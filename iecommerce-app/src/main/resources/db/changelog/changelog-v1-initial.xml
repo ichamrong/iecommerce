@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="1-initial-metadata" author="chamrong">
+        <createTable tableName="tenant_metadata">
+            <column name="tenant_id" type="VARCHAR(50)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="2-partitioning-helper" author="chamrong" runOnChange="true">
+        <sql splitStatements="false">
+            CREATE OR REPLACE FUNCTION create_year_partitions(
+                parent_table TEXT,
+                partition_prefix TEXT,
+                start_year INTEGER,
+                end_year INTEGER
+            ) RETURNS VOID AS $$
+            DECLARE
+                current_yr INTEGER;
+            BEGIN
+                FOR current_yr IN start_year..end_year LOOP
+                    EXECUTE format(
+                        'CREATE TABLE IF NOT EXISTS %I_y%s PARTITION OF %I FOR VALUES FROM (%L) TO (%L)',
+                        partition_prefix, current_yr, parent_table, 
+                        cast(current_yr || '-01-01' as date), 
+                        cast((current_yr + 1) || '-01-01' as date)
+                    );
+                END LOOP;
+            END;
+            $$ LANGUAGE plpgsql;
+        </sql>
+    </changeSet>
+
+    <changeSet id="3-order-partitioned-table" author="chamrong">
+        <sql splitStatements="false">
+            CREATE TABLE orders (
+                id BIGSERIAL,
+                tenant_id VARCHAR(50) NOT NULL,
+                customer_id BIGINT,
+                total_amount DECIMAL(19, 2),
+                status VARCHAR(50),
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                deleted BOOLEAN NOT NULL DEFAULT FALSE,
+                deleted_at TIMESTAMP WITH TIME ZONE,
+                PRIMARY KEY (id, deleted, created_at)
+            ) PARTITION BY LIST (deleted);
+
+            CREATE TABLE orders_active PARTITION OF orders
+                FOR VALUES IN (FALSE)
+                PARTITION BY RANGE (created_at);
+
+            CREATE TABLE orders_archived PARTITION OF orders
+                FOR VALUES IN (TRUE)
+                PARTITION BY RANGE (created_at);
+
+            SELECT create_year_partitions('orders_active', 'orders_active', 2024, 2124);
+            SELECT create_year_partitions('orders_archived', 'orders_archived', 2024, 2124);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
