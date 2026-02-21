@@ -3,7 +3,11 @@ package com.chamrong.iecommerce.audit.domain;
 import com.chamrong.iecommerce.common.BaseTenantEntity;
 import jakarta.persistence.*;
 import java.time.Instant;
+import lombok.Getter;
+import lombok.Setter;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "audit_log")
 public class AuditEvent extends BaseTenantEntity {
@@ -22,54 +26,12 @@ public class AuditEvent extends BaseTenantEntity {
   @Column(columnDefinition = "TEXT")
   private String metadata; // JSON representation of changes or extra info
 
+  @Column(length = 45)
+  private String ipAddress;
+
+  @Column(length = 500)
+  private String userAgent;
+
   @Column(nullable = false)
   private Instant timestamp = Instant.now();
-
-  public String getUserId() {
-    return userId;
-  }
-
-  public void setUserId(String userId) {
-    this.userId = userId;
-  }
-
-  public String getAction() {
-    return action;
-  }
-
-  public void setAction(String action) {
-    this.action = action;
-  }
-
-  public String getResourceType() {
-    return resourceType;
-  }
-
-  public void setResourceType(String resourceType) {
-    this.resourceType = resourceType;
-  }
-
-  public String getResourceId() {
-    return resourceId;
-  }
-
-  public void setResourceId(String resourceId) {
-    this.resourceId = resourceId;
-  }
-
-  public String getMetadata() {
-    return metadata;
-  }
-
-  public void setMetadata(String metadata) {
-    this.metadata = metadata;
-  }
-
-  public Instant getTimestamp() {
-    return timestamp;
-  }
-
-  public void setTimestamp(Instant timestamp) {
-    this.timestamp = timestamp;
-  }
 }

@@ -14,6 +14,9 @@ public final class Permissions {
   // Staff management
   public static final String STAFF_MANAGE = "staff:manage";
 
+  // Audit management
+  public static final String AUDIT_READ = "audit:read";
+
   // Self-service
   public static final String PROFILE_READ = "profile:read";
 
@@ -24,6 +27,7 @@ public final class Permissions {
   public static final String HAS_TENANT_CREATE = "hasAuthority('" + TENANT_CREATE + "')";
   public static final String HAS_STAFF_MANAGE = "hasAuthority('" + STAFF_MANAGE + "')";
   public static final String HAS_PROFILE_READ = "hasAuthority('" + PROFILE_READ + "')";
+  public static final String HAS_AUDIT_READ = "hasAuthority('" + AUDIT_READ + "')";
 
   private Permissions() {}
 }
