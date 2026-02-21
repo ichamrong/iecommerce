@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="33-enrich-customer" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="customer" columnName="status"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="customer">
+            <column name="status" type="VARCHAR(20)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="loyalty_tier" type="VARCHAR(20)" defaultValue="BRONZE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="loyalty_points" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date_of_birth" type="DATE"/>
+            <column name="gender" type="VARCHAR(20)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="34-enrich-address" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="customer_address" columnName="is_default_billing"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="customer_address">
+            <column name="is_default_billing" type="BOOLEAN" defaultValue="FALSE"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

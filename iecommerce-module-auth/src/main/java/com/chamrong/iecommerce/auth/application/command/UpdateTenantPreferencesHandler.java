@@ -1,9 +1,11 @@
 package com.chamrong.iecommerce.auth.application.command;
 
+import com.chamrong.iecommerce.auth.TenantPreferencesUpdatedEvent;
 import com.chamrong.iecommerce.auth.application.dto.TenantPreferencesResponse;
 import com.chamrong.iecommerce.auth.domain.TenantPreferences;
 import com.chamrong.iecommerce.auth.domain.TenantRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UpdateTenantPreferencesHandler {
 
   private final TenantRepository tenantRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
   public TenantPreferencesResponse handle(UpdateTenantPreferencesCommand cmd) {
@@ -20,7 +23,7 @@ public class UpdateTenantPreferencesHandler {
             .findByCode(cmd.tenantId())
             .orElseThrow(() -> new IllegalArgumentException("Tenant not found: " + cmd.tenantId()));
 
-    TenantPreferences prefs = tenant.getPreferences();
+    var prefs = tenant.getPreferences();
     if (prefs == null) {
       prefs = new TenantPreferences();
       tenant.setPreferences(prefs);
@@ -32,6 +35,7 @@ public class UpdateTenantPreferencesHandler {
     if (cmd.fontFamily() != null) prefs.setFontFamily(cmd.fontFamily());
 
     tenantRepository.save(tenant);
+    eventPublisher.publishEvent(new TenantPreferencesUpdatedEvent(cmd.tenantId()));
 
     return TenantPreferencesResponse.from(prefs);
   }

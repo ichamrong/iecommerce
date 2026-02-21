@@ -15,5 +15,21 @@
 			<groupId>com.chamrong</groupId>
 			<artifactId>iecommerce-common</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.chamrong</groupId>
+			<artifactId>iecommerce-module-catalog</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.chamrong</groupId>
+			<artifactId>iecommerce-module-auth</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.chamrong</groupId>
+			<artifactId>iecommerce-module-customer</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.chamrong</groupId>
+			<artifactId>iecommerce-module-staff</artifactId>
+		</dependency>
 	</dependencies>
 </project>

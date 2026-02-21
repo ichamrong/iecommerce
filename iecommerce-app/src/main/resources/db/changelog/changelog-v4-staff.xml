@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="35-enrich-staff" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="staff_profile" columnName="status"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="staff_profile">
+            <column name="status" type="VARCHAR(20)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="VARCHAR(50)" defaultValue="SUPPORT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="branch" type="VARCHAR(255)"/>
+            <column name="hire_date" type="DATE"/>
+            <column name="termination_date" type="DATE"/>
+        </addColumn>
+        <dropColumn tableName="staff_profile" columnName="active"/>
+    </changeSet>
+
+</databaseChangeLog>

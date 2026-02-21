@@ -1,5 +1,6 @@
 package com.chamrong.iecommerce.auth.application.command;
 
+import com.chamrong.iecommerce.auth.TenantRegisteredEvent;
 import com.chamrong.iecommerce.auth.application.dto.TenantResponse;
 import com.chamrong.iecommerce.auth.application.exception.DuplicateUserException;
 import com.chamrong.iecommerce.auth.domain.Permission;
@@ -15,6 +16,8 @@ import com.chamrong.iecommerce.common.TenantContext;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,34 +27,25 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>Creates a FREE tenant on a 30-day TRIAL and its owner account atomically via Keycloak.
  */
 @Component
+@RequiredArgsConstructor
 public class TenantSignupHandler {
 
   private final TenantRepository tenantRepository;
   private final RoleRepository roleRepository;
   private final PermissionRepository permissionRepository;
   private final RegisterUserHandler registerUserHandler;
-
-  public TenantSignupHandler(
-      TenantRepository tenantRepository,
-      RoleRepository roleRepository,
-      PermissionRepository permissionRepository,
-      RegisterUserHandler registerUserHandler) {
-    this.tenantRepository = tenantRepository;
-    this.roleRepository = roleRepository;
-    this.permissionRepository = permissionRepository;
-    this.registerUserHandler = registerUserHandler;
-  }
+  private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
   public TenantResponse handle(TenantSignupCommand cmd) {
-    String tenantCode = slugify(cmd.shopName());
+    var tenantCode = slugify(cmd.shopName());
 
     if (tenantRepository.existsByCode(tenantCode)) {
       throw new DuplicateUserException("Shop name already taken: " + cmd.shopName());
     }
 
     // 1. Create the tenant on a 30-day Trial
-    Tenant tenant = new Tenant();
+    var tenant = new Tenant();
     tenant.setCode(tenantCode);
     tenant.setName(cmd.shopName());
     tenant.setPlan(TenantPlan.FREE);
@@ -65,7 +59,7 @@ public class TenantSignupHandler {
       ensureTenantAdminRole(tenantCode);
 
       // 3. Register the owner user inside Keycloak and sync to local DB
-      RegisterCommand regCmd =
+      var regCmd =
           new RegisterCommand(
               cmd.ownerUsername(),
               cmd.ownerEmail(),
@@ -73,6 +67,10 @@ public class TenantSignupHandler {
               tenantCode,
               Role.ROLE_TENANT_ADMIN);
       registerUserHandler.handle(regCmd);
+
+      eventPublisher.publishEvent(
+          new TenantRegisteredEvent(
+              tenantCode, tenant.getName(), tenant.getPlan(), tenant.getStatus()));
     } finally {
       TenantContext.clear();
     }
@@ -82,17 +80,17 @@ public class TenantSignupHandler {
   }
 
   private Role ensureTenantAdminRole(String tenantCode) {
-    Permission profileRead =
+    var profileRead =
         permissionRepository
             .findByName(Permissions.PROFILE_READ)
             .orElseGet(() -> permissionRepository.save(new Permission(Permissions.PROFILE_READ)));
 
-    Role role =
+    var role =
         roleRepository
             .findByName(Role.ROLE_TENANT_ADMIN)
             .orElseGet(
                 () -> {
-                  Role r = new Role(Role.ROLE_TENANT_ADMIN);
+                  var r = new Role(Role.ROLE_TENANT_ADMIN);
                   r.setDescription("Tenant owner — manages their own store");
                   r.setTenantId(tenantCode);
                   return r;

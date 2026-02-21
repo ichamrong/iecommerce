@@ -4,9 +4,15 @@ import com.chamrong.iecommerce.common.BaseTenantEntity;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "customer")
+@Getter
+@Setter
+@NoArgsConstructor
 public class Customer extends BaseTenantEntity {
 
   @Column(nullable = true)
@@ -27,51 +33,60 @@ public class Customer extends BaseTenantEntity {
   @JoinColumn(name = "customer_id")
   private List<Address> addresses = new ArrayList<>();
 
-  public String getFirstName() {
-    return firstName;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private CustomerStatus status = CustomerStatus.ACTIVE;
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private LoyaltyTier loyaltyTier = LoyaltyTier.BRONZE;
+
+  @Column(nullable = false)
+  private int loyaltyPoints = 0;
+
+  private java.time.LocalDate dateOfBirth;
+
+  private String gender;
+
+  // ── Domain Methods ────────────────────────────────────────────────────────
+
+  public void block() {
+    this.status = CustomerStatus.BLOCKED;
   }
 
-  public void setFirstName(String firstName) {
-    this.firstName = firstName;
+  public void unblock() {
+    this.status = CustomerStatus.ACTIVE;
   }
 
-  public String getLastName() {
-    return lastName;
+  public void addPoints(int points) {
+    if (points < 0) throw new IllegalArgumentException("Points cannot be negative");
+    this.loyaltyPoints += points;
+    updateTier();
   }
 
-  public void setLastName(String lastName) {
-    this.lastName = lastName;
+  private void updateTier() {
+    if (this.loyaltyPoints >= 10000) {
+      this.loyaltyTier = LoyaltyTier.PLATINUM;
+    } else if (this.loyaltyPoints >= 5000) {
+      this.loyaltyTier = LoyaltyTier.GOLD;
+    } else if (this.loyaltyPoints >= 1000) {
+      this.loyaltyTier = LoyaltyTier.SILVER;
+    } else {
+      this.loyaltyTier = LoyaltyTier.BRONZE;
+    }
   }
 
-  public String getEmail() {
-    return email;
+  public void addAddress(Address address) {
+    if (address.isDefaultBilling()) {
+      addresses.forEach(a -> a.setDefaultBilling(false));
+    }
+    if (address.isDefaultShipping()) {
+      addresses.forEach(a -> a.setDefaultShipping(false));
+    }
+    this.addresses.add(address);
   }
 
-  public void setEmail(String email) {
-    this.email = email;
-  }
-
-  public String getPhoneNumber() {
-    return phoneNumber;
-  }
-
-  public void setPhoneNumber(String phoneNumber) {
-    this.phoneNumber = phoneNumber;
-  }
-
-  public Long getAuthUserId() {
-    return authUserId;
-  }
-
-  public void setAuthUserId(Long authUserId) {
-    this.authUserId = authUserId;
-  }
-
-  public List<Address> getAddresses() {
-    return addresses;
-  }
-
-  public void setAddresses(List<Address> addresses) {
-    this.addresses = addresses;
+  public void removeAddress(Address address) {
+    this.addresses.remove(address);
   }
 }

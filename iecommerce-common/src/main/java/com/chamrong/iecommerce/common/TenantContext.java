@@ -12,6 +12,14 @@ public class TenantContext {
     return CURRENT_TENANT.get();
   }
 
+  public static String requireTenantId() {
+    String tenantId = getCurrentTenant();
+    if (tenantId == null || tenantId.isBlank()) {
+      throw new IllegalStateException("No tenant context found");
+    }
+    return tenantId;
+  }
+
   public static void clear() {
     CURRENT_TENANT.remove();
   }

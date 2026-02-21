@@ -3,19 +3,19 @@ package com.chamrong.iecommerce.auth.application.command;
 import com.chamrong.iecommerce.auth.UserRegisteredEvent;
 import com.chamrong.iecommerce.auth.application.dto.AuthResponse;
 import com.chamrong.iecommerce.auth.application.exception.DuplicateUserException;
+import com.chamrong.iecommerce.auth.domain.Role;
 import com.chamrong.iecommerce.auth.domain.RoleRepository;
 import com.chamrong.iecommerce.auth.domain.User;
 import com.chamrong.iecommerce.auth.domain.UserRepository;
 import com.chamrong.iecommerce.auth.infrastructure.init.KeycloakProperties;
-import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
-import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -60,18 +60,14 @@ public class RegisterUserHandler {
 
     userRep.setCredentials(List.of(credential));
 
-    try (Response response = realmResource.users().create(userRep)) {
+    try (var response = realmResource.users().create(userRep)) {
       if (response.getStatus() == 201 || response.getStatus() == 200) {
-        String keycloakId = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
+        var keycloakId = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
 
         // Assign required Role
-        String targetRole =
-            cmd.role() != null
-                ? cmd.role()
-                : com.chamrong.iecommerce.auth.domain.Role.ROLE_CUSTOMER;
+        var targetRole = cmd.role() != null ? cmd.role() : Role.ROLE_CUSTOMER;
         try {
-          RoleRepresentation assignedRole =
-              realmResource.roles().get(targetRole).toRepresentation();
+          var assignedRole = realmResource.roles().get(targetRole).toRepresentation();
           realmResource.users().get(keycloakId).roles().realmLevel().add(List.of(assignedRole));
         } catch (Exception e) {
           log.warn(
@@ -79,17 +75,17 @@ public class RegisterUserHandler {
         }
 
         // Save locally
-        com.chamrong.iecommerce.auth.domain.Role localRole =
+        var localRole =
             roleRepository
                 .findByName(targetRole)
                 .orElseThrow(() -> new IllegalStateException(targetRole + " not found locally"));
 
-        User user = new User();
+        var user = new User();
         user.setUsername(cmd.username());
         user.setEmail(cmd.email());
         user.setKeycloakId(keycloakId);
         user.setTenantId(cmd.tenantId());
-        user.setRoles(java.util.Set.of(localRole));
+        user.setRoles(Set.of(localRole));
         user.setEnabled(true);
 
         var saved = userRepository.save(user);

@@ -9,4 +9,9 @@ public record CustomerResponse(
     String email,
     String phoneNumber,
     Long authUserId,
+    String status,
+    String loyaltyTier,
+    int loyaltyPoints,
+    java.time.LocalDate dateOfBirth,
+    String gender,
     List<AddressResponse> addresses) {}

@@ -92,3 +92,39 @@ package com.chamrong.iecommerce.auth.application;
 **Rationale:** Acts as living documentation. Anyone entering a new package immediately
 understands its purpose without reading multiple files.
 
+## 8. SonarQube & Code Quality
+*Common issues and rules to maintain high quality scores.*
+
+- **JUnit 5 Visibility**: Don't use `public` on test classes or test methods. JUnit 5 prefers package-private (default) visibility.
+- **Loggers over standard output**: Never use `System.out.println()` or `System.err.println()`. Use `log.info()`, `log.error()`, etc., via SLF4J.
+- **Generic Exceptions**: Avoid throwing or catching `java.lang.Exception`, `java.lang.RuntimeException`, or `java.lang.Throwable`. Use specific checked or unchecked exceptions.
+- **Cognitive Complexity**: Keep methods simple. If a method's cognitive complexity exceeds 15 (due to nested loops, if-statements, etc.), it must be refactored.
+- **Dead Stores**: Remove any local variables that are assigned but never read.
+- **Null-Safe Equals**: When comparing a variable to a constant string, use `"CONSTANT".equals(variable)` to prevent `NullPointerException`.
+- **String Concatenation in Loops**: Avoid `s += "next"` in loops. Use `StringBuilder` for better performance.
+- **Modern Collection Factory Methods**: Use `List.of()`, `Set.of()`, and `Map.of()` instead of `Arrays.asList()` when an immutable collection is needed.
+- **Utility Class Private Constructor**: Classes that only contain static methods (utility classes) must have a `private` constructor to prevent instantiation.
+- **Constants for Magic Literals**: Strings and numbers used more than once (or even once if they have specific meaning) should be extracted to `static final` constants.
+- **Dependency Injection**: Prefer **Constructor Injection** over field injection (`@Autowired`). It makes the code easier to test and ensures required dependencies are not null.
+- **Method References**: Use method references (e.g., `String::isEmpty`) instead of lambdas when possible (e.g., `s -> s.isEmpty()`).
+- **Collection Returns**: Always return an empty collection (e.g., `Collections.emptyList()`) instead of `null` to prevent downstream NPEs.
+- **Naming Constants**: Constants (static final) must be in `UPPER_SNAKE_CASE`.
+- **Naming Booleans**: Use prefixes like `is`, `has`, `can`, or `should` for boolean variables and methods (e.g., `isActive`, `hasPermission`).
+- **Bean Validation**: Use Jakarta Validation annotations (e.g., `@NotNull`, `@NotBlank`, `@Size`) in DTOs instead of manual validation logic in controllers or services.
+- **Avoid Raw Types**: Never use raw types like `List` or `Map`. Always use generics: `List<String>`.
+- **Try-with-Resources**: Use `try (...) { ... }` blocks for any objects that implement `AutoCloseable` (e.g., Streams, DB connections) to ensure they are closed properly.
+- **Java Time API**: Use `java.time.LocalDate`, `LocalDateTime`, and `Instant`. Never use `java.util.Date` or `java.util.Calendar`.
+- **Override Annotation**: Always use `@Override` when implementing an interface method or overriding a parent method to catch signature mismatches at compile time.
+
+## 9. Lombok Best Practices
+*Guidelines for using Lombok effectively while avoiding common pitfalls.*
+
+- **Constructor Injection**: Use `@RequiredArgsConstructor` on classes (Services, Controllers) with `private final` fields. This is the cleanest way to perform dependency injection.
+- **Avoid `@Data` on JPA Entities**: `@Data` generates `equals()`, `hashCode()`, and `toString()` which can trigger lazy-loading of collections or cause infinite recursion in circular relationships. Prefer `@Getter` and `@Setter` at the class or field level.
+- **Explicit Equals/HashCode for Entities**: For entities, manually implement `equals()` and `hashCode()` using the business key (e.g., a UUID or unique natural key), or use `@EqualsAndHashCode(onlyExplicitlyIncluded = true)` with `@EqualsAndHashCode.Include` on specific fields.
+- **Consistent Logging**: Use `@Slf4j` instead of manually declaring loggers.
+- **Exclude Sensitive Data**: Always use `@ToString(exclude = {"password", "secret"})` on classes that hold sensitive information to prevent accidental logging.
+- **Builders**: Use `@Builder` for complex object creation to improve readability. When used on a class, ensure a `@AllArgsConstructor` (private) exists.
+- **Lombok vs Records**: Do not use Lombok annotations on Java `records`. Records already provide getters, constructors, equals, hashCode, and toString by design.
+- **Cleanup**: Use `@Cleanup` for local variables that need closing only if they don't support try-with-resources (though try-with-resources is generally preferred).
+

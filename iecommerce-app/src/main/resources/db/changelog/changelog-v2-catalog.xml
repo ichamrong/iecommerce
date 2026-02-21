@@ -1,0 +1,581 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- ================================================================
+         CATALOG MODULE — V2 Schema
+         Strategy:
+           - catalog_products: partitioned LIST(deleted) → RANGE(created_at/year)
+           - catalog_product_translations: simple table, indexed (product_id, locale)
+           - catalog_categories: adjacency list + materialized path, GIN index
+           - All _translation tables: UNIQUE(entity_id, locale)
+           - Partial indexes: only WHERE deleted = FALSE for hot reads
+           - GIN index: full-text search on product name + description
+         ================================================================ -->
+
+    <!-- 22: Drop old stub catalog tables before recreating them properly -->
+    <changeSet id="22-drop-old-catalog-stub" author="chamrong">
+        <sql splitStatements="false">
+            DROP TABLE IF EXISTS catalog_product_variant CASCADE;
+            DROP TABLE IF EXISTS catalog_product CASCADE;
+        </sql>
+    </changeSet>
+
+    <!-- 23: catalog_categories (must exist before products FK) -->
+    <changeSet id="23-catalog-categories" author="chamrong">
+        <sql splitStatements="false">
+            CREATE TABLE catalog_categories (
+                id                BIGSERIAL,
+                tenant_id         VARCHAR(100)  NOT NULL,
+                slug              VARCHAR(255)  NOT NULL,
+                parent_id         BIGINT        REFERENCES catalog_categories(id) ON DELETE SET NULL,
+                materialized_path VARCHAR(1000),          -- e.g. /1/4/12/
+                depth             INTEGER       NOT NULL DEFAULT 0,
+                sort_order        INTEGER       NOT NULL DEFAULT 0,
+                image_url         VARCHAR(500),
+                is_active         BOOLEAN       NOT NULL DEFAULT TRUE,
+                created_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+                updated_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+                deleted           BOOLEAN       NOT NULL DEFAULT FALSE,
+                deleted_at        TIMESTAMPTZ,
+                PRIMARY KEY (id),
+                UNIQUE (tenant_id, slug)
+            );
+
+            -- Fast subtree queries: WHERE materialized_path LIKE '/1/4/%'
+            CREATE INDEX idx_category_path    ON catalog_categories(tenant_id, materialized_path)
+                WHERE deleted = FALSE;
+            CREATE INDEX idx_category_parent  ON catalog_categories(parent_id)
+                WHERE deleted = FALSE;
+            CREATE INDEX idx_category_active  ON catalog_categories(tenant_id, is_active)
+                WHERE deleted = FALSE;
+        </sql>
+    </changeSet>
+
+    <!-- 24: catalog_products — partitioned by deleted status (LIST) then year (RANGE) -->
+    <changeSet id="24-catalog-products-partitioned" author="chamrong">
+        <sql splitStatements="false">
+            CREATE TABLE catalog_products (
+                id                      BIGSERIAL,
+                tenant_id               VARCHAR(100)  NOT NULL,
+                slug                    VARCHAR(255)  NOT NULL,
+                status                  VARCHAR(20)   NOT NULL DEFAULT 'DRAFT',
+                product_type            VARCHAR(20)   NOT NULL DEFAULT 'PHYSICAL',
+                category_id             BIGINT        REFERENCES catalog_categories(id) ON DELETE SET NULL,
+                base_price_amount       NUMERIC(19,4),
+                base_price_currency     VARCHAR(3),
+                compare_at_price_amount NUMERIC(19,4),
+                compare_at_price_currency VARCHAR(3),
+                tax_category            VARCHAR(50)   DEFAULT 'STANDARD',
+                tags                    TEXT,
+                created_at              TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+                updated_at              TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+                deleted                 BOOLEAN       NOT NULL DEFAULT FALSE,
+                deleted_at              TIMESTAMPTZ,
+                PRIMARY KEY (id, deleted, created_at),
+                UNIQUE (tenant_id, slug)
+            ) PARTITION BY LIST (deleted);
+
+            -- L1 partitions: active vs soft-deleted
+            CREATE TABLE catalog_products_active   PARTITION OF catalog_products
+                FOR VALUES IN (FALSE)
+                PARTITION BY RANGE (created_at);
+
+            CREATE TABLE catalog_products_deleted  PARTITION OF catalog_products
+                FOR VALUES IN (TRUE)
+                PARTITION BY RANGE (created_at);
+
+            -- L2 year partitions 2024–2124 (uses helper function from v1 migration)
+            SELECT create_year_partitions('catalog_products_active',  'catalog_products_active',  2024, 2124);
+            SELECT create_year_partitions('catalog_products_deleted', 'catalog_products_deleted', 2024, 2124);
+        </sql>
+    </changeSet>
+
+    <!-- 25: catalog_products indexes -->
+    <changeSet id="25-catalog-products-indexes" author="chamrong">
+        <sql splitStatements="false">
+            -- Hot admin list: filter by tenant + status
+            CREATE INDEX idx_products_tenant_status
+                ON catalog_products(tenant_id, status)
+                WHERE deleted = FALSE;
+
+            -- Storefront slug lookup
+            CREATE INDEX idx_products_slug
+                ON catalog_products(tenant_id, slug)
+                WHERE deleted = FALSE;
+
+            -- Category drill-down queries
+            CREATE INDEX idx_products_category
+                ON catalog_products(category_id)
+                WHERE deleted = FALSE;
+
+            -- Tenant-level price browsing (range queries on price)
+            CREATE INDEX idx_products_price
+                ON catalog_products(tenant_id, base_price_amount)
+                WHERE deleted = FALSE AND status = 'ACTIVE';
+        </sql>
+    </changeSet>
+
+    <!-- 26: catalog_product_translations -->
+    <changeSet id="26-catalog-product-translations" author="chamrong">
+        <createTable tableName="catalog_product_translations">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="locale" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="short_description" type="VARCHAR(512)"/>
+            <column name="meta_title" type="VARCHAR(255)"/>
+            <column name="meta_description" type="VARCHAR(512)"/>
+        </createTable>
+        <addForeignKeyConstraint
+            baseTableName="catalog_product_translations"
+            baseColumnNames="product_id"
+            referencedTableName="catalog_products"
+            referencedColumnNames="id"
+            constraintName="fk_product_translation_product"
+            onDelete="CASCADE"/>
+        <addUniqueConstraint
+            tableName="catalog_product_translations"
+            columnNames="product_id, locale"
+            constraintName="uq_product_translation_locale"/>
+        <sql>
+            CREATE INDEX idx_product_trans_locale
+                ON catalog_product_translations(product_id, locale);
+            <!-- GIN full-text search across translated name + description -->
+            CREATE INDEX idx_product_trans_fts
+                ON catalog_product_translations
+                USING GIN (to_tsvector('simple', name || ' ' || COALESCE(description, '')));
+        </sql>
+    </changeSet>
+
+    <!-- 27: catalog_product_variants + translations -->
+    <changeSet id="27-catalog-product-variants" author="chamrong">
+        <createTable tableName="catalog_product_variants">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sku" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price_amount" type="NUMERIC(19,4)"/>
+            <column name="price_currency" type="VARCHAR(3)"/>
+            <column name="compare_at_price_amount" type="NUMERIC(19,4)"/>
+            <column name="compare_at_price_currency" type="VARCHAR(3)"/>
+            <column name="weight_grams" type="NUMERIC(10,3)"/>
+            <column name="stock_level" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sort_order" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </createTable>
+        <addForeignKeyConstraint
+            baseTableName="catalog_product_variants"
+            baseColumnNames="product_id"
+            referencedTableName="catalog_products"
+            referencedColumnNames="id"
+            constraintName="fk_variant_product"
+            onDelete="CASCADE"/>
+        <addUniqueConstraint
+            tableName="catalog_product_variants"
+            columnNames="sku"
+            constraintName="uq_variant_sku"/>
+        <sql>
+            CREATE INDEX idx_variants_product
+                ON catalog_product_variants(product_id)
+                WHERE deleted = FALSE;
+            CREATE INDEX idx_variants_enabled
+                ON catalog_product_variants(product_id, enabled)
+                WHERE deleted = FALSE;
+        </sql>
+
+        <!-- Variant translations -->
+        <createTable tableName="catalog_product_variant_translations">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="variant_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="locale" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+            baseTableName="catalog_product_variant_translations"
+            baseColumnNames="variant_id"
+            referencedTableName="catalog_product_variants"
+            referencedColumnNames="id"
+            constraintName="fk_variant_translation_variant"
+            onDelete="CASCADE"/>
+        <addUniqueConstraint
+            tableName="catalog_product_variant_translations"
+            columnNames="variant_id, locale"
+            constraintName="uq_variant_translation_locale"/>
+    </changeSet>
+
+    <!-- 28: catalog_product_attributes (locale-invariant technical specs) -->
+    <changeSet id="28-catalog-product-attributes" author="chamrong">
+        <createTable tableName="catalog_product_attributes">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="attribute_key" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="attribute_value" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="unit" type="VARCHAR(50)"/>
+            <column name="sort_order" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+            baseTableName="catalog_product_attributes"
+            baseColumnNames="product_id"
+            referencedTableName="catalog_products"
+            referencedColumnNames="id"
+            constraintName="fk_attribute_product"
+            onDelete="CASCADE"/>
+    </changeSet>
+
+    <!-- 29: catalog_product_relationships -->
+    <changeSet id="29-catalog-product-relationships" author="chamrong">
+        <createTable tableName="catalog_product_relationships">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="related_product_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sort_order" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+            baseTableName="catalog_product_relationships"
+            baseColumnNames="product_id"
+            referencedTableName="catalog_products"
+            referencedColumnNames="id"
+            constraintName="fk_relationship_source"
+            onDelete="CASCADE"/>
+        <addForeignKeyConstraint
+            baseTableName="catalog_product_relationships"
+            baseColumnNames="related_product_id"
+            referencedTableName="catalog_products"
+            referencedColumnNames="id"
+            constraintName="fk_relationship_target"
+            onDelete="CASCADE"/>
+        <addUniqueConstraint
+            tableName="catalog_product_relationships"
+            columnNames="product_id, related_product_id, type"
+            constraintName="uq_product_relationship"/>
+    </changeSet>
+
+    <!-- 30: catalog_category_translations -->
+    <changeSet id="30-catalog-category-translations" author="chamrong">
+        <createTable tableName="catalog_category_translations">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="category_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="locale" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+        </createTable>
+        <addForeignKeyConstraint
+            baseTableName="catalog_category_translations"
+            baseColumnNames="category_id"
+            referencedTableName="catalog_categories"
+            referencedColumnNames="id"
+            constraintName="fk_category_translation_category"
+            onDelete="CASCADE"/>
+        <addUniqueConstraint
+            tableName="catalog_category_translations"
+            columnNames="category_id, locale"
+            constraintName="uq_category_translation_locale"/>
+        <sql>
+            CREATE INDEX idx_category_trans_locale
+                ON catalog_category_translations(category_id, locale);
+        </sql>
+    </changeSet>
+
+    <!-- 31: catalog_collections + translations -->
+    <changeSet id="31-catalog-collections" author="chamrong">
+        <createTable tableName="catalog_collections">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="slug" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_automatic" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rule" type="JSONB"/>
+            <column name="sort_order" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </createTable>
+        <addUniqueConstraint
+            tableName="catalog_collections"
+            columnNames="tenant_id, slug"
+            constraintName="uq_collection_tenant_slug"/>
+        <sql>
+            CREATE INDEX idx_collection_tenant
+                ON catalog_collections(tenant_id, is_active)
+                WHERE deleted = FALSE;
+        </sql>
+
+        <!-- M:N join -->
+        <createTable tableName="catalog_collection_products">
+            <column name="collection_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sort_order" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="catalog_collection_products" columnNames="collection_id, product_id"/>
+        <addForeignKeyConstraint
+            baseTableName="catalog_collection_products"
+            baseColumnNames="collection_id"
+            referencedTableName="catalog_collections"
+            referencedColumnNames="id"
+            constraintName="fk_cp_collection"
+            onDelete="CASCADE"/>
+        <addForeignKeyConstraint
+            baseTableName="catalog_collection_products"
+            baseColumnNames="product_id"
+            referencedTableName="catalog_products"
+            referencedColumnNames="id"
+            constraintName="fk_cp_product"
+            onDelete="CASCADE"/>
+
+        <!-- Collection translations -->
+        <createTable tableName="catalog_collection_translations">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="collection_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="locale" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+        </createTable>
+        <addForeignKeyConstraint
+            baseTableName="catalog_collection_translations"
+            baseColumnNames="collection_id"
+            referencedTableName="catalog_collections"
+            referencedColumnNames="id"
+            constraintName="fk_collection_translation_collection"
+            onDelete="CASCADE"/>
+        <addUniqueConstraint
+            tableName="catalog_collection_translations"
+            columnNames="collection_id, locale"
+            constraintName="uq_collection_translation_locale"/>
+    </changeSet>
+
+    <!-- 32: catalog_facets + values + translations -->
+    <changeSet id="32-catalog-facets" author="chamrong">
+        <createTable tableName="catalog_facets">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="code" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_filterable" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint
+            tableName="catalog_facets"
+            columnNames="tenant_id, code"
+            constraintName="uq_facet_tenant_code"/>
+
+        <!-- Facet translations: e.g. code="brand" → name="Brand" (en) / "ម៉ាក" (km) -->
+        <createTable tableName="catalog_facet_translations">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="facet_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="locale" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+            baseTableName="catalog_facet_translations"
+            baseColumnNames="facet_id"
+            referencedTableName="catalog_facets"
+            referencedColumnNames="id"
+            constraintName="fk_facet_translation_facet"
+            onDelete="CASCADE"/>
+        <addUniqueConstraint
+            tableName="catalog_facet_translations"
+            columnNames="facet_id, locale"
+            constraintName="uq_facet_translation_locale"/>
+        <sql>
+            CREATE INDEX idx_facet_trans_locale ON catalog_facet_translations(facet_id, locale);
+        </sql>
+
+        <!-- Facet values -->
+        <createTable tableName="catalog_facet_values">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="facet_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="code" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+            baseTableName="catalog_facet_values"
+            baseColumnNames="facet_id"
+            referencedTableName="catalog_facets"
+            referencedColumnNames="id"
+            constraintName="fk_facet_value_facet"
+            onDelete="CASCADE"/>
+        <addUniqueConstraint
+            tableName="catalog_facet_values"
+            columnNames="facet_id, code"
+            constraintName="uq_facet_value_code"/>
+
+        <!-- Facet value translations: code="apple" → value="Apple" (en) / "អាប់ផ្លោ" (km) -->
+        <createTable tableName="catalog_facet_value_translations">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="facet_value_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="locale" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="value" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+            baseTableName="catalog_facet_value_translations"
+            baseColumnNames="facet_value_id"
+            referencedTableName="catalog_facet_values"
+            referencedColumnNames="id"
+            constraintName="fk_facet_value_translation"
+            onDelete="CASCADE"/>
+        <addUniqueConstraint
+            tableName="catalog_facet_value_translations"
+            columnNames="facet_value_id, locale"
+            constraintName="uq_facet_value_translation_locale"/>
+        <sql>
+            CREATE INDEX idx_fv_trans_locale ON catalog_facet_value_translations(facet_value_id, locale);
+        </sql>
+
+        <!-- Product ↔ FacetValue M:N -->
+        <createTable tableName="catalog_product_facet_values">
+            <column name="product_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="facet_value_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="catalog_product_facet_values" columnNames="product_id, facet_value_id"/>
+        <addForeignKeyConstraint
+            baseTableName="catalog_product_facet_values"
+            baseColumnNames="product_id"
+            referencedTableName="catalog_products"
+            referencedColumnNames="id"
+            constraintName="fk_pfv_product"
+            onDelete="CASCADE"/>
+        <addForeignKeyConstraint
+            baseTableName="catalog_product_facet_values"
+            baseColumnNames="facet_value_id"
+            referencedTableName="catalog_facet_values"
+            referencedColumnNames="id"
+            constraintName="fk_pfv_facet_value"
+            onDelete="CASCADE"/>
+    </changeSet>
+
+</databaseChangeLog>

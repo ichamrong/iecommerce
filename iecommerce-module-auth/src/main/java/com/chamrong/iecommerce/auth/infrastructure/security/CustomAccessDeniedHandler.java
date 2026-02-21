@@ -12,8 +12,8 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
 /**
- * Custom handler that serves a Thymeleaf 403 page for browser requests
- * and a JSON response for API/programmatic clients.
+ * Custom handler that serves a Thymeleaf 403 page for browser requests and a JSON response for
+ * API/programmatic clients.
  */
 @Component
 public class CustomAccessDeniedHandler implements AccessDeniedHandler {
@@ -43,11 +43,16 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
       objectMapper.writeValue(
           response.getOutputStream(),
           Map.of(
-              "status", 403,
-              "error", "Forbidden",
-              "message", "You do not have permission to access this resource.",
-              "timestamp", Instant.now().toString(),
-              "path", request.getRequestURI()));
+              "status",
+              403,
+              "error",
+              "Forbidden",
+              "message",
+              "You do not have permission to access this resource.",
+              "timestamp",
+              Instant.now().toString(),
+              "path",
+              request.getRequestURI()));
     }
   }
 }

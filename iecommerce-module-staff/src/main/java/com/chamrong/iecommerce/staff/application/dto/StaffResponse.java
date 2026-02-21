@@ -19,5 +19,9 @@ public record StaffResponse(
     String fullName,
     String phone,
     String department,
-    Set<String> assignedTenants,
-    boolean active) {}
+    String branch,
+    String status,
+    String role,
+    java.time.LocalDate hireDate,
+    java.time.LocalDate terminationDate,
+    Set<String> assignedTenants) {}

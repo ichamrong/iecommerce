@@ -48,8 +48,7 @@ public class SecurityConfig {
         // Register TenantContextFilter to run AFTER Spring extracts the Bearer token and sets the
         // SecurityContext
         .addFilterAfter(tenantContextFilter, BearerTokenAuthenticationFilter.class)
-        .exceptionHandling(
-            ex -> ex.accessDeniedHandler(accessDeniedHandler))
+        .exceptionHandling(ex -> ex.accessDeniedHandler(accessDeniedHandler))
         .authorizeHttpRequests(
             auth ->
                 auth

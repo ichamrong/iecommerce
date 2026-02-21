@@ -21,6 +21,11 @@
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>com.chamrong</groupId>
+			<artifactId>iecommerce-module-order</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.modulith</groupId>
 			<artifactId>spring-modulith-api</artifactId>
 		</dependency>

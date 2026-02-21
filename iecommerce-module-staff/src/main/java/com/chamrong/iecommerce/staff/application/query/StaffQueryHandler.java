@@ -1,6 +1,5 @@
 package com.chamrong.iecommerce.staff.application.query;
 
-import com.chamrong.iecommerce.staff.application.command.CreateStaffHandler;
 import com.chamrong.iecommerce.staff.application.dto.StaffResponse;
 import com.chamrong.iecommerce.staff.domain.StaffProfileRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -13,21 +12,25 @@ import org.springframework.transaction.annotation.Transactional;
 public class StaffQueryHandler {
 
   private final StaffProfileRepository staffProfileRepository;
+  private final com.chamrong.iecommerce.staff.application.StaffMapper mapper;
 
-  public StaffQueryHandler(StaffProfileRepository staffProfileRepository) {
+  public StaffQueryHandler(
+      StaffProfileRepository staffProfileRepository,
+      com.chamrong.iecommerce.staff.application.StaffMapper mapper) {
     this.staffProfileRepository = staffProfileRepository;
+    this.mapper = mapper;
   }
 
   @Transactional(readOnly = true)
   public Page<StaffResponse> findAll(Pageable pageable) {
-    return staffProfileRepository.findAll(pageable).map(CreateStaffHandler::toResponse);
+    return staffProfileRepository.findAll(pageable).map(mapper::toResponse);
   }
 
   @Transactional(readOnly = true)
   public StaffResponse findById(Long id) {
     return staffProfileRepository
         .findById(id)
-        .map(CreateStaffHandler::toResponse)
+        .map(mapper::toResponse)
         .orElseThrow(() -> new EntityNotFoundException("Staff not found: " + id));
   }
 }

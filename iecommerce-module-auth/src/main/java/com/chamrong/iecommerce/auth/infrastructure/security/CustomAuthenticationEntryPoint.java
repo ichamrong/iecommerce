@@ -12,8 +12,8 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
 /**
- * Custom entry point that serves a Thymeleaf 401 page for browser requests
- * and a JSON response for API/programmatic clients.
+ * Custom entry point that serves a Thymeleaf 401 page for browser requests and a JSON response for
+ * API/programmatic clients.
  */
 @Component
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
@@ -45,11 +45,16 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
       objectMapper.writeValue(
           response.getOutputStream(),
           Map.of(
-              "status", 401,
-              "error", "Unauthorized",
-              "message", "Authentication required. Please provide a valid Bearer token.",
-              "timestamp", Instant.now().toString(),
-              "path", request.getRequestURI()));
+              "status",
+              401,
+              "error",
+              "Unauthorized",
+              "message",
+              "Authentication required. Please provide a valid Bearer token.",
+              "timestamp",
+              Instant.now().toString(),
+              "path",
+              request.getRequestURI()));
     }
   }
 }

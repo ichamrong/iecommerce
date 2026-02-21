@@ -1,32 +1,66 @@
 package com.chamrong.iecommerce.catalog.application;
 
 import com.chamrong.iecommerce.catalog.CatalogApi;
-import com.chamrong.iecommerce.catalog.domain.Product;
-import com.chamrong.iecommerce.catalog.domain.ProductRepository;
-import java.util.List;
+import com.chamrong.iecommerce.catalog.domain.ProductStatus;
+import com.chamrong.iecommerce.catalog.domain.ProductVariant;
+import com.chamrong.iecommerce.catalog.domain.ProductVariantRepository;
+import com.chamrong.iecommerce.catalog.domain.ProductVariantTranslation;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class CatalogService implements CatalogApi {
 
-  private final ProductRepository productRepository;
+  private final ProductVariantRepository variantRepository;
 
-  public CatalogService(ProductRepository productRepository) {
-    this.productRepository = productRepository;
+  @Override
+  @Transactional(readOnly = true)
+  public Optional<ProductVariantInfo> findActiveVariant(Long variantId) {
+    return variantRepository
+        .findById(variantId)
+        .filter(v -> v.getProduct().getStatus() == ProductStatus.ACTIVE)
+        .filter(ProductVariant::isEnabled)
+        .map(
+            v -> {
+              // Resolve name to "en" locally for cross-module usage by default
+              var resolvedName =
+                  v.getTranslations().stream()
+                      .filter(t -> t.getLocale().equals("en"))
+                      .map(ProductVariantTranslation::getName)
+                      .findFirst()
+                      .orElse(
+                          v.getProduct().getSlug()); // Fallback to product slug if no translation
+
+              return new ProductVariantInfo(
+                  v.getId(),
+                  v.getProduct().getId(),
+                  v.getSku(),
+                  resolvedName,
+                  v.getPrice() != null ? v.getPrice().getAmount() : null,
+                  v.getPrice() != null ? v.getPrice().getCurrency() : null,
+                  v.getProduct().getStatus(),
+                  v.isEnabled());
+            });
   }
 
-  public List<Product> findAllProducts() {
-    return productRepository.findAll();
+  @Override
+  @Transactional(readOnly = true)
+  public int getStockLevel(Long variantId) {
+    return variantRepository.findById(variantId).map(ProductVariant::getStockLevel).orElse(0);
   }
 
-  public Optional<Product> findProductById(Long id) {
-    return productRepository.findById(id);
-  }
-
+  @Override
   @Transactional
-  public Product createProduct(Product product) {
-    return productRepository.save(product);
+  public void updateStockLevel(Long variantId, int newStockLevel) {
+    variantRepository
+        .findById(variantId)
+        .ifPresent(
+            v -> {
+              v.setStockLevel(newStockLevel);
+              variantRepository.save(v);
+            });
   }
 }

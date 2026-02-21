@@ -7,4 +7,5 @@ public record AddressResponse(
     String state,
     String postalCode,
     String country,
-    boolean defaultAddress) {}
+    boolean defaultShipping,
+    boolean defaultBilling) {}

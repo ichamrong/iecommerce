@@ -1,6 +1,5 @@
 package com.chamrong.iecommerce.customer.application.query;
 
-import com.chamrong.iecommerce.customer.application.command.CreateCustomerHandler;
 import com.chamrong.iecommerce.customer.application.dto.CustomerResponse;
 import com.chamrong.iecommerce.customer.domain.CustomerRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -14,22 +13,26 @@ import org.springframework.transaction.annotation.Transactional;
 public class CustomerQueryHandler {
 
   private final CustomerRepository customerRepository;
+  private final com.chamrong.iecommerce.customer.application.CustomerMapper mapper;
 
-  public CustomerQueryHandler(CustomerRepository customerRepository) {
+  public CustomerQueryHandler(
+      CustomerRepository customerRepository,
+      com.chamrong.iecommerce.customer.application.CustomerMapper mapper) {
     this.customerRepository = customerRepository;
+    this.mapper = mapper;
   }
 
   public CustomerResponse findById(Long id) {
     return customerRepository
         .findById(id)
-        .map(CreateCustomerHandler::toResponse)
+        .map(mapper::toResponse)
         .orElseThrow(() -> new EntityNotFoundException("Customer not found: " + id));
   }
 
   public CustomerResponse findByAuthUserId(Long authUserId) {
     return customerRepository
         .findByAuthUserId(authUserId)
-        .map(CreateCustomerHandler::toResponse)
+        .map(mapper::toResponse)
         .orElseThrow(
             () ->
                 new EntityNotFoundException("Customer not found for auth user id: " + authUserId));
@@ -37,7 +40,7 @@ public class CustomerQueryHandler {
 
   public List<CustomerResponse> findAll() {
     return customerRepository.findAll().stream()
-        .map(CreateCustomerHandler::toResponse)
+        .map(mapper::toResponse)
         .collect(Collectors.toList());
   }
 }

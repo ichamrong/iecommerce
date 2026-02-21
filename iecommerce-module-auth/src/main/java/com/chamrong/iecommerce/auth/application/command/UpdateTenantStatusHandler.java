@@ -1,8 +1,10 @@
 package com.chamrong.iecommerce.auth.application.command;
 
+import com.chamrong.iecommerce.auth.TenantStatusUpdatedEvent;
 import com.chamrong.iecommerce.auth.domain.TenantRepository;
 import com.chamrong.iecommerce.auth.domain.TenantStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UpdateTenantStatusHandler {
 
   private final TenantRepository tenantRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
   public void handle(UpdateTenantStatusCommand cmd) {
@@ -28,6 +31,7 @@ public class UpdateTenantStatusHandler {
     }
 
     tenantRepository.save(tenant);
+    eventPublisher.publishEvent(new TenantStatusUpdatedEvent(cmd.tenantId(), cmd.status()));
 
     // In the future: emit TenantSuspendedEvent to freeze storefront resources dynamically.
   }

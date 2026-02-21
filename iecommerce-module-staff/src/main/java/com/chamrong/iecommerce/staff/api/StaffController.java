@@ -35,14 +35,28 @@ public class StaffController {
   private final CreateStaffHandler createStaffHandler;
   private final UpdateStaffTenantsHandler updateTenantsHandler;
   private final StaffQueryHandler staffQueryHandler;
+  private final com.chamrong.iecommerce.staff.application.command.SuspendStaffHandler
+      suspendStaffHandler;
+  private final com.chamrong.iecommerce.staff.application.command.ReactivateStaffHandler
+      reactivateStaffHandler;
+  private final com.chamrong.iecommerce.staff.application.command.TerminateStaffHandler
+      terminateStaffHandler;
 
   public StaffController(
       CreateStaffHandler createStaffHandler,
       UpdateStaffTenantsHandler updateTenantsHandler,
-      StaffQueryHandler staffQueryHandler) {
+      StaffQueryHandler staffQueryHandler,
+      com.chamrong.iecommerce.staff.application.command.SuspendStaffHandler suspendStaffHandler,
+      com.chamrong.iecommerce.staff.application.command.ReactivateStaffHandler
+          reactivateStaffHandler,
+      com.chamrong.iecommerce.staff.application.command.TerminateStaffHandler
+          terminateStaffHandler) {
     this.createStaffHandler = createStaffHandler;
     this.updateTenantsHandler = updateTenantsHandler;
     this.staffQueryHandler = staffQueryHandler;
+    this.suspendStaffHandler = suspendStaffHandler;
+    this.reactivateStaffHandler = reactivateStaffHandler;
+    this.terminateStaffHandler = terminateStaffHandler;
   }
 
   /**
@@ -115,5 +129,28 @@ public class StaffController {
     } catch (EntityNotFoundException e) {
       return ResponseEntity.notFound().build();
     }
+  }
+
+  // ── Lifecycle ────────────────────────────────────────────────────────────
+
+  @Operation(summary = "Suspend a staff member")
+  @org.springframework.web.bind.annotation.PatchMapping("/{id}/suspend")
+  public ResponseEntity<Void> suspendStaff(@PathVariable Long id) {
+    suspendStaffHandler.handle(id);
+    return ResponseEntity.noContent().build();
+  }
+
+  @Operation(summary = "Reactivate a staff member")
+  @org.springframework.web.bind.annotation.PatchMapping("/{id}/reactivate")
+  public ResponseEntity<Void> reactivateStaff(@PathVariable Long id) {
+    reactivateStaffHandler.handle(id);
+    return ResponseEntity.noContent().build();
+  }
+
+  @Operation(summary = "Terminate a staff member")
+  @org.springframework.web.bind.annotation.PatchMapping("/{id}/terminate")
+  public ResponseEntity<Void> terminateStaff(@PathVariable Long id) {
+    terminateStaffHandler.handle(id);
+    return ResponseEntity.noContent().build();
   }
 }

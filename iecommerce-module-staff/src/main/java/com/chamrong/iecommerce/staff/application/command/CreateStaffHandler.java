@@ -1,9 +1,13 @@
 package com.chamrong.iecommerce.staff.application.command;
 
 import com.chamrong.iecommerce.auth.StaffAccountCreatedEvent;
+import com.chamrong.iecommerce.staff.StaffCreatedEvent;
+import com.chamrong.iecommerce.staff.application.StaffMapper;
 import com.chamrong.iecommerce.staff.application.dto.StaffResponse;
 import com.chamrong.iecommerce.staff.domain.StaffProfile;
 import com.chamrong.iecommerce.staff.domain.StaffProfileRepository;
+import com.chamrong.iecommerce.staff.domain.StaffRole;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,16 +17,12 @@ import org.springframework.transaction.annotation.Transactional;
  * account.
  */
 @Component
+@RequiredArgsConstructor
 public class CreateStaffHandler {
 
   private final StaffProfileRepository staffProfileRepository;
   private final ApplicationEventPublisher eventPublisher;
-
-  public CreateStaffHandler(
-      StaffProfileRepository staffProfileRepository, ApplicationEventPublisher eventPublisher) {
-    this.staffProfileRepository = staffProfileRepository;
-    this.eventPublisher = eventPublisher;
-  }
+  private final StaffMapper mapper;
 
   @Transactional
   public StaffResponse handle(CreateStaffCommand cmd) {
@@ -31,12 +31,12 @@ public class CreateStaffHandler {
     }
 
     // 1. Create the StaffProfile
-    StaffProfile profile = new StaffProfile();
-    profile.setUserId(cmd.username());
-    profile.setFullName(cmd.fullName());
+    var profile =
+        new StaffProfile(
+            cmd.username(), cmd.fullName(), StaffRole.SUPPORT // default to support unless given
+            );
     profile.setPhone(cmd.phone());
     profile.setDepartment(cmd.department());
-    profile.setActive(true);
     staffProfileRepository.save(profile);
 
     // 2. Publish event for Auth module to create the User account
@@ -48,17 +48,9 @@ public class CreateStaffHandler {
             cmd.fullName(),
             cmd.department()));
 
-    return toResponse(profile);
-  }
+    // 3. Publish audit event
+    eventPublisher.publishEvent(new StaffCreatedEvent(null, profile.getId(), cmd.email()));
 
-  public static StaffResponse toResponse(StaffProfile p) {
-    return new StaffResponse(
-        p.getId(),
-        p.getUserId(),
-        p.getFullName(),
-        p.getPhone(),
-        p.getDepartment(),
-        p.getAssignedTenants(),
-        p.isActive());
+    return mapper.toResponse(profile);
   }
 }
