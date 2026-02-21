@@ -6,26 +6,10 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+/** Spring Data JPA adapter for the domain {@link GlobalSettingRepository} port. */
 @Repository
-public class JpaGlobalSettingRepository implements GlobalSettingRepository {
-
-  private final GlobalSettingJpaInterface jpaInterface;
-
-  public JpaGlobalSettingRepository(GlobalSettingJpaInterface jpaInterface) {
-    this.jpaInterface = jpaInterface;
-  }
-
+public interface JpaGlobalSettingRepository
+    extends JpaRepository<GlobalSetting, Long>, GlobalSettingRepository {
   @Override
-  public GlobalSetting save(GlobalSetting setting) {
-    return jpaInterface.save(setting);
-  }
-
-  @Override
-  public Optional<GlobalSetting> findByKey(String key) {
-    return jpaInterface.findByKey(key);
-  }
-
-  public interface GlobalSettingJpaInterface extends JpaRepository<GlobalSetting, Long> {
-    Optional<GlobalSetting> findByKey(String key);
-  }
+  Optional<GlobalSetting> findByKey(String key);
 }

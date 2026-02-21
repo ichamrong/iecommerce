@@ -6,26 +6,10 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+/** Spring Data JPA adapter for the domain {@link TenantSettingRepository} port. */
 @Repository
-public class JpaTenantSettingRepository implements TenantSettingRepository {
-
-  private final TenantSettingJpaInterface jpaInterface;
-
-  public JpaTenantSettingRepository(TenantSettingJpaInterface jpaInterface) {
-    this.jpaInterface = jpaInterface;
-  }
-
+public interface JpaTenantSettingRepository
+    extends JpaRepository<TenantSetting, Long>, TenantSettingRepository {
   @Override
-  public TenantSetting save(TenantSetting setting) {
-    return jpaInterface.save(setting);
-  }
-
-  @Override
-  public Optional<TenantSetting> findByKey(String key) {
-    return jpaInterface.findByKey(key);
-  }
-
-  public interface TenantSettingJpaInterface extends JpaRepository<TenantSetting, Long> {
-    Optional<TenantSetting> findByKey(String key);
-  }
+  Optional<TenantSetting> findByKey(String key);
 }

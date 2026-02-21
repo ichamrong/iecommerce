@@ -6,31 +6,9 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+/** Spring Data JPA adapter for the domain {@link OrderRepository} port. */
 @Repository
-public class JpaOrderRepository implements OrderRepository {
-
-  private final OrderJpaInterface jpaInterface;
-
-  public JpaOrderRepository(OrderJpaInterface jpaInterface) {
-    this.jpaInterface = jpaInterface;
-  }
-
+public interface JpaOrderRepository extends JpaRepository<Order, Long>, OrderRepository {
   @Override
-  public Optional<Order> findById(Long id) {
-    return jpaInterface.findById(id);
-  }
-
-  @Override
-  public Optional<Order> findByCode(String code) {
-    return jpaInterface.findByCode(code);
-  }
-
-  @Override
-  public Order save(Order order) {
-    return jpaInterface.save(order);
-  }
-
-  public interface OrderJpaInterface extends JpaRepository<Order, Long> {
-    Optional<Order> findByCode(String code);
-  }
+  Optional<Order> findByCode(String code);
 }

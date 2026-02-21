@@ -15,7 +15,12 @@ public class ProductVariant extends BaseEntity {
   private String sku;
   private String name;
 
-  @Embedded private Money price;
+  @Embedded
+  @AttributeOverrides({
+    @AttributeOverride(name = "amount", column = @Column(name = "price_amount")),
+    @AttributeOverride(name = "currency", column = @Column(name = "price_currency"))
+  })
+  private Money price;
 
   private Integer stockLevel = 0;
   private boolean enabled = true;

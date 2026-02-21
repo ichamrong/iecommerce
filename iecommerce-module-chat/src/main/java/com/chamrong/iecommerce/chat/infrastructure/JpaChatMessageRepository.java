@@ -6,26 +6,10 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+/** Spring Data JPA adapter for the domain {@link ChatMessageRepository} port. */
 @Repository
-public class JpaChatMessageRepository implements ChatMessageRepository {
-
-  private final ChatMessageJpaInterface jpaInterface;
-
-  public JpaChatMessageRepository(ChatMessageJpaInterface jpaInterface) {
-    this.jpaInterface = jpaInterface;
-  }
-
+public interface JpaChatMessageRepository
+    extends JpaRepository<ChatMessage, Long>, ChatMessageRepository {
   @Override
-  public ChatMessage save(ChatMessage message) {
-    return jpaInterface.save(message);
-  }
-
-  @Override
-  public List<ChatMessage> findByConversationIdOrderByTimestampAsc(Long conversationId) {
-    return jpaInterface.findByConversationIdOrderByTimestampAsc(conversationId);
-  }
-
-  public interface ChatMessageJpaInterface extends JpaRepository<ChatMessage, Long> {
-    List<ChatMessage> findByConversationIdOrderByTimestampAsc(Long conversationId);
-  }
+  List<ChatMessage> findByConversationIdOrderByTimestampAsc(Long conversationId);
 }

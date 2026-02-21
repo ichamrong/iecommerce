@@ -7,33 +7,13 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+/** Spring Data JPA adapter for the domain {@link StockLevelRepository} port. */
 @Repository
-public class JpaStockLevelRepository implements StockLevelRepository {
-
-  private final StockLevelJpaInterface jpaInterface;
-
-  public JpaStockLevelRepository(StockLevelJpaInterface jpaInterface) {
-    this.jpaInterface = jpaInterface;
-  }
+public interface JpaStockLevelRepository
+    extends JpaRepository<StockLevel, Long>, StockLevelRepository {
+  @Override
+  Optional<StockLevel> findByProductIdAndWarehouseId(Long productId, Long warehouseId);
 
   @Override
-  public StockLevel save(StockLevel stockLevel) {
-    return jpaInterface.save(stockLevel);
-  }
-
-  @Override
-  public Optional<StockLevel> findByProductIdAndWarehouseId(Long productId, Long warehouseId) {
-    return jpaInterface.findByProductIdAndWarehouseId(productId, warehouseId);
-  }
-
-  @Override
-  public List<StockLevel> findByProductId(Long productId) {
-    return jpaInterface.findByProductId(productId);
-  }
-
-  public interface StockLevelJpaInterface extends JpaRepository<StockLevel, Long> {
-    Optional<StockLevel> findByProductIdAndWarehouseId(Long productId, Long warehouseId);
-
-    List<StockLevel> findByProductId(Long productId);
-  }
+  List<StockLevel> findByProductId(Long productId);
 }

@@ -31,11 +31,17 @@ This document defines the core coding principles for the `iecommerce` platform, 
     - Methods: Verbs (e.g., `calculateTotal()`).
     - Boolean: Is/Has (e.g., `isDeleted`).
 
-## 4. Platform Specifics
+## 4. Refactoring code configurations
+*Based on: Refactoring in Java (Stefano Violetta)*
+
+- **Constants over Absolute Values**: Avoid using raw absolute values (magic numbers or hardcoded strings) directly in the code or tests. Extract them into well-named `public static final` constants.
+- **Code Smells**: Continuously refactor code to eliminate duplication and long methods.
+
+## 5. Platform Specifics
 - **Soft Delete**: Always inherit from `BaseEntity` and use `entity.setDeleted(true)` instead of repository deletes.
 - **Tenant Context**: Never hardcode `tenantId`. Always retrieve it from `TenantContext.getCurrentTenant()`.
 - **Logging**: Use Structured Logging with slf4j. Every error must include a context or Correlation ID.
 
-## 5. Testing (TDD)
+## 6. Testing (TDD)
 - **Red-Green-Refactor**: No production code is written without a failing test first.
 - **Isolation**: Use `Testcontainers` for database-heavy tests and `Mockito` for external service mocks.

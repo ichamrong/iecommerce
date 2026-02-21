@@ -7,38 +7,12 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+/** Spring Data JPA adapter for the domain {@link InvoiceRepository} port. */
 @Repository
-public class JpaInvoiceRepository implements InvoiceRepository {
-
-  private final InvoiceJpaInterface jpaInterface;
-
-  public JpaInvoiceRepository(InvoiceJpaInterface jpaInterface) {
-    this.jpaInterface = jpaInterface;
-  }
+public interface JpaInvoiceRepository extends JpaRepository<Invoice, Long>, InvoiceRepository {
+  @Override
+  Optional<Invoice> findByInvoiceNumber(String invoiceNumber);
 
   @Override
-  public Invoice save(Invoice invoice) {
-    return jpaInterface.save(invoice);
-  }
-
-  @Override
-  public Optional<Invoice> findById(Long id) {
-    return jpaInterface.findById(id);
-  }
-
-  @Override
-  public Optional<Invoice> findByInvoiceNumber(String invoiceNumber) {
-    return jpaInterface.findByInvoiceNumber(invoiceNumber);
-  }
-
-  @Override
-  public List<Invoice> findByOrderId(Long orderId) {
-    return jpaInterface.findByOrderId(orderId);
-  }
-
-  public interface InvoiceJpaInterface extends JpaRepository<Invoice, Long> {
-    Optional<Invoice> findByInvoiceNumber(String invoiceNumber);
-
-    List<Invoice> findByOrderId(Long orderId);
-  }
+  List<Invoice> findByOrderId(Long orderId);
 }
