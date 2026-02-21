@@ -7,6 +7,8 @@ import com.chamrong.iecommerce.staff.application.command.UpdateStaffTenantsComma
 import com.chamrong.iecommerce.staff.application.command.UpdateStaffTenantsHandler;
 import com.chamrong.iecommerce.staff.application.dto.StaffResponse;
 import com.chamrong.iecommerce.staff.application.query.StaffQueryHandler;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.Set;
 import org.springframework.data.domain.Page;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Platform staff management endpoints — all require {@code staff:manage} permission. */
+@Tag(name = "Staff", description = "Platform staff management — requires `staff:manage` permission")
 @RestController
 @RequestMapping("/api/v1/admin/staff")
 @PreAuthorize(Permissions.HAS_STAFF_MANAGE)
@@ -47,6 +50,9 @@ public class StaffController {
    *
    * <p>POST /api/v1/admin/staff
    */
+  @Operation(
+      summary = "Create staff member",
+      description = "Creates a new platform staff account. Requires `staff:manage` permission.")
   @PostMapping
   public ResponseEntity<?> createStaff(@RequestBody CreateStaffCommand cmd) {
     try {
@@ -62,6 +68,9 @@ public class StaffController {
    *
    * <p>GET /api/v1/admin/staff
    */
+  @Operation(
+      summary = "List all staff",
+      description = "Returns a paginated list of all platform staff members.")
   @GetMapping
   public ResponseEntity<Page<StaffResponse>> listStaff(
       @PageableDefault(size = 20) Pageable pageable) {
@@ -73,6 +82,9 @@ public class StaffController {
    *
    * <p>GET /api/v1/admin/staff/{id}
    */
+  @Operation(
+      summary = "Get staff by ID",
+      description = "Fetch a specific staff member by their ID.")
   @GetMapping("/{id}")
   public ResponseEntity<?> getStaff(@PathVariable Long id) {
     try {
@@ -89,6 +101,11 @@ public class StaffController {
    *
    * <p>Staff must re-login for the new assignment to be reflected in their JWT.
    */
+  @Operation(
+      summary = "Update staff tenant assignments",
+      description =
+          "Replaces the full list of tenants a staff member is assigned to. Staff must re-login for"
+              + " changes to take effect.")
   @PutMapping("/{id}/tenants")
   public ResponseEntity<?> updateTenants(
       @PathVariable Long id, @RequestBody Set<String> tenantCodes) {

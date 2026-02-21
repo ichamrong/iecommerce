@@ -20,9 +20,16 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
   private final TenantContextFilter tenantContextFilter;
+  private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+  private final CustomAccessDeniedHandler accessDeniedHandler;
 
-  public SecurityConfig(TenantContextFilter tenantContextFilter) {
+  public SecurityConfig(
+      TenantContextFilter tenantContextFilter,
+      CustomAuthenticationEntryPoint authenticationEntryPoint,
+      CustomAccessDeniedHandler accessDeniedHandler) {
     this.tenantContextFilter = tenantContextFilter;
+    this.authenticationEntryPoint = authenticationEntryPoint;
+    this.accessDeniedHandler = accessDeniedHandler;
   }
 
   @Bean
@@ -32,12 +39,17 @@ public class SecurityConfig {
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .oauth2ResourceServer(
             oauth2 ->
-                oauth2.jwt(
-                    jwt ->
-                        jwt.jwtAuthenticationConverter(new KeycloakJwtAuthenticationConverter())))
+                oauth2
+                    .jwt(
+                        jwt ->
+                            jwt.jwtAuthenticationConverter(
+                                new KeycloakJwtAuthenticationConverter()))
+                    .authenticationEntryPoint(authenticationEntryPoint))
         // Register TenantContextFilter to run AFTER Spring extracts the Bearer token and sets the
         // SecurityContext
         .addFilterAfter(tenantContextFilter, BearerTokenAuthenticationFilter.class)
+        .exceptionHandling(
+            ex -> ex.accessDeniedHandler(accessDeniedHandler))
         .authorizeHttpRequests(
             auth ->
                 auth
@@ -48,10 +60,11 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.POST, "/api/v1/tenants/register")
                     .permitAll()
                     // OpenAPI / Swagger
-                    .requestMatchers("/v3/api-docs/**", "/swagger-ui/**")
+                    .requestMatchers(
+                        "/v3/api-docs/**", "/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
                     .permitAll()
-                    // Tomcat's internal error dispatch must pass through security unchanged
-                    .requestMatchers("/error")
+                    // Custom error pages
+                    .requestMatchers("/error", "/error/**")
                     .permitAll()
                     // Permission-based rules (defence in depth alongside @PreAuthorize)
                     .requestMatchers(HttpMethod.GET, "/api/v1/users", "/api/v1/users/*")

@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>500 — Server Error | IECommerce</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-from: #1a0a0a;
+            --bg-mid: #2d1515;
+            --bg-to: #1a1a2e;
+            --accent: #f87171;
+            --accent2: #fb923c;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.10);
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Nunito', system-ui, sans-serif;
+            background: linear-gradient(135deg, var(--bg-from), var(--bg-mid), var(--bg-to));
+            overflow: hidden;
+            position: relative;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            animation: drift 14s ease-in-out infinite alternate;
+        }
+
+        .orb-1 {
+            width: 500px;
+            height: 500px;
+            background: #7f1d1d;
+            top: -200px;
+            left: -100px;
+        }
+
+        .orb-2 {
+            width: 380px;
+            height: 380px;
+            background: #92400e;
+            bottom: -120px;
+            right: -80px;
+            animation-delay: 4s;
+        }
+
+        .orb-3 {
+            width: 250px;
+            height: 250px;
+            background: #1e1b4b;
+            top: 60%;
+            left: 30%;
+            animation-delay: 8s;
+        }
+
+        @keyframes drift {
+            from {
+                transform: translate(0, 0);
+            }
+
+            to {
+                transform: translate(50px, 30px);
+            }
+        }
+
+        .particles {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(248, 113, 113, 0.5);
+            animation: float-up linear infinite;
+        }
+
+        @keyframes float-up {
+            0% {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-10vh);
+                opacity: 0;
+            }
+        }
+
+        .card {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 3rem 3.5rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 2rem;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            max-width: 580px;
+            width: 92vw;
+            animation: card-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
+        @keyframes card-in {
+            from {
+                opacity: 0;
+                transform: translateY(60px) scale(0.92);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Animated warning icon */
+        .icon-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.25rem;
+            width: 72px;
+            height: 72px;
+            border-radius: 1.25rem;
+            background: linear-gradient(135deg, rgba(248, 113, 113, 0.2), rgba(251, 146, 60, 0.15));
+            border: 1px solid rgba(248, 113, 113, 0.25);
+            animation: shake 4s ease-in-out infinite;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: rotate(0deg);
+            }
+
+            92% {
+                transform: rotate(0deg);
+            }
+
+            94% {
+                transform: rotate(-4deg);
+            }
+
+            96% {
+                transform: rotate(4deg);
+            }
+
+            98% {
+                transform: rotate(-2deg);
+            }
+        }
+
+        .icon-wrapper svg {
+            color: var(--accent);
+        }
+
+        .error-code {
+            font-size: clamp(5rem, 16vw, 8rem);
+            font-weight: 900;
+            line-height: 1;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 40px rgba(248, 113, 113, 0.4));
+            letter-spacing: -4px;
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                filter: drop-shadow(0 0 30px rgba(248, 113, 113, 0.3));
+            }
+
+            50% {
+                filter: drop-shadow(0 0 60px rgba(248, 113, 113, 0.7));
+            }
+        }
+
+        .divider {
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            border-radius: 2px;
+            margin: 1.25rem auto;
+        }
+
+        h1 {
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.75rem;
+        }
+
+        p.subtitle {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.5);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Error detail box */
+        .error-detail {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(248, 113, 113, 0.2);
+            border-radius: 0.875rem;
+            padding: 1rem 1.25rem;
+            text-align: left;
+            margin-bottom: 2rem;
+        }
+
+        .error-detail-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: rgba(248, 113, 113, 0.7);
+            margin-bottom: 0.4rem;
+        }
+
+        .error-detail-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.55);
+            word-break: break-all;
+            line-height: 1.5;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.75rem;
+            border-radius: 0.875rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #dc2626, #ea580c);
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(220, 38, 38, 0.35);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(220, 38, 38, 0.5);
+        }
+
+        .btn-secondary {
+            background: var(--glass-bg);
+            color: rgba(255, 255, 255, 0.8);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            color: #fff;
+        }
+
+        .btn-swagger {
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.11);
+            font-size: 0.88rem;
+        }
+
+        .btn-swagger:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #fca5a5;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.3rem 0.85rem;
+            border-radius: 999px;
+            margin-bottom: 1rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #ef4444;
+            animation: blink 1.4s ease infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.2
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="particles" id="particles"></div>
+
+    <div class="card">
+        <div class="status-badge"><span class="dot"></span> 500 Error</div>
+
+        <div class="icon-wrapper">
+            <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+        </div>
+
+        <div class="error-code">500</div>
+        <div class="divider"></div>
+        <h1>Internal Server Error</h1>
+        <p class="subtitle">
+            Something went wrong on our end. Our team has been notified.<br />
+            Please try again in a few moments.
+        </p>
+
+        <div class="error-detail" th:if="${message}">
+            <div class="error-detail-label">Error Details</div>
+            <div class="error-detail-value" th:text="${message}">An unexpected error occurred.</div>
+        </div>
+        <div class="error-detail" th:unless="${message}">
+            <div class="error-detail-label">Error Details</div>
+            <div class="error-detail-value">An unexpected internal server error occurred. If this persists, contact
+                support.</div>
+        </div>
+
+        <div class="btn-group">
+            <a href="/" class="btn btn-primary">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path
+                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Go Home
+            </a>
+            <a href="javascript:location.reload()" class="btn btn-secondary">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Try Again
+            </a>
+            <a href="/swagger-ui/index.html" class="btn btn-swagger" target="_blank">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                API Docs
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('particles');
+        for (let i = 0; i < 25; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.cssText = `
+        left: ${Math.random() * 100}%;
+        width: ${Math.random() * 3 + 2}px;
+        height: ${Math.random() * 3 + 2}px;
+        animation-duration: ${Math.random() * 12 + 8}s;
+        animation-delay: ${Math.random() * 12}s;
+      `;
+            container.appendChild(p);
+        }
+    </script>
+</body>
+
+</html>

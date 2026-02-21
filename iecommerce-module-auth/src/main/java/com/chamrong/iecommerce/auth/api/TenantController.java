@@ -14,6 +14,8 @@ import com.chamrong.iecommerce.auth.application.exception.DuplicateUserException
 import com.chamrong.iecommerce.auth.application.query.GetTenantPreferencesHandler;
 import com.chamrong.iecommerce.auth.domain.Permissions;
 import com.chamrong.iecommerce.common.TenantContext;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,6 +27,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Tenant provisioning endpoints for both self-service and admin-managed flows. */
+@Tag(
+    name = "Tenants",
+    description = "Tenant provisioning, status management and storefront preferences")
 @RestController
 public class TenantController {
 
@@ -48,6 +53,11 @@ public class TenantController {
   }
 
   /** Self-service tenant registration — public, no auth required. */
+  @Operation(
+      summary = "Self-service tenant registration",
+      description =
+          "Public endpoint. Registers a new tenant and their admin user. No authentication"
+              + " required.")
   @PostMapping("/api/v1/tenants/register")
   public ResponseEntity<?> selfServiceSignup(@RequestBody TenantSignupCommand cmd) {
     try {
@@ -59,6 +69,9 @@ public class TenantController {
   }
 
   /** Admin-provisioned tenant creation. */
+  @Operation(
+      summary = "Admin: provision a tenant",
+      description = "Admin-only. Creates a new tenant. Requires `tenant:create` permission.")
   @PostMapping("/api/v1/admin/tenants")
   @PreAuthorize(Permissions.HAS_TENANT_CREATE)
   public ResponseEntity<?> adminProvision(@RequestBody TenantProvisionCommand cmd) {
@@ -71,6 +84,11 @@ public class TenantController {
   }
 
   /** Updates a tenant's billing/operational status. */
+  @Operation(
+      summary = "Admin: update tenant status",
+      description =
+          "Update a tenant's billing/operational status (e.g. ACTIVE, SUSPENDED). Requires"
+              + " `tenant:create` permission.")
   @PutMapping("/api/v1/admin/tenants/{id}/status")
   @PreAuthorize(Permissions.HAS_TENANT_CREATE)
   public ResponseEntity<?> updateStatus(
@@ -87,6 +105,9 @@ public class TenantController {
    * Update the current tenant's storefront preferences. Only accessible by users authenticated
    * within the tenant context.
    */
+  @Operation(
+      summary = "Update my storefront preferences",
+      description = "Updates the current tenant's branding (logo, colors, font). Requires JWT.")
   @PutMapping("/api/v1/tenants/me/preferences")
   public ResponseEntity<TenantPreferencesResponse> updateMyPreferences(
       @RequestBody UpdateTenantPreferencesCommand body) {
@@ -107,6 +128,10 @@ public class TenantController {
   }
 
   /** Public endpoint to fetch a tenant's storefront preferences for dynamic UI branding. */
+  @Operation(
+      summary = "Get storefront preferences",
+      description =
+          "Public endpoint. Returns the branding/preferences for a given tenant's storefront.")
   @GetMapping("/api/v1/storefront/{tenantId}/preferences")
   public ResponseEntity<TenantPreferencesResponse> getStorefrontPreferences(
       @PathVariable("tenantId") String tenantId) {

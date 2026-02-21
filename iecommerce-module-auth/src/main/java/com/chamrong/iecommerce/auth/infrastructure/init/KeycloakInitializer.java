@@ -154,8 +154,11 @@ public class KeycloakInitializer implements CommandLineRunner {
     } else {
       log.info("Super admin user already exists in Keycloak.");
       UserRepresentation existingUser = users.get(0);
-      syncSuperAdminToDatabase(
-          existingUser.getId(), existingUser.getUsername(), existingUser.getEmail());
+      String email =
+          existingUser.getEmail() != null
+              ? existingUser.getEmail()
+              : existingUser.getUsername() + "@platform.com";
+      syncSuperAdminToDatabase(existingUser.getId(), existingUser.getUsername(), email);
     }
   }
 

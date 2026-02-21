@@ -29,6 +29,10 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${app.keycloak.server-url}/realms/${app.keycloak.realm}
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
 
 springdoc:
   api-docs:
@@ -41,6 +45,11 @@ springdoc:
 
 server:
   port: 8081
+  error:
+    whitelabel:
+      enabled: false  # Use our custom Thymeleaf error pages
+
+
 
 app:
   keycloak:

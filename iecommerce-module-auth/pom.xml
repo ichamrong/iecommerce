@@ -34,6 +34,10 @@
 			<artifactId>keycloak-admin-client</artifactId>
 			<version>26.0.5</version>
 		</dependency>
+		<dependency>
+			<groupId>io.swagger.core.v3</groupId>
+			<artifactId>swagger-annotations-jakarta</artifactId>
+		</dependency>
 
 		<!-- JWT -->
 		<dependency>

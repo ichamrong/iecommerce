@@ -45,3 +45,50 @@ This document defines the core coding principles for the `iecommerce` platform, 
 ## 6. Testing (TDD)
 - **Red-Green-Refactor**: No production code is written without a failing test first.
 - **Isolation**: Use `Testcontainers` for database-heavy tests and `Mockito` for external service mocks.
+
+## 7. Import & Package Rules
+
+### 7.1 No Wildcard Imports
+**Never** use wildcard imports (`*`). Every import must be explicit.
+
+```java
+// ❌ FORBIDDEN
+import org.springframework.web.bind.annotation.*;
+import java.util.*;
+
+// ✅ CORRECT
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import java.util.List;
+import java.util.Optional;
+```
+
+**Rationale:** Wildcard imports hide what is actually being used, cause naming conflicts,
+and make code reviews harder. IntelliJ enforces this via **Settings → Editor → Code Style → Java → Imports → Class count to use import with '*' = 999**.
+
+---
+
+### 7.2 Every Package Must Have a `package-info.java`
+Each package must contain a `package-info.java` file with a short Javadoc description
+of the package's responsibility.
+
+```java
+/**
+ * Application layer for the authentication module.
+ *
+ * <p>Contains command handlers, query handlers, and DTOs.
+ * This layer orchestrates domain logic and delegates to the domain model.
+ */
+package com.chamrong.iecommerce.auth.application;
+```
+
+**Required packages** to document:
+- `domain` — core business rules and entities
+- `application` — use cases, commands, queries, DTOs
+- `infrastructure` — persistence, security, external integrations
+- `api` — REST controllers and request/response models
+
+**Rationale:** Acts as living documentation. Anyone entering a new package immediately
+understands its purpose without reading multiple files.
+
