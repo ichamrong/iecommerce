@@ -1,11 +1,15 @@
 ## 1. Overview
-This project is an enterprise-grade e-commerce platform built as a **Modular Monolith** using Spring Boot and Spring Modulith. It is designed to be highly maintainable, scalable, and microservice-ready.
+This project is an enterprise-grade **Headless (API-first) B2B2C SaaS Platform**. It is built as a **Modular Monolith** using Spring Boot and Spring Modulith. 
+Our primary clients are **Merchants (Shop Owners, Service Providers, Hoteliers)** who subscribe to our API to power their own custom-designed storefronts and applications. The platform is inherently multi-tenant, enabling our clients to serve their own **End-Customers** seamlessly.
+
+While optimized for traditional **E-commerce**, the dynamic domain model makes it highly adaptable to **Booking Systems (Appointments/Services)** and **Accommodation Systems (Hotels/Rentals)**.
 
 ## 2. Architecture Principles
+- **Headless & API-First**: The backend is completely decoupled from the presentation layer. Clients design their own storefronts (Web, Mobile App, Kiosk) and consume our APIs.
 - **Domain-Driven Design (DDD)**: Each module owns its domain, application logic, and infrastructure.
 - **Strict Boundaries**: Modules communicate via clear APIs or internal events (Modulith).
-- **Multi-Tenancy**: Shared database with row-level isolation via `tenant_id`.
-- **Omnichannel ready**: Designed to support both **Online Storefronts** and **Physical POS (Point of Sale)** using a shared core.
+- **Multi-Tenancy**: Shared database with row-level isolation via `tenant_id`. Every client (shop owner) operates in their own secure data silo.
+- **Omnichannel & Multi-Paradigm ready**: Designed to support Physical POS, Online Storefronts, Booking Widgets, and Hotel Reservation engines using a shared core.
 - **Immutability**: Financial records (Invoices, Audit Logs) are immutable.
 
 ## 3. Module Dependency Graph
@@ -44,6 +48,13 @@ Detailed specifications for each module can be found in the `docs/modules/` dire
 - [Report Module](modules/report.md)
 - [Notification Module](modules/notification.md) (Email, Telegram, WhatsApp)
 - [Promotion Module](modules/promotion.md) (Discounts, Coupons)
+- [Customer Module](modules/customer.md) (Profiles, Addresses, Loyalty)
+- [Staff Module](modules/staff.md) (Employee Profiles, Roles)
+- [Audit Module](modules/audit.md) (Immutable Event Trails)
+- [Invoice Module](modules/invoice.md) (Billing, Receipts)
+- [Chat Module](modules/chat.md) (Real-time Messaging, Support)
+- [Review Module](modules/review.md) (Product Ratings, Customer Feedback)
+- [Subscription Module](modules/subscription.md) (SaaS Billing, Plans, Feature Gating)
 
 ## 6. Database Performance: Indexing & Partitioning
 To ensure the system remains fast as data grows into millions of rows, we follow these enterprise database strategies:
@@ -72,9 +83,10 @@ For high-volume tables (`Order`, `AuditLog`, `StockMovement`, `Notification`), w
 - **Tenant ID**: Shared database with row-level isolation via `tenant_id`.
 - **Global Data**: Tenant ID is `NULL` for system-wide static data.
 
-### E. Security & Error Handling
+### E. Security, Compliance, & Error Handling
 - **Opaque Errors**: The system never exposes internal stack traces or 500 error details to the client.
 - **Global Exception Handler**: A centralized component intercepts all uncaught exceptions, logs the full detail for developers, and returns a generic "Internal Server Error" message with a unique **Correlation ID** to the user.
+- **Encryption & Immutability**: All sensitive PII, passwords, and external integrations (e.g. Stripe Keys) are heavily encrypted or hashed. Financial records and Audit trails are strictly immutable. Please refer to the detailed [Compliance & Security Architecture](compliance_and_security.md) for full details on GDPR and SOC2 adherence.
 
 ## 7. Technology Stack
 - **Java 21**: Virtual threads and modern syntax.

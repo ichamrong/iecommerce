@@ -58,7 +58,7 @@ Collection (Aggregate Root)
 | `description` | `String` | TEXT | Rich text / markdown |
 | `shortDescription` | `String` | max 512 | Used for cards/listings |
 | `status` | `ProductStatus` | NOT NULL, default DRAFT | Lifecycle state |
-| `productType` | `ProductType` | NOT NULL | `PHYSICAL`, `DIGITAL`, `SERVICE` |
+| `productType` | `ProductType` | NOT NULL | `PHYSICAL`, `DIGITAL`, `SERVICE`, `BOOKING`, `ACCOMMODATION` |
 | `categoryId` | `Long` | FK, nullable | Leaf-node category assignment |
 | `basePrice` | `Money` | embedded | The starting/reference price |
 | `taxCategory` | `String` | nullable | e.g. `STANDARD`, `ZERO_RATED` |
@@ -80,6 +80,8 @@ DRAFT ──publish()──► ACTIVE ──archive()──► ARCHIVED
 - `PHYSICAL` — has physical stock, weight, dimensions
 - `DIGITAL` — downloadable file or key
 - `SERVICE` — intangible (massage, consultation)
+- `BOOKING` — time-based appointments or rentals
+- `ACCOMMODATION` — hotel rooms, nightly rentals
 
 ---
 
@@ -613,7 +615,7 @@ iecommerce-module-catalog/src/main/java/com/chamrong/iecommerce/catalog/
 │   ├── package-info.java
 │   ├── Product.java                           ← Aggregate Root
 │   ├── ProductStatus.java                     ← enum: DRAFT, ACTIVE, ARCHIVED
-│   ├── ProductType.java                       ← enum: PHYSICAL, DIGITAL, SERVICE
+│   ├── ProductType.java                       ← enum: PHYSICAL, DIGITAL, SERVICE, BOOKING, ACCOMMODATION
 │   ├── ProductVariant.java
 │   ├── ProductAttribute.java
 │   ├── ProductRelationship.java

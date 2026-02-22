@@ -24,89 +24,59 @@
 
 ## 2. Delivery Phases
 
-### Phase 1 — Foundation (Week 1)
-**Goal:** Close all the gaps needed before any feature module can work correctly.
+### Phase 1 — SaaS Foundation & Core Subscriptions
+**Goal:** Build the multi-tenant SaaS infrastructure required to onboard Shop Admins and securely bill them.
 
 | # | Task | Module | Why First |
 |---|---|---|---|
-| 1.1 | Write Liquibase migrations for all 6 modules | All | DB schema is the bedrock |
-| 1.2 | Enrich `Customer` domain (Address, Loyalty) | Customer | Referenced by Order, Promotion |
-| 1.3 | Enrich `StaffProfile` domain (Role, Status) | Staff | Referenced by Auth & Audit |
-| 1.4 | Wire `AuditService` listeners to all write operations | Audit | Must capture events from day one |
-| 1.5 | Complete `SettingService` CRUD + REST API | Setting | Used by all other modules for quotas |
+| 1.1 | Write core Liquibase migrations for multi-tenancy | All | DB schema is the bedrock |
+| 1.2 | Implement `Subscription` domain (Plans, Tenant limits) | Subscription | Gatekeeper for all subsequent features |
+| 1.3 | Complete Auth/RBAC mapping to Keycloak | Auth | Shop Admins need to log in securely |
+| 1.4 | Complete Tenant Settings & Quota Enforcement | Setting | Used by other modules to enforce plan limits |
+| 1.5 | Wire `AuditService` listeners | Audit | Must capture events from day one for compliance |
+| 1.6 | Enrich Staff Profiles | Staff | Admins managing their own store employees |
 
-### Phase 2 — Catalog Core (Week 2)
-**Goal:** A fully functional product catalog that can be queried by Order module.
+### Phase 2 — Accommodation Service APIs
+**Goal:** Sell the "Hotel & Rental" API package to hoteliers, ensuring they can define properties and accept nightly bookings.
 
-> Full detail: [`docs/catalog-manage-spec.md`](catalog-manage-spec.md)
+| # | Task | Module | Notes |
+|---|---|---|---|
+| 2.1 | Catalog mapping for `ACCOMMODATION` types | Catalog | Room types, features, amenities |
+| 2.2 | Time-based calendar domain | Booking | Blackout dates, minimum stays, availability checks |
+| 2.3 | Media/Gallery integration | Asset | Minio storage for room/property images |
+| 2.4 | Nightly rate calculation engine | Order | Processing check-in/check-out dates into monetary orders |
+| 2.5 | Accomodation Order APIs | Order | Handling deposits and cancellations |
 
-| # | Task | Notes |
-|---|---|---|
-| 2.1 | ✅ Migration: All catalog tables + translation tables | See Section 5 & 11.3 of spec |
-| 2.2 | ✅ Domain: `ProductStatus`, `ProductType` enums | DRAFT → ACTIVE → ARCHIVED lifecycle |
-| 2.3 | ✅ Domain: `Product` (locale-invariant fields only) | `name`/`description` REMOVED — in translation table |
-| 2.4 | ✅ Domain: `ProductTranslation` entity | `(product_id, locale)` unique |
-| 2.5 | ✅ Domain: `ProductVariant` + `ProductVariantTranslation` | `name` in translation table |
-| 2.6 | ✅ Domain: `Category` (adjacency list + materialized path) | Max 5 levels |
-| 2.7 | ✅ Domain: `CategoryTranslation` entity | `(category_id, locale)` unique |
-| 2.8 | ✅ Domain: `Collection`, `CollectionTranslation` | Dynamic product groups |
-| 2.9 | ✅ Domain: `Facet`, `FacetTranslation`, `FacetValue`, `FacetValueTranslation` | `code` stays on main table |
-| 2.10 | ✅ Domain: `ProductAttribute`, `ProductRelationship` | No translation (technical specs) |
-| 2.11 | ✅ Application: `CreateProductHandler` (with translations map) | Quota check via `SettingService` |
-| 2.12 | ✅ Application: `UpdateProductHandler`, `ArchiveProductHandler`, `PublishProductHandler` | Lifecycle methods |
-| 2.13 | ✅ Application: `UpsertProductTranslationHandler` | Upsert one locale for a product |
-| 2.14 | ✅ Application: `ProductQueryHandler` (list, detail, by-slug, `?locale=`) | Returns translation for requested locale |
-| 2.15 | ✅ Application: `CategoryQueryHandler` (tree, breadcrumb) | Recursive tree-building |
-| 2.16 | ✅ API: `ProductController` — full CRUD + lifecycle endpoints | `/api/v1/admin/products` |
-| 2.17 | ✅ API: `ProductController` — translation endpoints | `GET/PUT/DELETE /translations/{locale}` |
-| 2.18 | ✅ API: `CategoryController` — CRUD + tree + move | `/api/v1/admin/categories` |
-| 2.19 | ✅ API: `FacetController` — CRUD + translation endpoints | `/api/v1/admin/facets` |
-| 2.20 | ✅ `CatalogApi` public interface for inter-module calls | Used by Order, Inventory |
+### Phase 3 — E-commerce APIs
+**Goal:** Sell the "Retail Store" API package to shop owners selling physical or digital goods.
 
-### Phase 3 — Customer Enrichment (Week 2–3)
-**Goal:** Customer profiles complete enough for Order and Loyalty use.
+| # | Task | Module | Notes |
+|---|---|---|---|
+| 3.1 | Catalog mapping for `PHYSICAL` and `DIGITAL` types | Catalog | Variants, SKUs, Translations, Categories |
+| 3.2 | Physical Stock management | Inventory | Reserving, tracking, and auditing physical counts |
+| 3.3 | Physical Fulfillment workflows | Order | Pick, pack, and ship logic (Tracking numbers) |
+| 3.4 | Customer profile enrichment | Customer | Multiple shipping addresses, loyalty points |
+| 3.5 | Promotion rules | Promotion | Voucher codes, percentage discounts |
 
-| # | Task | Notes |
-|---|---|---|
-| 3.1 | ✅ Domain: `Address` embeddable complete (billing vs shipping) | Value object |
-| 3.2 | ✅ Domain: `LoyaltyTier` enum + `loyaltyPoints` on Customer | Basic loyalty |
-| 3.3 | ✅ Application: `UpdateCustomerHandler`, `AddAddressHandler` | |
-| 3.4 | ✅ API: GET `/api/v1/customers/{id}/addresses` + POST/DELETE | |
-| 3.5 | ✅ Event: Listen to `OrderCompletedEvent` → award loyalty points | Cross-module event |
+### Phase 4 — Booking Service APIs
+**Goal:** Sell the "Appointments" package for time-based services (Massage, Salons, Consultants).
 
-### Phase 4 — Staff Enrichment (Week 3)
-**Goal:** Staff profiles fully usable for access control and audit trail.
+| # | Task | Module | Notes |
+|---|---|---|---|
+| 4.1 | Catalog mapping for `BOOKING` types | Catalog | Service duration, required staff |
+| 4.2 | Service Booking engine | Booking | Hourly/minute slot reservation, Staff scheduling |
+| 4.3 | Notification reminders | Notification | Email/WhatsApp reminders 24h before appt |
+| 4.4 | Post-service review collection | Review | Verified service, rating system |
 
-| # | Task | Notes |
-|---|---|---|
-| 4.1 | ✅ Domain: `StaffStatus` enum (`ACTIVE`, `SUSPENDED`, `TERMINATED`) | |
-| 4.2 | ✅ Domain: `StaffRole` enum (`STORE_MANAGER`, `SALES_AGENT`, `CASHIER`, `SUPPORT`) | Granular within staff |
-| 4.3 | ✅ Application: `SuspendStaffHandler`, `ReactivateStaffHandler` | |
-| 4.4 | ✅ API: `PATCH /api/v1/admin/staff/{id}/suspend` etc. | |
-| 4.5 | ✅ Event: Publish `StaffSuspendedEvent` → Audit picks it up | |
+### Phase 5 — POS (Point of Sale) APIs
+**Goal:** Allow physical retail stores to operate offline-capable cash registers powered by the headless API.
 
-### Phase 5 — Audit Module (Week 3)
-**Goal:** A robust, immutable audit trail for all write operations.
-
-| # | Task | Notes |
-|---|---|---|
-| 5.1 | Domain: Enrich `AuditEvent` (actor, action, entity, diff, ip) | Immutable record |
-| 5.2 | Application: `AuditEventListener` — listen to all domain events | |
-| 5.3 | Application: `AuditQueryHandler` — paginated search with filters | |
-| 5.4 | API: `GET /api/v1/admin/audit-log` (admin only) | |
-| 5.5 | Migration: `audit_events` table with composite partitioning by year | |
-
-### Phase 6 — Setting Module (Week 4)
-**Goal:** Full tenant + global settings with quota enforcement.
-
-| # | Task | Notes |
-|---|---|---|
-| 6.1 | Domain: `SettingCategory` enum (`GENERAL`, `INTEGRATION`, `QUOTA`) | |
-| 6.2 | Domain: Add `dataType`, `isSecret` fields to `TenantSetting` | For masking secrets |
-| 6.3 | Application: `UpdateSettingHandler`, `ResetToDefaultHandler` | |
-| 6.4 | Application: `QuotaEnforcer` — generic quota check service | Called by catalog, auth |
-| 6.5 | API: `GET/PUT /api/v1/admin/settings` (global) | |
-| 6.6 | API: `GET/PUT /api/v1/tenants/me/settings` (tenant) | |
+| # | Task | Module | Notes |
+|---|---|---|---|
+| 5.1 | Terminal and Session tracking | Auth | Identify which cash register initiated the sale |
+| 5.2 | Instant Inventory relief | Inventory | Bypass standard "Pick/Pack" for immediate handover |
+| 5.3 | Local Receipt generation | Invoice | PDF/Print-ready thermal receipts |
+| 5.4 | End-of-day reconciliation reports | Report | Sales per cashier, cash drawer discrepancy |
 
 ---
 
@@ -123,7 +93,7 @@
 ```
 Domain:
   ✅ ProductStatus enum (DRAFT → ACTIVE → ARCHIVED)
-  ✅ ProductType enum (PHYSICAL, DIGITAL, SERVICE)
+  ✅ ProductType enum (PHYSICAL, DIGITAL, SERVICE, BOOKING, ACCOMMODATION)
   ✅ ProductTranslation         (name, description, short_description, meta_title, meta_description)
   ✅ ProductVariantTranslation  (variant name per locale)
   ✅ Category                   (hierarchical tree, adjacency list + materialized path)
@@ -358,7 +328,7 @@ public class ProductTranslation {
 
 // ✅ Enums for status — never raw Strings
 public enum ProductStatus { DRAFT, ACTIVE, ARCHIVED }
-public enum ProductType  { PHYSICAL, DIGITAL, SERVICE }
+public enum ProductType  { PHYSICAL, DIGITAL, SERVICE, BOOKING, ACCOMMODATION }
 
 // ✅ Named domain methods — no raw setters for state changes
 product.publish();          // not product.setStatus(ACTIVE)
@@ -405,15 +375,20 @@ All new APIs must follow:
 ## 10. Implementation Order (Recommended)
 
 ```
-Week 1:  Migrations (all 6 modules, including translation tables)
-         → Setting API → Audit listener wiring
+Phase 1:  SaaS Foundation (Subscription, Auth, Setting, Staff, Audit)
+          → Setup multi-tenancy and the ability for Shop Admins to register and pay.
 
-Week 2:  Catalog domain (with translations) + application layer + API
-         → most complex, highest dependency from other modules
+Phase 2:  Accommodation APIs (Catalog [Room Types], Booking Calendars, Nightly Orders)
+          → First monetization target (Hotels/Resorts).
 
-Week 3:  Customer enrichment + Staff enrichment
+Phase 3:  E-Commerce APIs (Catalog [Physical/Digital], Inventory, Retail Orders)
+          → Open platform to retail online shops.
 
-Week 4:  Audit API + integration tests for cross-module events
+Phase 4:  Booking Service APIs (Catalog [Services], Hourly Bookings, Reviews)
+          → Salons, Clinics, Consulting services.
+
+Phase 5:  POS APIs (Terminal tracking, Offline sync, Thermal receipts)
+          → Physical brick-and-mortar integration for existing E-com clients.
 ```
 
 > **Next immediate action:** Start `V002__catalog_schema.xml` + domain entities per [`catalog-manage-spec.md`](catalog-manage-spec.md)

@@ -61,7 +61,7 @@ To avoid querying the database for permissions on every single request, we use t
 3. **Caching**: These permissions are cached in-memory (e.g., via Caffeine or Redis) for the duration of the token's lifetime (e.g., 5-15 minutes).
 4. **Subsequent Requests**: Authorities are loaded directly from the cache.
 
-### Implementation: Adjacency List + Materialized Path
+## 6. Architecture: Adjacency List + Materialized Path
 For our hierarchies (Teams, Categories), we use a hybrid approach:
 1. **Adjacency List (`parent_id`)**: Used for all **Write** operations. It's the "Source of Truth" because moving a branch is simple and atomical.
 2. **Materialized Path (`path`)**: Used for all **Read** operations. It is automatically updated via a JPA `@PostPersist`/`@PostUpdate` hook or a Database Trigger.
@@ -73,14 +73,14 @@ For our hierarchies (Teams, Categories), we use a hybrid approach:
 
 ## 7. Domain Model
 - `User`: Linked to `sub (UUID)` from Keycloak.
-- `Tenant`: Our internal record for billing and logic isolation.
+- `Tenant`: Our internal record representing the merchant. When a new Tenant is created, an event triggers the `Subscription` module to assign a default Free Trial plan.
 - `UserRole`: Mapping between Users, Roles, and Tenants.
 
-## 5. Security Flow
+## 8. Security Flow
 1. Client requests token from **Keycloak**.
 2. Client sends token to **Spring Boot API** in the Authorization header.
 3. `iecommerce-common` extracts `tenant_id` and `user_id` into `TenantContext`.
 
-## 6. Public APIs (Internal Modulith)
+## 9. Public APIs (Internal Modulith)
 - `AuthService.getCurrentUser()`: Returns the authenticated user from the context.
 - `AuthService.isAuthorized(Permission)`: Checks RBAC.

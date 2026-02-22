@@ -24,9 +24,9 @@ Instead of hardcoding limits in every module, we centralize them here:
 2. **Retrieval**: Modules (Catalog, Auth, Asset) call `SettingService` to check if a tenant has reached their limit before performing a "Write" operation.
 3. **Hierarchy**: If a tenant doesn't have a specific quota set, the system falls back to the **Global Default** or the **Plan Default**.
 
-## 4. Relationship with Auth Module
-- **Auth Module**: Knows *what plan* the tenant is on (e.g., "Basic", "Enterprise").
-- **Setting Module**: Knows *what values* that plan corresponds to (e.g., "Basic" = 1,000 products).
+## 4. Relationship with Subscription Module
+- **Subscription Module**: Knows *what plan* the tenant is on, their *billing status*, and their *feature flags* (via `TenantSubscription`).
+- **Setting Module**: Knows the *numeric values* for any system limits tied to those feature plans (e.g., "Basic Plan" = 1,000 max products allowed). Setting Module serves as the fast lookup for simple threshold checks.
 
 ## 5. Domain Model
 - `GlobalSetting`: `key`, `value`, `description`.

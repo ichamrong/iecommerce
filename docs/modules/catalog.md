@@ -4,20 +4,24 @@
 The Catalog module manages the product life cycle, including categorization, variants, attributes, and digital assets. It provides a read-optimized API for discovery and a management API for administration.
 
 ## 2. Core Domain Models
-- **Product**: The **Room Type** (e.g., "Standard Queen").
-  - *Universal Attributes*: Check-in/out times, House Rules.
-  - *Logic*: All specific rooms (Variants) under this product share these "Type-level" rules.
-- **ProductVariant**: The **Specific Configuration** (e.g., "Standard Queen - Room Only" vs "Standard Queen + Spa Package").
-  - *Pricing*: Each variant has its own nightly rate.
-  - *Asset Linking*: Can have its own specific images (e.g., photo of the breakfast included).
+- **Product**: The core offering that a merchant sells over the API.
+  - *E-commerce*: A physical item (e.g., "T-Shirt").
+  - *Booking/Service*: A time-based service (e.g., "Massage", "Consultation").
+  - *Accommodation*: A room type (e.g., "Standard Queen").
+  - *Universal Attributes*: Name, Description, Base Price, Tax Category.
+  - *Logic*: All specific configurations (Variants) under this product share these "Product-level" rules.
+- **ProductVariant**: The **Specific Configuration** of a Product.
+  - *E-commerce*: Specific SKU (e.g., "T-Shirt - Red/Large").
+  - *Accommodation*: Specific offering (e.g., "Standard Queen - Room Only" vs "Standard Queen + Spa Package").
+  - *Pricing*: Each variant has its own price/rate.
+  - *Asset Linking*: Can have its own specific images.
 - **Asset (Media Gallery)**: 
   - **Hierarchy**: Attached to Product or Variant.
-  - **Grouping**: Images grouped into "Bedroom," "Bathroom," "Amenities," etc.
-- **Service Product**: Standalone products that are not physical (e.g., "Massage", "Airport Transfer").
-- **Add-on**: A special relationship where one product is offered as an option for another (e.g., "Breakfast" is an add-on for "Room").
+  - **Grouping**: Images grouped into "Gallery," "Thumbnail," "Floorplan," etc.
+- **Add-on**: A special relationship where one product is offered as an option for another (e.g., "Gift Wrap" for physical goods, or "Breakfast" for Accommodation).
   - *Type*: Can be **Mandatory** (e.g., Cleaning Fee) or **Optional** (e.g., Extra Bed).
-- **ProductOption**: Dimensions like "Color" (Physical) or "View/Floor" (Booking).
-- **ProductOptionValue**: Specific values like "Red", "Blue", "XL".
+- **ProductOption**: Dimensions like "Color/Size" (Physical) or "View/Floor" (Booking).
+- **ProductOptionValue**: Specific values like "Red", "Blue", "XL", "Ocean View".
 - **Facet & FacetValue**: Dynamic categories for filtering (e.g., "Brand: Apple", "Material: Iron", "Style: Vintage").
   - **Extensible**: New facets can be added via the Admin API without any code changes.
 - **ProductAttribute**: Technical specifications that don't vary (e.g., "Screen Size: 6.7 inches").
@@ -40,8 +44,8 @@ We apply a strict separation between **Discovery** and **Detail Retrieval**:
 - **Redis Caching**: The full `ProductDetail` object is cached in Redis with a TTL.
 - **Cache Invalidation**: Cache is evicted automatically when a product is updated.
 
-## 4. Multi-Tenancy Strategy
-Products and Categories are strictly isolated by `tenant_id`. Global products (system-provided) are handled via a shared `NULL` tenant ID or a system tenant.
+## 4. Multi-Tenancy Strategy (SaaS)
+Products and Categories are strictly isolated by `tenant_id`. Every shop owner (tenant) manages their own catalog. The Headless API ensures that tenant context is securely extracted from the request (e.g., via API keys or JWTs), preventing merchants from accessing each other's data. Global products (system-provided) are handled via a shared `NULL` tenant ID or a system tenant.
 
 ## 5. Key Business Logic
 - **Slug Generation**: Automatic URL-friendly slug generation from product names.

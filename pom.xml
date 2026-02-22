@@ -33,6 +33,7 @@
 		<module>iecommerce-module-inventory</module>
 		<module>iecommerce-module-promotion</module>
 		<module>iecommerce-module-review</module>
+		<module>iecommerce-module-booking</module>
 		<module>iecommerce-app</module>
 	</modules>
 
@@ -134,6 +135,11 @@
 			<dependency>
 				<groupId>com.chamrong</groupId>
 				<artifactId>iecommerce-module-review</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.chamrong</groupId>
+				<artifactId>iecommerce-module-booking</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>

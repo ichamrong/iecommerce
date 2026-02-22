@@ -13,10 +13,17 @@ The Payment module manages the integration with third-party payment gateways and
 
 ## 3. Supported Strategies
 
-### A. Bakong (KHQR)
-- **Flow**: The system generates a dynamic **KHQR string** for the specific order.
-- **Verification**: The module listens for a webhook from Bakong or polls the Bakong API until the transaction is verified.
-- **UI**: Displays the QR code to the customer during the checkout process.
+### A. Bakong (National Bank of Cambodia - KHQR)
+Because Cambodia is a core market, **KHQR** (the unified national QR code standard) is a first-class citizen within the `payment` module.
+
+- **Standard**: All generated QR strings must strictly adhere to the **EMV® QR Code Specification for Payment Systems (EMVCo)**.
+- **Dynamic Generation (`PaymentProvider.generateKHQR`)**: 
+  1. The API receives an `Order` calculation and the Tenant's specific Bakong Account ID.
+  2. The module dynamically encodes the precise `Total Amount`, `Currency` (KHR/USD), and a unique `Terminal ID` (Order Number) into the raw KHQR string.
+  3. The raw string is returned to the Headless Storefront to be rendered as a scannable QR Image.
+- **Verification & Settlement**: 
+  - **Primary (Webhook)**: The module exposes a secure endpoint (`/api/v1/payments/bakong/webhook`) to listen for real-time notifications from the Bakong API confirming the transaction was successful.
+  - **Fallback (Polling)**: Because webhooks can drop due to network issues, the storefront (or backend cron job) can actively poll the Bakong API (`PaymentProvider.checkBakongStatus`) to verify the transaction `Hash` if the customer claims they paid but the webhook never arrived.
 
 ### B. Pay on Arrival (Offline)
 - **Flow**: Confirmation happens immediately without a digital payment.
