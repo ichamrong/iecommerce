@@ -5,6 +5,7 @@ import com.chamrong.iecommerce.common.event.PaymentFailedEvent;
 import com.chamrong.iecommerce.common.event.PaymentSucceededEvent;
 import com.chamrong.iecommerce.payment.application.dto.PaymentRequest;
 import com.chamrong.iecommerce.payment.application.dto.PaymentResponse;
+import com.chamrong.iecommerce.payment.application.spi.PaymentProvider;
 import com.chamrong.iecommerce.payment.domain.Payment;
 import com.chamrong.iecommerce.payment.domain.PaymentOutboxEvent;
 import com.chamrong.iecommerce.payment.domain.PaymentOutboxRepository;
@@ -26,8 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentService {
 
   private final PaymentRepository paymentRepository;
-  private final com.chamrong.iecommerce.payment.infrastructure.bakong.BakongService bakongService;
-  private final com.chamrong.iecommerce.payment.infrastructure.aba.ABAService abaService;
+  private final List<PaymentProvider> paymentProviders;
   private final PaymentOutboxRepository outboxRepository;
   private final ObjectMapper objectMapper;
 
@@ -45,36 +45,35 @@ public class PaymentService {
 
   @Transactional
   public PaymentResponse initiate(String tenantId, PaymentRequest req) {
+    if (req.idempotencyKey() != null && !req.idempotencyKey().isBlank()) {
+      Optional<Payment> existing = paymentRepository.findByIdempotencyKey(req.idempotencyKey());
+      if (existing.isPresent()) {
+        log.info(
+            "Duplicate payment request detected for key={}, returning existing payment",
+            req.idempotencyKey());
+        return toResponse(existing.get());
+      }
+    }
+
     Payment p = new Payment();
     p.setTenantId(tenantId);
     p.setOrderId(req.orderId());
     p.setAmount(new Money(req.amount(), req.currency()));
     p.setMethod(req.method());
     p.setStatus(PaymentStatus.PENDING);
-
-    String checkoutData = null;
-    if ("BAKONG".equalsIgnoreCase(req.method())) {
-      checkoutData = bakongService.generateKhqr(req.orderId().toString(), req.amount());
-    } else if ("ABA".equalsIgnoreCase(req.method())) {
-      // Simplified ABA checkout data (hash generation)
-      checkoutData =
-          abaService.generateHash(
-              String.valueOf(System.currentTimeMillis()),
-              "M_ID",
-              req.orderId().toString(),
-              req.amount().toString(),
-              "",
-              "",
-              "",
-              "",
-              "",
-              "",
-              "cards",
-              "aba_pay",
-              "",
-              "",
-              "");
+    if (req.idempotencyKey() != null) {
+      p.setIdempotencyKey(req.idempotencyKey());
     }
+
+    var provider =
+        paymentProviders.stream()
+            .filter(pro -> pro.supports(req.method()))
+            .findFirst()
+            .orElseThrow(
+                () -> new IllegalArgumentException("Unsupported payment method: " + req.method()));
+
+    String checkoutData =
+        provider.initiatePayment(req.orderId().toString(), req.amount(), req.currency());
 
     p.setCheckoutData(checkoutData);
     log.info(

@@ -38,8 +38,11 @@ public class InventoryOutboxRelayScheduler {
       } catch (Exception ex) {
         outboxEvent.markFailed();
         outboxRepository.save(outboxEvent);
-        log.error("Inventory Outbox relay: FAILED to deliver eventType={} id={}",
-            outboxEvent.getEventType(), outboxEvent.getId(), ex);
+        log.error(
+            "Inventory Outbox relay: FAILED to deliver eventType={} id={}",
+            outboxEvent.getEventType(),
+            outboxEvent.getId(),
+            ex);
       }
     }
   }
@@ -47,7 +50,8 @@ public class InventoryOutboxRelayScheduler {
   private Class<?> getEventClass(String eventType) {
     return switch (eventType) {
       case "StockReservedEvent" -> com.chamrong.iecommerce.common.event.StockReservedEvent.class;
-      case "InventoryOperationFailedEvent" -> com.chamrong.iecommerce.common.event.InventoryOperationFailedEvent.class;
+      case "InventoryOperationFailedEvent" ->
+          com.chamrong.iecommerce.common.event.InventoryOperationFailedEvent.class;
       default -> Object.class;
     };
   }

@@ -81,6 +81,11 @@ public class ChatService {
 
   private ChatMessageResponse toMsgResponse(ChatMessage m) {
     return new ChatMessageResponse(
-        m.getId(), m.getConversationId(), m.getSenderId(), m.getContent(), m.isRead(), m.getTimestamp());
+        m.getId(),
+        m.getConversationId(),
+        m.getSenderId(),
+        m.getContent(),
+        m.isRead(),
+        m.getTimestamp());
   }
 }

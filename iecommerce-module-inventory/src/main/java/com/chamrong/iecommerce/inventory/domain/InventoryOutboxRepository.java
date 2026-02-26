@@ -9,7 +9,7 @@ public interface InventoryOutboxRepository extends JpaRepository<InventoryOutbox
 
   @Query("SELECT e FROM InventoryOutboxEvent e WHERE e.status = 'PENDING' ORDER BY e.createdAt ASC")
   List<InventoryOutboxEvent> findPending(PageRequest pageRequest);
-  
+
   default List<InventoryOutboxEvent> findPending(int batchSize) {
     return findPending(PageRequest.of(0, batchSize));
   }

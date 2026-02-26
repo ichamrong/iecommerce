@@ -1,7 +1,14 @@
 package com.chamrong.iecommerce.inventory.api;
 
+import com.chamrong.iecommerce.inventory.application.InventoryService;
+import com.chamrong.iecommerce.inventory.application.dto.AdjustStockRequest;
+import com.chamrong.iecommerce.inventory.application.dto.StockLevelResponse;
+import com.chamrong.iecommerce.inventory.application.dto.WarehouseRequest;
+import com.chamrong.iecommerce.inventory.application.dto.WarehouseResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,16 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.chamrong.iecommerce.inventory.application.InventoryService;
-import com.chamrong.iecommerce.inventory.application.dto.AdjustStockRequest;
-import com.chamrong.iecommerce.inventory.application.dto.StockLevelResponse;
-import com.chamrong.iecommerce.inventory.application.dto.WarehouseRequest;
-import com.chamrong.iecommerce.inventory.application.dto.WarehouseResponse;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 
 /**
  * Inventory management — warehouses and stock levels.
@@ -70,7 +67,8 @@ public class InventoryController {
 
   @Operation(
       summary = "Adjust stock",
-      description = "Adds or removes stock for a product-warehouse combination. Records a movement.")
+      description =
+          "Adds or removes stock for a product-warehouse combination. Records a movement.")
   @PostMapping("/stock/adjust")
   @PreAuthorize("hasAuthority('inventory:manage')")
   public StockLevelResponse adjustStock(
@@ -83,14 +81,14 @@ public class InventoryController {
       description = "Returns all stock levels at or below the given threshold (default 5).")
   @GetMapping("/stock/low")
   public List<StockLevelResponse> getLowStock(
-      @RequestParam String tenantId,
-      @RequestParam(defaultValue = "5") int threshold) {
+      @RequestParam String tenantId, @RequestParam(defaultValue = "5") int threshold) {
     return inventoryService.getLowStock(tenantId, threshold);
   }
 
   @Operation(
       summary = "Set absolute stock level",
-      description = "Overwrites current stock with a fixed value. Calculates delta and records a movement.")
+      description =
+          "Overwrites current stock with a fixed value. Calculates delta and records a movement.")
   @PostMapping("/stock/set")
   @PreAuthorize("hasAuthority('inventory:manage')")
   public StockLevelResponse setStock(

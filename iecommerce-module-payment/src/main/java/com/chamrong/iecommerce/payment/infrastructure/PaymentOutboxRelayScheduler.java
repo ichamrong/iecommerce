@@ -1,53 +1,41 @@
 package com.chamrong.iecommerce.payment.infrastructure;
 
+import com.chamrong.iecommerce.common.event.EventDispatcher;
+import com.chamrong.iecommerce.common.outbox.AbstractOutboxRelay;
 import com.chamrong.iecommerce.payment.domain.PaymentOutboxEvent;
 import com.chamrong.iecommerce.payment.domain.PaymentOutboxRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
-public class PaymentOutboxRelayScheduler {
-
-  private static final int BATCH_SIZE = 50;
+public class PaymentOutboxRelayScheduler extends AbstractOutboxRelay<PaymentOutboxEvent> {
 
   private final PaymentOutboxRepository outboxRepository;
-  private final ApplicationEventPublisher eventPublisher;
-  private final ObjectMapper objectMapper;
 
-  @Scheduled(fixedDelay = 5000)
-  @Transactional
-  public void relay() {
-    var pending = outboxRepository.findPending(BATCH_SIZE);
-    if (pending.isEmpty()) return;
-
-    for (PaymentOutboxEvent outboxEvent : pending) {
-      try {
-        Class<?> eventClass = getEventClass(outboxEvent.getEventType());
-        var payload = objectMapper.readValue(outboxEvent.getPayload(), eventClass);
-        eventPublisher.publishEvent(payload);
-
-        outboxEvent.markSent();
-        outboxRepository.save(outboxEvent);
-      } catch (Exception ex) {
-        outboxEvent.markFailed();
-        outboxRepository.save(outboxEvent);
-        log.error(
-            "Payment Outbox relay: FAILED to deliver eventType={} id={}",
-            outboxEvent.getEventType(),
-            outboxEvent.getId(),
-            ex);
-      }
-    }
+  public PaymentOutboxRelayScheduler(
+      PaymentOutboxRepository outboxRepository,
+      EventDispatcher eventDispatcher,
+      ObjectMapper objectMapper) {
+    super(eventDispatcher, objectMapper);
+    this.outboxRepository = outboxRepository;
   }
 
-  private Class<?> getEventClass(String eventType) {
+  @Scheduled(fixedDelay = 5000)
+  @org.springframework.transaction.annotation.Transactional
+  public void relay() {
+    processPendingEvents(outboxRepository.findPending(50));
+  }
+
+  @Override
+  protected void saveEvent(PaymentOutboxEvent event) {
+    outboxRepository.save(event);
+  }
+
+  @Override
+  protected Class<?> getEventClass(String eventType) {
     return switch (eventType) {
       case "PaymentSucceededEvent" ->
           com.chamrong.iecommerce.common.event.PaymentSucceededEvent.class;

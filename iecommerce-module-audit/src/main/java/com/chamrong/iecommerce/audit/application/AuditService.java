@@ -4,6 +4,7 @@ import com.chamrong.iecommerce.audit.application.dto.AuditQuery;
 import com.chamrong.iecommerce.audit.application.dto.AuditResponse;
 import com.chamrong.iecommerce.audit.domain.AuditEvent;
 import com.chamrong.iecommerce.audit.domain.AuditRepository;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 public class AuditService {
 
   private final AuditRepository auditRepository;
+  private final com.chamrong.iecommerce.common.security.DigitalSignatureService signatureService;
 
   @Transactional
   public void log(
@@ -28,7 +30,9 @@ public class AuditService {
     event.setAction(action);
     event.setResourceType(resourceType);
     event.setResourceId(resourceId);
-    event.setMetadata(metadata);
+
+    // Applying bank-level audit masking for sensitive metadata
+    event.setMetadata(signatureService.mask(metadata));
 
     try {
       var requestAttributes = RequestContextHolder.getRequestAttributes();
@@ -53,6 +57,25 @@ public class AuditService {
     }
 
     auditRepository.save(event);
+  }
+
+  @Transactional
+  public void logMonetaryChange(
+      String userId,
+      String action,
+      String resourceType,
+      String resourceId,
+      BigDecimal valueBefore,
+      BigDecimal valueAfter,
+      String currency,
+      String reason) {
+
+    String metadata =
+        String.format(
+            "{\"valueBefore\":%s, \"valueAfter\":%s, \"currency\":\"%s\", \"reason\":\"%s\"}",
+            valueBefore, valueAfter, currency, reason != null ? reason.replace("\"", "\\\"") : "");
+
+    this.log(userId, action, resourceType, resourceId, metadata);
   }
 
   @Transactional(readOnly = true)

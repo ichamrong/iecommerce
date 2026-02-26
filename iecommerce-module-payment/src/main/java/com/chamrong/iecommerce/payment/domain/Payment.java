@@ -47,6 +47,9 @@ public class Payment extends BaseTenantEntity {
   @Column(columnDefinition = "TEXT")
   private String checkoutData;
 
+  @Column(unique = true, length = 100)
+  private String idempotencyKey;
+
   // ── Domain behaviour ───────────────────────────────────────────────────────
 
   public void markSucceeded(String externalId) {
@@ -88,5 +91,10 @@ public class Payment extends BaseTenantEntity {
 
   public void setCheckoutData(String checkoutData) {
     this.checkoutData = checkoutData;
+  }
+
+  public void setIdempotencyKey(String idempotencyKey) {
+    if (this.idempotencyKey != null) throw new IllegalStateException("idempotencyKey already set");
+    this.idempotencyKey = idempotencyKey;
   }
 }

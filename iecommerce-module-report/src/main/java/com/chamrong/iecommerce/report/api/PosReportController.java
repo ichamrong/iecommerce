@@ -1,7 +1,7 @@
 package com.chamrong.iecommerce.report.api;
 
-import com.chamrong.iecommerce.report.application.PosReconciliationDto;
 import com.chamrong.iecommerce.report.application.ReconciliationReportService;
+import com.chamrong.iecommerce.report.application.dto.PosReconciliationDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.math.BigDecimal;

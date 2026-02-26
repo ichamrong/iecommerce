@@ -5,5 +5,6 @@ public enum NotificationType {
   SMS,
   PUSH,
   TELEGRAM,
-  WHATSAPP
+  WHATSAPP,
+  IN_APP
 }

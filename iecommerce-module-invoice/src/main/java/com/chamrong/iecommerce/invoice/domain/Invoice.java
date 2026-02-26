@@ -49,6 +49,14 @@ public class Invoice extends BaseTenantEntity {
   @JoinColumn(name = "invoice_id")
   private List<InvoiceLine> lines = new ArrayList<>();
 
+  @Column(columnDefinition = "TEXT")
+  private String digitalSignature;
+
+  private Instant signedAt;
+
+  @Column(unique = true, length = 100)
+  private String idempotencyKey;
+
   // ── Domain behaviour ───────────────────────────────────────────────────────
 
   public void issue() {
@@ -68,5 +76,10 @@ public class Invoice extends BaseTenantEntity {
       throw new IllegalStateException("Cannot void a PAID invoice");
     }
     this.status = InvoiceStatus.VOID;
+  }
+
+  public void setIdempotencyKey(String idempotencyKey) {
+    if (this.idempotencyKey != null) throw new IllegalStateException("idempotencyKey already set");
+    this.idempotencyKey = idempotencyKey;
   }
 }

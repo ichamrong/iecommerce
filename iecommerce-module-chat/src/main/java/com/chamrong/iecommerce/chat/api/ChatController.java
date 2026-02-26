@@ -42,7 +42,9 @@ public class ChatController {
         .body(chatService.startConversation(tenantId, req));
   }
 
-  @Operation(summary = "List my conversations", description = "Returns all conversations where the given user is a participant.")
+  @Operation(
+      summary = "List my conversations",
+      description = "Returns all conversations where the given user is a participant.")
   @GetMapping("/conversations")
   public List<ConversationResponse> myConversations(@RequestParam Long userId) {
     return chatService.getMyConversations(userId);

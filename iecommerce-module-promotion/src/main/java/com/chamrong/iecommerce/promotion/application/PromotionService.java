@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PromotionService implements PromotionApi {
 
   private final PromotionRepository promotionRepository;
+  private final com.chamrong.iecommerce.promotion.application.rule.PromotionRuleChecker ruleChecker;
 
   @Override
   @Transactional(readOnly = true)
@@ -27,6 +28,26 @@ public class PromotionService implements PromotionApi {
         .findByTenantIdAndCode(tenantId, code)
         .filter(p -> p.isActiveAt(Instant.now()))
         .map(p -> new Money(p.calculateDiscount(baseAmount.getAmount()), baseAmount.getCurrency()));
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Optional<Money> calculateDiscount(
+      String code, com.chamrong.iecommerce.promotion.application.rule.PromotionContext context) {
+    return promotionRepository
+        .findByTenantIdAndCode(context.getTenantId(), code)
+        .filter(
+            p ->
+                p.isActiveAt(
+                    context.getEvaluationTime() != null
+                        ? context.getEvaluationTime()
+                        : Instant.now()))
+        .filter(p -> p.getRules().stream().allMatch(rule -> ruleChecker.isEligible(rule, context)))
+        .map(
+            p ->
+                new Money(
+                    p.calculateDiscount(context.getBaseAmount().getAmount()),
+                    context.getBaseAmount().getCurrency()));
   }
 
   @Transactional(readOnly = true)

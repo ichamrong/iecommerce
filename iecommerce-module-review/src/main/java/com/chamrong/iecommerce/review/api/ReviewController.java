@@ -44,28 +44,36 @@ public class ReviewController {
     return ResponseEntity.status(HttpStatus.CREATED).body(reviewService.submit(req));
   }
 
-  @Operation(summary = "Approve a review", description = "Moderator-only — makes review visible on storefront.")
+  @Operation(
+      summary = "Approve a review",
+      description = "Moderator-only — makes review visible on storefront.")
   @PostMapping("/{id}/approve")
   @PreAuthorize("hasAuthority('reviews:moderate')")
   public ReviewResponse approve(@PathVariable Long id) {
     return reviewService.approve(id);
   }
 
-  @Operation(summary = "Reject a review", description = "Moderator-only — hides review from storefront.")
+  @Operation(
+      summary = "Reject a review",
+      description = "Moderator-only — hides review from storefront.")
   @PostMapping("/{id}/reject")
   @PreAuthorize("hasAuthority('reviews:moderate')")
   public ReviewResponse reject(@PathVariable Long id) {
     return reviewService.reject(id);
   }
 
-  @Operation(summary = "Get pending reviews", description = "Returns all reviews awaiting moderation.")
+  @Operation(
+      summary = "Get pending reviews",
+      description = "Returns all reviews awaiting moderation.")
   @GetMapping("/pending")
   @PreAuthorize("hasAuthority('reviews:moderate')")
   public List<ReviewResponse> getPending() {
     return reviewService.getPendingReviews();
   }
 
-  @Operation(summary = "Flag a review", description = "Owner can flag a review for moderation review.")
+  @Operation(
+      summary = "Flag a review",
+      description = "Owner can flag a review for moderation review.")
   @PostMapping("/{id}/flag")
   @PreAuthorize("hasAuthority('reviews:manage')")
   public ReviewResponse flagReview(@PathVariable Long id, @RequestParam String reason) {

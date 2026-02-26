@@ -1,30 +1,23 @@
 package com.chamrong.iecommerce.notification.application;
 
+import com.chamrong.iecommerce.notification.NotificationApi;
 import com.chamrong.iecommerce.notification.application.dto.NotificationRequest;
 import com.chamrong.iecommerce.notification.application.dto.NotificationResponse;
+import com.chamrong.iecommerce.notification.application.spi.SmsProvider;
+import com.chamrong.iecommerce.notification.application.spi.TelegramProvider;
 import com.chamrong.iecommerce.notification.domain.Notification;
 import com.chamrong.iecommerce.notification.domain.NotificationRepository;
 import com.chamrong.iecommerce.notification.domain.NotificationStatus;
+import com.chamrong.iecommerce.notification.domain.NotificationTemplateRepository;
 import com.chamrong.iecommerce.notification.domain.NotificationType;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.SimpleMailMessage;
-import com.twilio.rest.api.v2010.account.Message;
-import com.twilio.type.PhoneNumber;
-import com.chamrong.iecommerce.notification.infrastructure.twilio.TwilioConfiguration;
-
-/**
- * Notification service — persists outbound messages and simulates dispatch.
- *
- * <p>In production, {@code dispatch()} would delegate to an SMTP client, Firebase, Twilio, etc.
- * For now it records the message and marks it SENT to keep the system functional without external
- * dependencies.
- */
-import com.chamrong.iecommerce.notification.NotificationApi;
 
 @Slf4j
 @Service
@@ -32,8 +25,14 @@ import com.chamrong.iecommerce.notification.NotificationApi;
 public class NotificationService implements NotificationApi {
 
   private final NotificationRepository notificationRepository;
+  private final NotificationTemplateRepository templateRepository;
+  private final TemplateEngine templateEngine;
   private final JavaMailSender mailSender;
-  private final TwilioConfiguration twilioConfiguration;
+  private final List<SmsProvider> smsProviders;
+  private final TelegramProvider telegramProvider;
+
+  @Value("${notification.sms.provider:twilio}")
+  private String activeSmsProvider;
 
   @Override
   @Transactional
@@ -49,6 +48,36 @@ public class NotificationService implements NotificationApi {
     n.markSent();
     notificationRepository.save(n);
     log.info("Notification stored: to={} subject={}", recipient, subject);
+  }
+
+  @Override
+  @Transactional
+  public void sendTemplatedNotification(
+      String tenantId,
+      String recipient,
+      String templateKey,
+      String locale,
+      java.util.Map<String, Object> data) {
+
+    // 1. Find templates for all supported types or a specific preferred one
+    // For simplicity, we try to send standard channels: Email, SMS, In-App, Push
+    for (NotificationType type :
+        java.util.List.of(
+            NotificationType.EMAIL,
+            NotificationType.SMS,
+            NotificationType.IN_APP,
+            NotificationType.PUSH)) {
+      templateRepository
+          .findByTenantIdAndTemplateKeyAndTypeAndLocale(tenantId, templateKey, type, locale)
+          .ifPresent(
+              template -> {
+                String subject = templateEngine.render(template.getSubjectTemplate(), data);
+                String content = templateEngine.render(template.getContentTemplate(), data);
+
+                NotificationRequest req = new NotificationRequest(recipient, subject, content);
+                dispatch(tenantId, req, type);
+              });
+    }
   }
 
   // ── Commands ───────────────────────────────────────────────────────────────
@@ -68,6 +97,11 @@ public class NotificationService implements NotificationApi {
     return dispatch(tenantId, req, NotificationType.PUSH);
   }
 
+  @Transactional
+  public NotificationResponse sendTelegram(String tenantId, NotificationRequest req) {
+    return dispatch(tenantId, req, NotificationType.TELEGRAM);
+  }
+
   // ── Queries ────────────────────────────────────────────────────────────────
 
   @Transactional(readOnly = true)
@@ -79,15 +113,23 @@ public class NotificationService implements NotificationApi {
 
   @Transactional(readOnly = true)
   public List<NotificationResponse> getByTenant(String tenantId) {
-    return notificationRepository.findByTenantId(tenantId).stream()
-        .map(this::toResponse)
-        .toList();
+    return notificationRepository.findByTenantId(tenantId).stream().map(this::toResponse).toList();
   }
 
   @Transactional(readOnly = true)
   public List<NotificationResponse> getFailed(String tenantId) {
     return notificationRepository
         .findByTenantIdAndStatus(tenantId, NotificationStatus.FAILED)
+        .stream()
+        .map(this::toResponse)
+        .toList();
+  }
+
+  @Transactional(readOnly = true)
+  public List<NotificationResponse> getActiveInApp(String recipient) {
+    return notificationRepository
+        .findByRecipientAndTypeAndStatus(
+            recipient, NotificationType.IN_APP, NotificationStatus.SENT)
         .stream()
         .map(this::toResponse)
         .toList();
@@ -107,26 +149,41 @@ public class NotificationService implements NotificationApi {
     notificationRepository.save(n);
 
     try {
-      if (type == NotificationType.EMAIL) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(req.recipient());
-        message.setSubject(req.subject());
-        message.setText(req.content());
-        mailSender.send(message);
-        log.info("Dispatching EMAIL to {} [tenant={}]", req.recipient(), tenantId);
-      } else if (type == NotificationType.SMS) {
-        if (!"dummy_sid".equals(twilioConfiguration.getAccountSid())) {
-          Message.creator(
-              new PhoneNumber(req.recipient()),
-              new PhoneNumber(twilioConfiguration.getSystemPhoneNumber()),
-              req.content()
-          ).create();
-          log.info("Dispatching real SMS to {} [tenant={}] via Twilio", req.recipient(), tenantId);
-        } else {
-          log.info("Mock dispatching SMS to {} [tenant={}]", req.recipient(), tenantId);
+      switch (type) {
+        case EMAIL -> {
+          SimpleMailMessage message = new SimpleMailMessage();
+          message.setTo(req.recipient());
+          message.setSubject(req.subject());
+          message.setText(req.content());
+          mailSender.send(message);
+          log.info("Dispatching EMAIL to {} [tenant={}]", req.recipient(), tenantId);
         }
-      } else {
-        log.info("Mock dispatching {} to {} [tenant={}]", type, req.recipient(), tenantId);
+        case SMS -> {
+          var provider =
+              smsProviders.stream()
+                  .filter(p -> p.supports(activeSmsProvider))
+                  .findFirst()
+                  .orElseThrow(
+                      () ->
+                          new IllegalStateException(
+                              "No SMS provider found for: " + activeSmsProvider));
+          provider.sendSms(req.recipient(), req.content());
+          log.info(
+              "Dispatching SMS to {} [tenant={}] via {}",
+              req.recipient(),
+              tenantId,
+              activeSmsProvider);
+        }
+        case TELEGRAM -> {
+          telegramProvider.sendMessage(req.recipient(), req.content());
+          log.info("Dispatching TELEGRAM to {} [tenant={}]", req.recipient(), tenantId);
+        }
+        default ->
+            log.info(
+                "Recording/Mock dispatching {} for {} [tenant={}]",
+                type,
+                req.recipient(),
+                tenantId);
       }
       n.markSent();
     } catch (Exception ex) {

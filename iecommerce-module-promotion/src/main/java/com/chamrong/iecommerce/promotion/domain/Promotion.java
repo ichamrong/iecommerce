@@ -40,6 +40,12 @@ public class Promotion extends BaseTenantEntity {
   @Column(nullable = false)
   private boolean active = true;
 
+  @jakarta.persistence.OneToMany(
+      mappedBy = "promotion",
+      cascade = jakarta.persistence.CascadeType.ALL,
+      orphanRemoval = true)
+  private java.util.List<PromotionRule> rules = new java.util.ArrayList<>();
+
   // ── Domain behaviour ───────────────────────────────────────────────────────
 
   /** Returns true if the promotion is currently valid at the given instant. */

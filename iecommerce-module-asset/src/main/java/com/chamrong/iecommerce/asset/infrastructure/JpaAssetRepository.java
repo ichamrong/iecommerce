@@ -12,5 +12,23 @@ import org.springframework.stereotype.Repository;
 public interface JpaAssetRepository extends JpaRepository<Asset, Long>, AssetRepository {
 
   @Override
+  List<Asset> findByTenantIdAndType(String tenantId, AssetType type);
+
+  @Override
   List<Asset> findByType(AssetType type);
+
+  @Override
+  long countByParentId(Long parentId);
+
+  @Override
+  List<Asset> findByTenantIdAndPathStartingWith(String tenantId, String pathPrefix);
+
+  @Override
+  void deleteByTenantIdAndPathStartingWith(String tenantId, String pathPrefix);
+
+  @Override
+  List<Asset> findByTenantIdAndNameContainingIgnoreCase(String tenantId, String name);
+
+  @Override
+  List<Asset> findByTenantIdAndFileSizeBetween(String tenantId, long minSize, long maxSize);
 }

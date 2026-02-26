@@ -13,4 +13,7 @@ public interface NotificationRepository {
   List<Notification> findByTenantId(String tenantId);
 
   List<Notification> findByTenantIdAndStatus(String tenantId, NotificationStatus status);
+
+  List<Notification> findByRecipientAndTypeAndStatus(
+      String recipient, NotificationType type, NotificationStatus status);
 }

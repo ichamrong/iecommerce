@@ -2,9 +2,11 @@ package com.chamrong.iecommerce.inventory.infrastructure;
 
 import com.chamrong.iecommerce.inventory.domain.StockLevel;
 import com.chamrong.iecommerce.inventory.domain.StockLevelRepository;
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Repository;
 
 /** Spring Data JPA adapter for the domain {@link StockLevelRepository} port. */
@@ -23,4 +25,8 @@ public interface JpaStockLevelRepository
 
   @Override
   List<StockLevel> findByTenantIdAndQuantityLessThanEqual(String tenantId, int quantity);
+
+  @Override
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  List<StockLevel> findForUpdateByProductId(Long productId);
 }

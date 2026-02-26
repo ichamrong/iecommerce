@@ -1,12 +1,12 @@
 package com.chamrong.iecommerce.invoice.application;
 
+import com.chamrong.iecommerce.common.Money;
 import com.chamrong.iecommerce.invoice.application.dto.CreateInvoiceRequest;
 import com.chamrong.iecommerce.invoice.application.dto.InvoiceResponse;
 import com.chamrong.iecommerce.invoice.domain.Invoice;
 import com.chamrong.iecommerce.invoice.domain.InvoiceLine;
 import com.chamrong.iecommerce.invoice.domain.InvoiceRepository;
 import com.chamrong.iecommerce.invoice.domain.InvoiceStatus;
-import com.chamrong.iecommerce.common.Money;
 import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -24,15 +24,29 @@ import org.springframework.transaction.annotation.Transactional;
 public class InvoiceService {
 
   private final InvoiceRepository invoiceRepository;
+  private final com.chamrong.iecommerce.common.security.DigitalSignatureService signatureService;
 
   @Transactional
   public InvoiceResponse create(String tenantId, CreateInvoiceRequest req) {
+    if (req.idempotencyKey() != null && !req.idempotencyKey().isBlank()) {
+      Optional<Invoice> existing = invoiceRepository.findByIdempotencyKey(req.idempotencyKey());
+      if (existing.isPresent()) {
+        log.info(
+            "Duplicate invoice request detected for key={}, returning existing invoice",
+            req.idempotencyKey());
+        return toResponse(existing.get());
+      }
+    }
+
     Invoice invoice = new Invoice();
     invoice.setTenantId(tenantId);
     invoice.setInvoiceNumber("INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
     invoice.setOrderId(req.orderId());
     invoice.setInvoiceDate(Instant.now());
     invoice.setStatus(InvoiceStatus.DRAFT);
+    if (req.idempotencyKey() != null) {
+      invoice.setIdempotencyKey(req.idempotencyKey());
+    }
 
     // Populate lines
     List<InvoiceLine> lines =
@@ -63,6 +77,23 @@ public class InvoiceService {
   public InvoiceResponse issue(Long id) {
     Invoice inv = require(id);
     inv.issue();
+
+    // Digital Signing Logic
+    String contentToSign =
+        String.format(
+            "INV:%s|ORDER:%d|TOTAL:%s|DATE:%s",
+            inv.getInvoiceNumber(),
+            inv.getOrderId(),
+            inv.getTotalAmount().toString(),
+            inv.getInvoiceDate().toString());
+    String signature = signatureService.sign(contentToSign);
+    inv.setDigitalSignature(signature);
+    inv.setSignedAt(Instant.now());
+
+    log.info(
+        "Invoice signed with fingerprint={}",
+        signature != null ? signature.substring(0, 10) + "..." : "FAIL");
+
     return toResponse(invoiceRepository.save(inv));
   }
 
@@ -88,6 +119,21 @@ public class InvoiceService {
   @Transactional(readOnly = true)
   public List<InvoiceResponse> findByOrderId(Long orderId) {
     return invoiceRepository.findByOrderId(orderId).stream().map(this::toResponse).toList();
+  }
+
+  @Transactional(readOnly = true)
+  public boolean verifySignature(Long id) {
+    Invoice inv = require(id);
+    if (inv.getDigitalSignature() == null) return false;
+
+    String contentToVerify =
+        String.format(
+            "INV:%s|ORDER:%d|TOTAL:%s|DATE:%s",
+            inv.getInvoiceNumber(),
+            inv.getOrderId(),
+            inv.getTotalAmount().toString(),
+            inv.getInvoiceDate().toString());
+    return signatureService.verify(contentToVerify, inv.getDigitalSignature());
   }
 
   private Invoice require(Long id) {

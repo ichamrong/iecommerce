@@ -1,5 +1,10 @@
 package com.chamrong.iecommerce.inventory;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import com.chamrong.iecommerce.inventory.application.InventoryService;
 import com.chamrong.iecommerce.inventory.application.dto.AdjustStockRequest;
 import com.chamrong.iecommerce.inventory.domain.OutOfStockException;
@@ -8,6 +13,8 @@ import com.chamrong.iecommerce.inventory.domain.StockLevelRepository;
 import com.chamrong.iecommerce.inventory.domain.StockMovement;
 import com.chamrong.iecommerce.inventory.domain.StockMovementRepository;
 import com.chamrong.iecommerce.inventory.domain.WarehouseRepository;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,14 +22,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class InventoryServiceTest {
@@ -53,7 +52,7 @@ class InventoryServiceTest {
 
     assertEquals(10, stockLevel.getReservedQuantity());
     assertEquals(40, stockLevel.getAvailableQuantity());
-    
+
     verify(stockLevelRepository).save(stockLevel);
   }
 
@@ -61,8 +60,7 @@ class InventoryServiceTest {
   void testReserveStock_NotEnoughStock_ThrowsException() {
     when(stockLevelRepository.findByProductId(100L)).thenReturn(List.of(stockLevel));
 
-    assertThrows(OutOfStockException.class, 
-        () -> inventoryService.reserveStock("t1", 100L, 60));
+    assertThrows(OutOfStockException.class, () -> inventoryService.reserveStock("t1", 100L, 60));
 
     verify(stockLevelRepository, never()).save(any());
   }
@@ -76,7 +74,7 @@ class InventoryServiceTest {
 
     assertEquals(5, stockLevel.getReservedQuantity());
     assertEquals(45, stockLevel.getAvailableQuantity());
-    
+
     verify(stockLevelRepository).save(stockLevel);
   }
 
@@ -108,7 +106,10 @@ class InventoryServiceTest {
     when(stockLevelRepository.findByProductIdAndWarehouseId(100L, 200L))
         .thenReturn(Optional.of(stockLevel));
 
-    inventoryService.adjustStock("t1", new AdjustStockRequest(100L, 200L, 25, StockMovement.MovementReason.RESTOCK, "Supplier delivery"));
+    inventoryService.adjustStock(
+        "t1",
+        new AdjustStockRequest(
+            100L, 200L, 25, StockMovement.MovementReason.RESTOCK, "Supplier delivery"));
 
     assertEquals(75, stockLevel.getQuantity());
     verify(stockLevelRepository).save(stockLevel);

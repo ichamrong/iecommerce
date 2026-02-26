@@ -2,6 +2,8 @@ package com.chamrong.iecommerce.order.infrastructure;
 
 import com.chamrong.iecommerce.order.domain.Order;
 import com.chamrong.iecommerce.order.domain.OrderRepository;
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -11,4 +13,7 @@ import org.springframework.stereotype.Repository;
 public interface JpaOrderRepository extends JpaRepository<Order, Long>, OrderRepository {
   @Override
   Optional<Order> findByCode(String code);
+
+  @Override
+  List<Order> findByTenantIdAndCreatedAtBetween(String tenantId, Instant start, Instant end);
 }

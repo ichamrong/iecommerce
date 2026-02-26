@@ -24,9 +24,7 @@ public record SettingResponse(
 
   private static final String MASKED = "***";
 
-  /**
-   * Returns a safe copy of this response where the value is masked when the setting is secret.
-   */
+  /** Returns a safe copy of this response where the value is masked when the setting is secret. */
   public SettingResponse masked() {
     if (secret) {
       return new SettingResponse(

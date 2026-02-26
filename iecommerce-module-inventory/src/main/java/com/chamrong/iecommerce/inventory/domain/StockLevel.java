@@ -16,9 +16,12 @@ import lombok.Setter;
     uniqueConstraints = @UniqueConstraint(columnNames = {"product_id", "warehouse_id"}))
 public class StockLevel extends BaseTenantEntity {
 
+  // Package-private setters for JPA/Infra if needed, but prefer domain methods
+  @Setter
   @Column(nullable = false)
   private Long productId;
 
+  @Setter
   @Column(nullable = false)
   private Long warehouseId;
 
@@ -34,10 +37,7 @@ public class StockLevel extends BaseTenantEntity {
 
   // ── Domain Logic ─────────────────────────────────────────────────────────
 
-  /**
-   * High-level reservation guard. 
-   * Validates available stock before incrementing reservation.
-   */
+  /** High-level reservation guard. Validates available stock before incrementing reservation. */
   public void reserve(int qty) {
     if (qty <= 0) throw new IllegalArgumentException("Quantity must be positive");
     if (getAvailableQuantity() < qty) {
@@ -54,9 +54,7 @@ public class StockLevel extends BaseTenantEntity {
     this.reservedQuantity -= qty;
   }
 
-  /**
-   * Finalizes the sale by deducting from both physical quantity and reservation.
-   */
+  /** Finalizes the sale by deducting from both physical quantity and reservation. */
   public void deduct(int qty) {
     if (qty <= 0) throw new IllegalArgumentException("Quantity must be positive");
     if (this.reservedQuantity < qty) {
@@ -69,9 +67,7 @@ public class StockLevel extends BaseTenantEntity {
     this.quantity -= qty;
   }
 
-  /**
-   * Direct deduction (POS/Manual) without reservation.
-   */
+  /** Direct deduction (POS/Manual) without reservation. */
   public void deductInstantly(int qty) {
     if (qty <= 0) throw new IllegalArgumentException("Quantity must be positive");
     if (getAvailableQuantity() < qty) {
@@ -84,11 +80,10 @@ public class StockLevel extends BaseTenantEntity {
     if (qty < 0) throw new IllegalArgumentException("Quantity cannot be negative");
     this.quantity = qty;
   }
-  
-  // Package-private setters for JPA/Infra if needed, but prefer domain methods
-  public void setProductId(Long productId) { this.productId = productId; }
-  public void setWarehouseId(Long warehouseId) { this.warehouseId = warehouseId; }
-  public void setTenantId(String tenantId) { super.setTenantId(tenantId); }
+
+  public void setTenantId(String tenantId) {
+    super.setTenantId(tenantId);
+  }
 
   public int getAvailableQuantity() {
     return quantity - reservedQuantity;

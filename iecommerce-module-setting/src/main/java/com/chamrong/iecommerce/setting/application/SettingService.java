@@ -114,12 +114,9 @@ public class SettingService {
    * <p>If the key already exists for this tenant, only non-null fields are applied.
    */
   @Transactional
-  public SettingResponse upsertTenantSetting(
-      String tenantId, String key, SettingRequest request) {
+  public SettingResponse upsertTenantSetting(String tenantId, String key, SettingRequest request) {
     TenantSetting setting =
-        tenantSettingRepository
-            .findByTenantIdAndKey(tenantId, key)
-            .orElse(new TenantSetting());
+        tenantSettingRepository.findByTenantIdAndKey(tenantId, key).orElse(new TenantSetting());
     setting.setTenantId(tenantId);
     setting.setKey(key);
     if (request.value() != null) setting.setValue(request.value());
@@ -164,6 +161,17 @@ public class SettingService {
               fallback.setDescription("Reset to global default");
               return toTenantResponse(tenantSettingRepository.save(fallback)).masked();
             });
+  }
+
+  /**
+   * Returns true if the feature flag for the given key is enabled for the tenant. Falls back to
+   * global setting if no tenant override exists.
+   */
+  @Transactional(readOnly = true)
+  public boolean isFeatureEnabled(String tenantId, String featureKey) {
+    String value =
+        getTenantValue(tenantId, featureKey).or(() -> getGlobalValue(featureKey)).orElse("false");
+    return "true".equalsIgnoreCase(value.trim());
   }
 
   // ── Quota Convenience ─────────────────────────────────────────────────────

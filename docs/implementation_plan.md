@@ -29,6 +29,8 @@
 | `chat` | ✅ Rich | ✅ Full | ✅ Done | ✅ Done | ✅ Done | ✅ 90% |
 | `report` | ✅ Rich | ✅ Full | ✅ Done | ✅ Done | ✅ Done | ✅ 85% |
 | `asset` | ✅ Rich | ✅ Full | ✅ Done | ✅ Done | ✅ Done | ✅ 90% |
+| `subscription` | ✅ Rich | ✅ Full | ✅ Done | ✅ Done | ✅ Done | ✅ 90% |
+| `sale` | ✅ Rich | ✅ Full | ✅ Done | ✅ Done | ✅ Done | ✅ 90% |
 | `booking` | ⚠️ Stub | ⚠️ Stub | ⚠️ Stub | 🔴 None | ✅ Done | 🔴 30% |
 
 > ✅ **All 19 modules compile cleanly (BUILD SUCCESS).** All domain entities use Lombok
@@ -68,30 +70,29 @@
 | # | Task | Module | Status | Notes |
 |---|---|---|---|---|
 | 3.1 | Catalog mapping for `PHYSICAL` and `DIGITAL` types | Catalog | ✅ Done | Variants, SKUs, Translations, Categories |
-| 3.2 | Physical Stock management | Inventory | ✅ Done | Reserving, tracking, and auditing physical counts |
-| 3.3 | Physical Fulfillment workflows | Order | ✅ Done | Pick, pack, and ship logic (Tracking numbers) |
-| 3.4 | Customer profile enrichment | Customer | ✅ Done | Multiple shipping addresses, loyalty points |
-| 3.5 | Promotion rules | Promotion | ✅ Done | Voucher codes, percentage discounts |
-
-### Phase 4 — Booking Service APIs
-**Goal:** Sell the "Appointments" package for time-based services (Massage, Salons, Consultants).
-
+### Phase 3: Core Business Flows
 | # | Task | Module | Status | Notes |
 |---|---|---|---|---|
-| 4.1 | Catalog mapping for `BOOKING` types | Catalog | ✅ Done | Service duration, required staff |
-| 4.2 | Service Booking engine | Booking | ✅ Done | Hourly/minute slot reservation, Staff scheduling |
-| 4.3 | Notification reminders | Notification | ✅ Done | Email/WhatsApp reminders via Scheduled Job |
-| 4.4 | Post-service review collection | Review | ✅ Done | Verified service, rating system |
+| 3.1 | Cart & Checkout logic (Multi-product) | Order | ✅ Done | Initial implementation |
+| 3.2 | Digital Content Delivery (Asset bridge) | Asset/Order | ⏳ Pending | ZIP/Video streaming delivery |
+| 3.3 | Return & Refund Orchestration | Order/Payment | ⏳ Pending | Partial refunds support |
+| 3.4 | Customer profile enrichment (Addresses, Points) | Customer | ✅ Done | loyalty points, multi-address, status |
 
-### Phase 5 — POS (Point of Sale) APIs
-**Goal:** Allow physical retail stores to operate offline-capable cash registers powered by the headless API.
+### Phase 4: Booking & Reservation Logic
+| # | Task | Module | Status | Notes |
+|---|---|---|---|---|
+| 4.1 | Calendar Domain (Slot management) | Booking | ✅ Done | Foundations ready |
+| 4.2 | Slot Reservation Engine | Booking | ✅ Done | Conflict checking implemented |
+| 4.3 | Lodge Operation rules (Check-in/out) | Booking | ⏳ Pending | Property management specifics |
 
-| # | Task | Module | Notes |
-|---|---|---|---|
+### Phase 5: Point of Sale (POS) Integration
+| # | Task | Module | Status | Notes |
+|---|---|---|---|---|
 | 5.1 | Offline-capable Cashier interface (WebWorker) | POS | ⏳ Pending | Syncing local results to upstream |
 | 5.2 | Instant Inventory relief | Order | ✅ Done | Bypass standard 'Pick/Pack' for immediate handover |
-| 5.3 | Local Receipt printing | POS | ⏳ Pending | Thermal printer support (ESC/POS) |receipts |
-| 5.4 | End-of-day reconciliation reports | Report | Sales per cashier, cash drawer discrepancy |
+| 5.3 | POS API Implementation | Order | ✅ Done | createPosOrder with automatic completion |
+| 5.4 | Local Receipt printing | POS | ⏳ Pending | Thermal printer support (ESC/POS) |
+| 5.5 | End-of-day reconciliation reports | Report | ⏳ Pending | Sales per cashier, cash drawer discrepancy |
 
 ---
 

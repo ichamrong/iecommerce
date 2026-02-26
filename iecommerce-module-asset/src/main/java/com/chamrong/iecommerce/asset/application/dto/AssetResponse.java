@@ -9,5 +9,6 @@ public record AssetResponse(
     String mimeType,
     Long fileSize,
     String source,
+    String url,
     String type,
     Instant createdAt) {}

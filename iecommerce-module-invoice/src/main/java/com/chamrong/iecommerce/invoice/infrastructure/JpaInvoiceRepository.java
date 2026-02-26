@@ -2,6 +2,7 @@ package com.chamrong.iecommerce.invoice.infrastructure;
 
 import com.chamrong.iecommerce.invoice.domain.Invoice;
 import com.chamrong.iecommerce.invoice.domain.InvoiceRepository;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,4 +16,7 @@ public interface JpaInvoiceRepository extends JpaRepository<Invoice, Long>, Invo
 
   @Override
   List<Invoice> findByOrderId(Long orderId);
+
+  @Override
+  List<Invoice> findByTenantIdAndCreatedAtBetween(String tenantId, Instant start, Instant end);
 }

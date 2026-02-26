@@ -1,12 +1,19 @@
 package com.chamrong.iecommerce.invoice.application.dto;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.List;
 
 public record CreateInvoiceRequest(
-    Long orderId,
-    String currency,
-    List<LineItem> lines) {
+    @NotNull Long orderId,
+    @NotBlank String currency,
+    @NotEmpty List<@Valid LineItem> lines,
+    String idempotencyKey) {
 
-  public record LineItem(String productName, int quantity, BigDecimal unitPriceAmount) {}
+  public record LineItem(
+      @NotBlank String productName, @Min(1) int quantity, @NotNull BigDecimal unitPriceAmount) {}
 }

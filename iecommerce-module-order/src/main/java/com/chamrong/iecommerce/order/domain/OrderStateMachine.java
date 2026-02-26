@@ -45,7 +45,11 @@ public final class OrderStateMachine {
     t.put(
         OrderState.PaymentSettled,
         java.util.Collections.unmodifiableSet(
-            EnumSet.of(OrderState.Picking, OrderState.Shipped, OrderState.Completed, OrderState.Cancelled)));
+            EnumSet.of(
+                OrderState.Picking,
+                OrderState.Shipped,
+                OrderState.Completed,
+                OrderState.Cancelled)));
     t.put(
         OrderState.Picking,
         java.util.Collections.unmodifiableSet(

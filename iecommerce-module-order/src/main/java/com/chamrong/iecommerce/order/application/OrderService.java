@@ -1,16 +1,5 @@
 package com.chamrong.iecommerce.order.application;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.chamrong.iecommerce.common.Money;
 import com.chamrong.iecommerce.common.event.OrderCancelledEvent;
 import com.chamrong.iecommerce.common.event.OrderCompletedEvent;
@@ -33,10 +22,18 @@ import com.chamrong.iecommerce.order.domain.OrderState;
 import com.chamrong.iecommerce.promotion.PromotionApi;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import jakarta.persistence.EntityNotFoundException;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -241,36 +238,44 @@ public class OrderService implements OrderApi {
     }
 
     order.setTotalManual(new Money(req.amountPaid(), req.currency()));
-    
+
     // Transition to confirmed
     order.confirm();
-    
+
     // Transition to payment settled (since it's POS, paid upfront)
     order.pay();
-    
+
     // Transition to completed immediately (Bypass pick/pack/ship)
     order.completeImmediate();
 
     Order saved = orderRepository.save(order);
 
     // Publish stock deduction event (immediate inventory relief)
-    var items = saved.getItems().stream()
-        .map(i -> new OrderShippedEvent.Item(i.getProductVariantId(), i.getQuantity()))
-        .toList();
-    
+    var items =
+        saved.getItems().stream()
+            .map(i -> new OrderShippedEvent.Item(i.getProductVariantId(), i.getQuantity()))
+            .toList();
+
     saveOutbox(
         saved.getTenantId(),
-        "OrderShippedEvent", // Using ShippedEvent to trigger stock deduction in inventory module
-        new OrderShippedEvent(saved.getId(), saved.getTenantId(), saved.getCustomerId(), "POS-HANDOVER", items));
+        com.chamrong.iecommerce.common.event.EventConstants
+            .ORDER_SHIPPED, // Using ShippedEvent to trigger stock deduction in inventory module
+        new OrderShippedEvent(
+            saved.getId(), saved.getTenantId(), saved.getCustomerId(), "POS-HANDOVER", items));
 
     // Publish completion event for loyalty points
     int points = saved.getTotal() != null ? saved.getTotal().getAmount().intValue() : 0;
-    saveOutbox(saved.getTenantId(), "OrderCompletedEvent", 
+    saveOutbox(
+        saved.getTenantId(),
+        com.chamrong.iecommerce.common.event.EventConstants.ORDER_COMPLETED,
         new OrderCompletedEvent(saved.getTenantId(), saved.getId(), saved.getCustomerId(), points));
 
     audit(saved, null, OrderState.Completed, OrderAuditActions.ORDER_COMPLETED, "POS Sale");
-    
-    log.info("POS Order id={} created and completed immediately for customer {}", saved.getId(), req.customerId());
+
+    log.info(
+        "POS Order id={} created and completed immediately for customer {}",
+        saved.getId(),
+        req.customerId());
     return toResponse(saved);
   }
 

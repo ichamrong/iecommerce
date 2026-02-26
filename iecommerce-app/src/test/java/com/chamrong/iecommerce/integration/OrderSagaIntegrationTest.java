@@ -1,22 +1,6 @@
 package com.chamrong.iecommerce.integration;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.ActiveProfiles;
 
 import com.chamrong.iecommerce.IecommerceApplication;
 import com.chamrong.iecommerce.auth.application.dto.AuthResponse;
@@ -31,6 +15,21 @@ import com.chamrong.iecommerce.order.application.dto.AddItemRequest;
 import com.chamrong.iecommerce.order.application.dto.OrderResponse;
 import com.chamrong.iecommerce.payment.application.dto.PaymentRequest;
 import com.chamrong.iecommerce.payment.application.dto.PaymentResponse;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest(
     classes = IecommerceApplication.class,
@@ -61,16 +60,30 @@ public class OrderSagaIntegrationTest extends AbstractIntegrationTest {
     headers.set("X-Tenant-Id", tenantId);
 
     // 2. Setup Catalog: Create a Product and Variant
-    CreateProductRequest createProdReq = new CreateProductRequest(
-        "test-phone-" + System.currentTimeMillis(),
-        "PHYSICAL",
-        new BigDecimal("999.00"), "USD",
-        null, null,
-        null, "STANDARD", "test",
-        null, null,
-        Map.of("en", new TranslationRequest("Test Phone", "Description", null, null, null)),
-        List.of(new CreateVariantRequest("SKU-" + System.currentTimeMillis(), new BigDecimal("999.00"), "USD", null, null, null, 0, Map.of("en", "Default")))
-    );
+    CreateProductRequest createProdReq =
+        new CreateProductRequest(
+            "test-phone-" + System.currentTimeMillis(),
+            "PHYSICAL",
+            new BigDecimal("999.00"),
+            "USD",
+            null,
+            null,
+            null,
+            "STANDARD",
+            "test",
+            null,
+            null,
+            Map.of("en", new TranslationRequest("Test Phone", "Description", null, null, null)),
+            List.of(
+                new CreateVariantRequest(
+                    "SKU-" + System.currentTimeMillis(),
+                    new BigDecimal("999.00"),
+                    "USD",
+                    null,
+                    null,
+                    null,
+                    0,
+                    Map.of("en", "Default"))));
 
     ResponseEntity<ProductResponse> prodResp =
         restTemplate.exchange(
@@ -100,7 +113,12 @@ public class OrderSagaIntegrationTest extends AbstractIntegrationTest {
 
     // Set stock to 100
     restTemplate.exchange(
-        "/api/v1/inventory/stock/set?productId=" + variantId + "&warehouseId=" + whId + "&qty=100&tenantId=" + tenantId,
+        "/api/v1/inventory/stock/set?productId="
+            + variantId
+            + "&warehouseId="
+            + whId
+            + "&qty=100&tenantId="
+            + tenantId,
         HttpMethod.POST,
         new HttpEntity<>(headers),
         Void.class);
@@ -108,10 +126,7 @@ public class OrderSagaIntegrationTest extends AbstractIntegrationTest {
     // 5. Create Draft Order
     ResponseEntity<OrderResponse> createOrderResp =
         restTemplate.exchange(
-            "/api/v1/orders",
-            HttpMethod.POST,
-            new HttpEntity<>(headers),
-            OrderResponse.class);
+            "/api/v1/orders", HttpMethod.POST, new HttpEntity<>(headers), OrderResponse.class);
     assertThat(createOrderResp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     Long orderId = createOrderResp.getBody().id();
 
@@ -133,7 +148,7 @@ public class OrderSagaIntegrationTest extends AbstractIntegrationTest {
         OrderResponse.class);
 
     // Wait for Outbox relay
-    Thread.sleep(6000); 
+    Thread.sleep(6000);
 
     // 8. Pay for Order
     PaymentRequest payReq = new PaymentRequest(orderId, new BigDecimal("1998.00"), "USD", "STRIPE");
@@ -163,11 +178,27 @@ public class OrderSagaIntegrationTest extends AbstractIntegrationTest {
     assertThat(verifyResp.getBody().state()).isEqualTo("Picking");
 
     // 10. Finish lifecycle
-    restTemplate.exchange("/api/v1/orders/" + orderId + "/pick", HttpMethod.POST, new HttpEntity<>(headers), OrderResponse.class);
-    restTemplate.exchange("/api/v1/orders/" + orderId + "/pack", HttpMethod.POST, new HttpEntity<>(headers), OrderResponse.class);
-    restTemplate.exchange("/api/v1/orders/" + orderId + "/ship?trackingNumber=SAGA123", HttpMethod.POST, new HttpEntity<>(headers), OrderResponse.class);
-    restTemplate.exchange("/api/v1/orders/" + orderId + "/deliver", HttpMethod.POST, new HttpEntity<>(headers), OrderResponse.class);
-    
+    restTemplate.exchange(
+        "/api/v1/orders/" + orderId + "/pick",
+        HttpMethod.POST,
+        new HttpEntity<>(headers),
+        OrderResponse.class);
+    restTemplate.exchange(
+        "/api/v1/orders/" + orderId + "/pack",
+        HttpMethod.POST,
+        new HttpEntity<>(headers),
+        OrderResponse.class);
+    restTemplate.exchange(
+        "/api/v1/orders/" + orderId + "/ship?trackingNumber=SAGA123",
+        HttpMethod.POST,
+        new HttpEntity<>(headers),
+        OrderResponse.class);
+    restTemplate.exchange(
+        "/api/v1/orders/" + orderId + "/deliver",
+        HttpMethod.POST,
+        new HttpEntity<>(headers),
+        OrderResponse.class);
+
     ResponseEntity<OrderResponse> completeResp =
         restTemplate.exchange(
             "/api/v1/orders/" + orderId + "/complete",

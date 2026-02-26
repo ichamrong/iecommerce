@@ -17,6 +17,11 @@ spring:
     username: ${postgres.username:admin}
     password: ${postgres.password}
     driver-class-name: org.postgresql.Driver
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -87,4 +92,8 @@ iecommerce:
     accountSid: dummy_sid
     authToken: dummy_token
     systemPhoneNumber: "+15555555555"
+
+notification:
+  sms:
+    provider: twilio # Values: twilio, plasgate, mekong
 

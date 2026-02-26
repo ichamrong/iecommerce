@@ -1,5 +1,6 @@
 package com.chamrong.iecommerce.inventory.application;
 
+import com.chamrong.iecommerce.inventory.InventoryApi;
 import com.chamrong.iecommerce.inventory.application.dto.AdjustStockRequest;
 import com.chamrong.iecommerce.inventory.application.dto.StockLevelResponse;
 import com.chamrong.iecommerce.inventory.application.dto.WarehouseRequest;
@@ -15,15 +16,12 @@ import com.chamrong.iecommerce.inventory.domain.Warehouse;
 import com.chamrong.iecommerce.inventory.domain.WarehouseRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.chamrong.iecommerce.inventory.InventoryApi;
- 
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -48,7 +46,7 @@ public class InventoryService implements InventoryApi {
   @Override
   @Transactional
   public void reserveStock(String tenantId, Long productId, int quantity) {
-    List<StockLevel> levels = stockLevelRepository.findByProductId(productId);
+    List<StockLevel> levels = stockLevelRepository.findForUpdateByProductId(productId);
     StockLevel levelWithStock =
         levels.stream()
             .filter(l -> l.getAvailableQuantity() >= quantity)
@@ -67,7 +65,7 @@ public class InventoryService implements InventoryApi {
   @Override
   @Transactional
   public void releaseStock(String tenantId, Long productId, int quantity) {
-    List<StockLevel> levels = stockLevelRepository.findByProductId(productId);
+    List<StockLevel> levels = stockLevelRepository.findForUpdateByProductId(productId);
     for (StockLevel level : levels) {
       if (level.getReservedQuantity() >= quantity) {
         level.release(quantity);
@@ -85,7 +83,7 @@ public class InventoryService implements InventoryApi {
   @Override
   @Transactional
   public void deductStock(String tenantId, Long productId, int quantity) {
-    List<StockLevel> levels = stockLevelRepository.findByProductId(productId);
+    List<StockLevel> levels = stockLevelRepository.findForUpdateByProductId(productId);
     for (StockLevel level : levels) {
       if (level.getReservedQuantity() >= quantity) {
         level.deduct(quantity);
@@ -114,13 +112,15 @@ public class InventoryService implements InventoryApi {
   @Override
   @Transactional
   public void deductPosSaleStock(String tenantId, Long productId, int quantity, Long terminalId) {
-    List<StockLevel> levels = stockLevelRepository.findByProductId(productId);
+    List<StockLevel> levels = stockLevelRepository.findForUpdateByProductId(productId);
     StockLevel levelWithStock =
         levels.stream()
             .filter(l -> l.getAvailableQuantity() >= quantity)
             .findFirst()
-            .orElseThrow(() -> new OutOfStockException(
-                "Not enough available stock for POS sale of product: " + productId));
+            .orElseThrow(
+                () ->
+                    new OutOfStockException(
+                        "Not enough available stock for POS sale of product: " + productId));
 
     levelWithStock.deductInstantly(quantity);
     stockLevelRepository.save(levelWithStock);
@@ -196,7 +196,10 @@ public class InventoryService implements InventoryApi {
 
     log.info(
         "Stock adjusted productId={} warehouseId={} delta={} newQty={}",
-        req.productId(), req.warehouseId(), req.delta(), newQty);
+        req.productId(),
+        req.warehouseId(),
+        req.delta(),
+        newQty);
 
     return toStockResponse(level);
   }
@@ -226,7 +229,11 @@ public class InventoryService implements InventoryApi {
     return adjustStock(
         tenantId,
         new AdjustStockRequest(
-            productId, warehouseId, delta, StockMovement.MovementReason.CORRECTION, "Manual override to " + qty));
+            productId,
+            warehouseId,
+            delta,
+            StockMovement.MovementReason.CORRECTION,
+            "Manual override to " + qty));
   }
 
   // ── Low-stock check ────────────────────────────────────────────────────────
@@ -245,6 +252,7 @@ public class InventoryService implements InventoryApi {
   }
 
   private StockLevelResponse toStockResponse(StockLevel sl) {
-    return new StockLevelResponse(sl.getId(), sl.getProductId(), sl.getWarehouseId(), sl.getQuantity());
+    return new StockLevelResponse(
+        sl.getId(), sl.getProductId(), sl.getWarehouseId(), sl.getQuantity());
   }
 }

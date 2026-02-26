@@ -16,7 +16,11 @@ import lombok.Getter;
 @Getter
 public class InventoryOutboxEvent {
 
-  public enum Status { PENDING, SENT, FAILED }
+  public enum Status {
+    PENDING,
+    SENT,
+    FAILED
+  }
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

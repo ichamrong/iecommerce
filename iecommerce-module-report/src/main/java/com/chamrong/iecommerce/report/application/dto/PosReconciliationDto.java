@@ -1,4 +1,4 @@
-package com.chamrong.iecommerce.report.application;
+package com.chamrong.iecommerce.report.application.dto;
 
 import java.math.BigDecimal;
 import java.time.Instant;

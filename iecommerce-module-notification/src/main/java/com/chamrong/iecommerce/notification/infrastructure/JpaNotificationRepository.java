@@ -3,6 +3,7 @@ package com.chamrong.iecommerce.notification.infrastructure;
 import com.chamrong.iecommerce.notification.domain.Notification;
 import com.chamrong.iecommerce.notification.domain.NotificationRepository;
 import com.chamrong.iecommerce.notification.domain.NotificationStatus;
+import com.chamrong.iecommerce.notification.domain.NotificationType;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -20,4 +21,8 @@ public interface JpaNotificationRepository
 
   @Override
   List<Notification> findByTenantIdAndStatus(String tenantId, NotificationStatus status);
+
+  @Override
+  List<Notification> findByRecipientAndTypeAndStatus(
+      String recipient, NotificationType type, NotificationStatus status);
 }

@@ -34,4 +34,7 @@ public enum SettingCategory {
 
   /** UI / storefront customisation (theme, fonts, colours). */
   APPEARANCE,
+
+  /** Feature flags for toggling system functionalities dynamically. */
+  FEATURE_FLAG,
 }

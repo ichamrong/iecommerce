@@ -51,9 +51,7 @@ public class ReviewService {
 
   @Transactional(readOnly = true)
   public List<ReviewResponse> getPendingReviews() {
-    return reviewRepository
-        .findByStatus(ReviewStatus.PENDING.name())
-        .stream()
+    return reviewRepository.findByStatus(ReviewStatus.PENDING.name()).stream()
         .map(this::toResponse)
         .toList();
   }

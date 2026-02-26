@@ -22,8 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Admin-level global setting management.
  *
- * <p>Only platform super-admins can manage global settings. All operations require the
- * {@code settings:manage} permission.
+ * <p>Only platform super-admins can manage global settings. All operations require the {@code
+ * settings:manage} permission.
  *
  * <p>Base path: {@code /api/v1/admin/settings}
  */
@@ -42,8 +42,7 @@ public class GlobalSettingController {
           "Returns all platform-wide settings. Secret values are masked with ***."
               + " Supports optional category filter.")
   @GetMapping
-  public List<SettingResponse> listAll(
-      @RequestParam(required = false) SettingCategory category) {
+  public List<SettingResponse> listAll(@RequestParam(required = false) SettingCategory category) {
     if (category != null) {
       return settingService.getGlobalSettingsByCategory(category);
     }
@@ -56,8 +55,7 @@ public class GlobalSettingController {
           "Creates or updates a platform-wide setting by key. Supports partial updates — only"
               + " non-null fields are applied.")
   @PutMapping("/{key}")
-  public SettingResponse upsert(
-      @PathVariable String key, @RequestBody SettingRequest request) {
+  public SettingResponse upsert(@PathVariable String key, @RequestBody SettingRequest request) {
     return settingService.upsertGlobalSetting(key, request);
   }
 

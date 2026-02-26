@@ -1,10 +1,5 @@
 package com.chamrong.iecommerce.audit.infrastructure;
 
-import org.springframework.context.event.EventListener;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
-
 import com.chamrong.iecommerce.audit.application.AuditService;
 import com.chamrong.iecommerce.auth.TenantPreferencesUpdatedEvent;
 import com.chamrong.iecommerce.auth.TenantRegisteredEvent;
@@ -34,6 +29,8 @@ import com.chamrong.iecommerce.catalog.VariantAddedEvent;
 import com.chamrong.iecommerce.catalog.VariantRemovedEvent;
 import com.chamrong.iecommerce.catalog.VariantUpdatedEvent;
 import com.chamrong.iecommerce.common.event.OrderCompletedEvent;
+import com.chamrong.iecommerce.common.event.PaymentFailedEvent;
+import com.chamrong.iecommerce.common.event.PaymentSucceededEvent;
 import com.chamrong.iecommerce.customer.AddressAddedEvent;
 import com.chamrong.iecommerce.customer.AddressRemovedEvent;
 import com.chamrong.iecommerce.customer.AddressUpdatedEvent;
@@ -45,9 +42,13 @@ import com.chamrong.iecommerce.staff.StaffCreatedEvent;
 import com.chamrong.iecommerce.staff.StaffReactivatedEvent;
 import com.chamrong.iecommerce.staff.StaffSuspendedEvent;
 import com.chamrong.iecommerce.staff.StaffTerminatedEvent;
-
+import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 
 /** Listener for domain events across the system to populate audit logs. */
 @Slf4j
@@ -427,5 +428,30 @@ public class AuditEventListener {
         "BOOKING",
         event.bookingId().toString(),
         "Tenant: " + event.tenantId());
+  }
+
+  // --- Financial & Money Sequences ──────────────────────────────────────────
+
+  @EventListener
+  public void onPaymentSucceeded(PaymentSucceededEvent event) {
+    auditService.logMonetaryChange(
+        "SYSTEM", // Events don't carry the user ctx natively in async outbox relays
+        "PAYMENT_SUCCEED",
+        "PAYMENT",
+        event.paymentId().toString(),
+        BigDecimal.ZERO, // Before value conceptual (Pending)
+        event.amount().getAmount(), // After value
+        event.amount().getCurrency(),
+        "Payment Succeeded. OrderID: " + event.orderId() + ", ExternalID: " + event.externalId());
+  }
+
+  @EventListener
+  public void onPaymentFailed(PaymentFailedEvent event) {
+    auditService.log(
+        "SYSTEM",
+        "PAYMENT_FAIL",
+        "PAYMENT",
+        event.paymentId().toString(),
+        "Payment Failed. OrderID: " + event.orderId() + ", Reason: " + event.reason());
   }
 }

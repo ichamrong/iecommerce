@@ -32,23 +32,17 @@ public class Review extends BaseTenantEntity {
   private Integer rating;
 
   // ── Granular Ratings (Optional but recommended) ────────────────────────────
-  @Column
-  private Integer cleanlinessRating;
+  @Column private Integer cleanlinessRating;
 
-  @Column
-  private Integer accuracyRating;
+  @Column private Integer accuracyRating;
 
-  @Column
-  private Integer communicationRating;
+  @Column private Integer communicationRating;
 
-  @Column
-  private Integer locationRating;
+  @Column private Integer locationRating;
 
-  @Column
-  private Integer checkInRating;
+  @Column private Integer checkInRating;
 
-  @Column
-  private Integer valueRating;
+  @Column private Integer valueRating;
 
   // ── Text & Media ───────────────────────────────────────────────────────────
   @Column(columnDefinition = "TEXT")
@@ -63,15 +57,13 @@ public class Review extends BaseTenantEntity {
   @Column(nullable = false, length = 20)
   private ReviewStatus status = ReviewStatus.PENDING;
 
-  @Column
-  private boolean flaggedByOwner = false;
+  @Column private boolean flaggedByOwner = false;
 
   @Column(length = 50)
   private String flagReason; // Spam, Irrelevancy, Harassment, Competitor Conflict
 
   @Column(columnDefinition = "TEXT")
   private String ownerReply;
-
 
   // ── Domain behaviour ───────────────────────────────────────────────────────
 

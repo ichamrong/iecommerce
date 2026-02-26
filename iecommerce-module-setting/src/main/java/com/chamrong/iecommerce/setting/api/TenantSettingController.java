@@ -45,8 +45,7 @@ public class TenantSettingController {
               + " Supports optional category filter.")
   @GetMapping
   public List<SettingResponse> listMySettings(
-      @RequestParam String tenantId,
-      @RequestParam(required = false) SettingCategory category) {
+      @RequestParam String tenantId, @RequestParam(required = false) SettingCategory category) {
     if (category != null) {
       return settingService.getTenantSettingsByCategory(tenantId, category);
     }

@@ -12,8 +12,8 @@ import lombok.Setter;
 /**
  * Platform-wide configuration entry — shared across all tenants.
  *
- * <p>Examples: {@code supported_languages}, {@code maintenance_mode},
- * {@code platform_default_currency}.
+ * <p>Examples: {@code supported_languages}, {@code maintenance_mode}, {@code
+ * platform_default_currency}.
  */
 @Getter
 @Setter

@@ -1,0 +1,9 @@
+package com.chamrong.iecommerce.notification.domain;
+
+import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface NotificationTemplateRepository extends JpaRepository<NotificationTemplate, Long> {
+  Optional<NotificationTemplate> findByTenantIdAndTemplateKeyAndTypeAndLocale(
+      String tenantId, String templateKey, NotificationType type, String locale);
+}

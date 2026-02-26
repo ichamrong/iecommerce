@@ -33,7 +33,7 @@ public class QuotaEnforcer {
    *
    * @param tenantId the tenant to check
    * @param quotaKey the setting key that holds the numeric limit
-   * @param current  the current count or usage
+   * @param current the current count or usage
    * @throws QuotaExceededException if {@code current >= limit}
    */
   public void enforce(String tenantId, String quotaKey, long current) {
@@ -41,7 +41,10 @@ public class QuotaEnforcer {
     if (current >= limit) {
       log.warn(
           "Quota exceeded for tenant={} key={} current={} limit={}",
-          tenantId, quotaKey, current, limit);
+          tenantId,
+          quotaKey,
+          current,
+          limit);
       throw new QuotaExceededException(quotaKey, current, limit);
     }
   }
