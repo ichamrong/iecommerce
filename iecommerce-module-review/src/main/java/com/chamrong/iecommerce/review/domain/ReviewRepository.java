@@ -6,7 +6,9 @@ import java.util.Optional;
 public interface ReviewRepository {
   Review save(Review review);
 
+  Optional<Review> findById(Long id);
+
   List<Review> findByProductIdAndStatus(Long productId, String status);
 
-  Optional<Review> findById(Long id);
+  List<Review> findByStatus(String status);
 }

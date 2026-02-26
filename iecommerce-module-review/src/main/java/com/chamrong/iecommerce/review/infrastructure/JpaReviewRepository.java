@@ -9,6 +9,10 @@ import org.springframework.stereotype.Repository;
 /** Spring Data JPA adapter for the domain {@link ReviewRepository} port. */
 @Repository
 public interface JpaReviewRepository extends JpaRepository<Review, Long>, ReviewRepository {
+
   @Override
   List<Review> findByProductIdAndStatus(Long productId, String status);
+
+  @Override
+  List<Review> findByStatus(String status);
 }

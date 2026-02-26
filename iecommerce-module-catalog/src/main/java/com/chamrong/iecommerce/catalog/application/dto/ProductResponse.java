@@ -16,6 +16,8 @@ public record ProductResponse(
     String compareAtPriceCurrency,
     String taxCategory,
     String tags,
+    Integer serviceDurationMinutes,
+    Integer requiredStaffCount,
 
     // Resolved translation for the requested locale
     String resolvedLocale,

@@ -9,4 +9,6 @@ public interface WarehouseRepository {
   Optional<Warehouse> findById(Long id);
 
   List<Warehouse> findAll();
+
+  List<Warehouse> findByTenantId(String tenantId);
 }

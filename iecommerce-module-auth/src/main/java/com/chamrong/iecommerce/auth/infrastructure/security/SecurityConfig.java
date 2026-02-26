@@ -34,7 +34,19 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    return http.csrf(AbstractHttpConfigurer::disable)
+    return http.cors(org.springframework.security.config.Customizer.withDefaults())
+        .csrf(AbstractHttpConfigurer::disable)
+        .headers(
+            headers ->
+                headers
+                    .contentSecurityPolicy(
+                        csp ->
+                            csp.policyDirectives(
+                                "default-src 'self'; frame-ancestors 'none'; sandbox"))
+                    .frameOptions(frameOptions -> frameOptions.deny())
+                    .xssProtection(xss -> xss.disable()) // Relying on CSP for XSS protection
+                    .httpStrictTransportSecurity(
+                        hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000)))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .oauth2ResourceServer(

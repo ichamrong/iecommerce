@@ -9,4 +9,14 @@
     <include file="db/changelog/changelog-v2-catalog.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/changelog-v3-customer.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/changelog-v4-staff.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v5-setting-audit.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v6-features.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v7-subscription.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v8-accommodation.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v9-ecommerce.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v10-lodge.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v11-pos.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v12-booking-catalog.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v13-order-reliability.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v14-inventory-reliability.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>

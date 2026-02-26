@@ -33,6 +33,9 @@ spring:
     prefix: classpath:/templates/
     suffix: .html
     cache: false
+  mail:
+    host: localhost
+    port: 1025 # MailHog or similar dummy SMTP server
 
 springdoc:
   api-docs:
@@ -71,3 +74,17 @@ logging:
   level:
     org.springframework.modulith: INFO
     com.chamrong: DEBUG
+iecommerce:
+  storage:
+    r2:
+      endpoint: https://dummy.r2.cloudflarestorage.com
+      accessKey: dummy
+      secretKey: dummy
+      bucketName: iecommerce-bucket
+      publicUrl: https://cdn.dummy.com
+
+  twilio:
+    accountSid: dummy_sid
+    authToken: dummy_token
+    systemPhoneNumber: "+15555555555"
+

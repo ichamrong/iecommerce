@@ -1,7 +1,7 @@
 package com.chamrong.iecommerce.customer.infrastructure.event;
 
+import com.chamrong.iecommerce.common.event.OrderCompletedEvent;
 import com.chamrong.iecommerce.customer.domain.CustomerRepository;
-import com.chamrong.iecommerce.order.OrderCompletedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;

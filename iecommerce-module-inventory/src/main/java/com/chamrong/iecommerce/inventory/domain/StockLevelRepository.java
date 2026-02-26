@@ -9,4 +9,8 @@ public interface StockLevelRepository {
   Optional<StockLevel> findByProductIdAndWarehouseId(Long productId, Long warehouseId);
 
   List<StockLevel> findByProductId(Long productId);
+
+  List<StockLevel> findByWarehouseId(Long warehouseId);
+
+  List<StockLevel> findByTenantIdAndQuantityLessThanEqual(String tenantId, int threshold);
 }

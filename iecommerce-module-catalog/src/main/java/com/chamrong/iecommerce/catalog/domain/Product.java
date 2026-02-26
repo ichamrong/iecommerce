@@ -96,6 +96,12 @@ public class Product extends BaseTenantEntity {
   @Column(columnDefinition = "TEXT")
   private String tags;
 
+  // ── Booking / Service specifics ────────────────────────────────────────────
+
+  @Getter @Setter @Column private Integer serviceDurationMinutes;
+
+  @Getter @Setter @Column private Integer requiredStaffCount;
+
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ProductTranslation> translations = new ArrayList<>();
 
@@ -107,6 +113,9 @@ public class Product extends BaseTenantEntity {
 
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ProductRelationship> relationships = new ArrayList<>();
+
+  @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<ProductImage> images = new ArrayList<>();
 
   protected Product() {}
 

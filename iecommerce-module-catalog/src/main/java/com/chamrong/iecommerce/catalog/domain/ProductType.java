@@ -10,5 +10,11 @@ public enum ProductType {
   DIGITAL,
 
   /** Intangible service (e.g., massage, consultation). No stock tracking. */
-  SERVICE
+  SERVICE,
+
+  /** Time-based service (appointment). Managed by booking module. */
+  BOOKING,
+
+  /** Multi-night stay (hotel, rental). Managed by booking/order modules. */
+  ACCOMMODATION
 }

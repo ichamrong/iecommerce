@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="24-catalog-capacity" author="chamrong">
+        <addColumn tableName="catalog_product_variants">
+            <column name="capacity" type="INTEGER" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="25-booking-stay-limits" author="chamrong">
+        <addColumn tableName="booking_availability_rule">
+            <column name="min_stay_nights" type="INTEGER"/>
+            <column name="max_stay_nights" type="INTEGER"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="26-order-timed-items" author="chamrong">
+        <addColumn tableName="ecommerce_order_item">
+            <column name="start_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="end_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="27-order-deposit" author="chamrong">
+        <addColumn tableName="ecommerce_order">
+            <column name="deposit_amount" type="DECIMAL(19,4)"/>
+            <column name="deposit_currency" type="VARCHAR(3)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="28-catalog-product-images" author="chamrong">
+        <createTable tableName="catalog_product_images">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_product_image_product" referencedTableName="catalog_products" referencedColumnNames="id"/>
+            </column>
+            <column name="asset_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sort_order" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="alt_text" type="VARCHAR(255)"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

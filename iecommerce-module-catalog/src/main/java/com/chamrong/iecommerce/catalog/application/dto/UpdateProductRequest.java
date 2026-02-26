@@ -12,5 +12,7 @@ public record UpdateProductRequest(
     Long categoryId,
     String taxCategory,
     String tags,
+    Integer serviceDurationMinutes,
+    Integer requiredStaffCount,
     Map<String, CreateProductRequest.TranslationRequest> translations // null = don't touch
     ) {}

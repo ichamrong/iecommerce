@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         V5-A  Enrich audit_log with ip_address and user_agent columns.
+         These are populated by AuditService from the request context.
+         ───────────────────────────────────────────────────────────────────── -->
+    <changeSet id="36-enrich-audit-log" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="audit_log" columnName="ip_address"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="audit_log">
+            <column name="ip_address" type="VARCHAR(45)"/>
+            <column name="user_agent" type="VARCHAR(500)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         V5-B  Enrich setting_global with category, data_type, description,
+               and is_secret columns.
+         ───────────────────────────────────────────────────────────────────── -->
+    <changeSet id="37-enrich-setting-global" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="setting_global" columnName="category"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="setting_global">
+            <column name="description" type="VARCHAR(500)"/>
+            <column name="category" type="VARCHAR(50)" defaultValue="GENERAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="data_type" type="VARCHAR(20)" defaultValue="STRING">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_secret" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         V5-C  Enrich setting_tenant with category, data_type, description,
+               is_secret, and a unique constraint on (tenant_id, setting_key).
+         ───────────────────────────────────────────────────────────────────── -->
+    <changeSet id="38-enrich-setting-tenant" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="setting_tenant" columnName="category"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="setting_tenant">
+            <column name="description" type="VARCHAR(500)"/>
+            <column name="category" type="VARCHAR(50)" defaultValue="GENERAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="data_type" type="VARCHAR(20)" defaultValue="STRING">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_secret" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         V5-D  Add UNIQUE constraint on (tenant_id, setting_key) for
+               setting_tenant — one row per key per tenant.
+         ───────────────────────────────────────────────────────────────────── -->
+    <changeSet id="39-setting-tenant-unique-key" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="setting_tenant" indexName="uq_setting_tenant_tenantid_key"/>
+            </not>
+        </preConditions>
+        <addUniqueConstraint
+            tableName="setting_tenant"
+            columnNames="tenant_id, setting_key"
+            constraintName="uq_setting_tenant_tenantid_key"/>
+    </changeSet>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         V5-E  Performance indexes on audit_log for fast filtering by actor & resource.
+         ───────────────────────────────────────────────────────────────────── -->
+    <changeSet id="40-audit-log-indexes" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="audit_log" indexName="idx_audit_log_user_id"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="audit_log" indexName="idx_audit_log_user_id">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex tableName="audit_log" indexName="idx_audit_log_resource">
+            <column name="resource_type"/>
+            <column name="resource_id"/>
+        </createIndex>
+        <createIndex tableName="audit_log" indexName="idx_audit_log_timestamp">
+            <column name="timestamp"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         V5-F  Seed default global quota settings for the BASIC plan.
+               These are safe to skip if already present (MARK_RAN on precondition).
+         ───────────────────────────────────────────────────────────────────── -->
+    <changeSet id="41-seed-global-quotas" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM setting_global WHERE setting_key = 'quota.max_products'
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            INSERT INTO setting_global (setting_key, setting_value, description, category, data_type, is_secret, created_at, updated_at, deleted)
+            VALUES
+            ('quota.max_products',    '1000',  'Maximum number of catalog products per tenant',        'QUOTA', 'INTEGER', false, NOW(), NOW(), false),
+            ('quota.max_staff',       '20',    'Maximum number of staff accounts per tenant',           'QUOTA', 'INTEGER', false, NOW(), NOW(), false),
+            ('quota.max_customers',   '10000', 'Maximum number of customer records per tenant',         'QUOTA', 'INTEGER', false, NOW(), NOW(), false),
+            ('quota.max_warehouses',  '5',     'Maximum number of inventory warehouses per tenant',     'QUOTA', 'INTEGER', false, NOW(), NOW(), false),
+            ('quota.max_media_mb',    '5120',  'Maximum media storage in megabytes per tenant',         'QUOTA', 'INTEGER', false, NOW(), NOW(), false),
+            ('platform.default_locale',    'en',    'Default locale for the platform',                 'GENERAL', 'STRING',  false, NOW(), NOW(), false),
+            ('platform.default_currency',  'USD',   'Default currency code for the platform',          'GENERAL', 'STRING',  false, NOW(), NOW(), false),
+            ('platform.maintenance_mode',  'false', 'Put the entire platform into read-only mode',     'GENERAL', 'BOOLEAN', false, NOW(), NOW(), false);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

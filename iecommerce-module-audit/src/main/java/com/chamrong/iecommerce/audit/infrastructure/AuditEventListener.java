@@ -1,5 +1,10 @@
 package com.chamrong.iecommerce.audit.infrastructure;
 
+import org.springframework.context.event.EventListener;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+
 import com.chamrong.iecommerce.audit.application.AuditService;
 import com.chamrong.iecommerce.auth.TenantPreferencesUpdatedEvent;
 import com.chamrong.iecommerce.auth.TenantRegisteredEvent;
@@ -8,6 +13,7 @@ import com.chamrong.iecommerce.auth.UserDisabledEvent;
 import com.chamrong.iecommerce.auth.UserLoggedInEvent;
 import com.chamrong.iecommerce.auth.UserLoginFailedEvent;
 import com.chamrong.iecommerce.auth.UserRegisteredEvent;
+import com.chamrong.iecommerce.booking.BookingConfirmedEvent;
 import com.chamrong.iecommerce.catalog.CategoryCreatedEvent;
 import com.chamrong.iecommerce.catalog.CategoryDeletedEvent;
 import com.chamrong.iecommerce.catalog.CategoryUpdatedEvent;
@@ -27,6 +33,7 @@ import com.chamrong.iecommerce.catalog.ProductUpdatedEvent;
 import com.chamrong.iecommerce.catalog.VariantAddedEvent;
 import com.chamrong.iecommerce.catalog.VariantRemovedEvent;
 import com.chamrong.iecommerce.catalog.VariantUpdatedEvent;
+import com.chamrong.iecommerce.common.event.OrderCompletedEvent;
 import com.chamrong.iecommerce.customer.AddressAddedEvent;
 import com.chamrong.iecommerce.customer.AddressRemovedEvent;
 import com.chamrong.iecommerce.customer.AddressUpdatedEvent;
@@ -38,12 +45,9 @@ import com.chamrong.iecommerce.staff.StaffCreatedEvent;
 import com.chamrong.iecommerce.staff.StaffReactivatedEvent;
 import com.chamrong.iecommerce.staff.StaffSuspendedEvent;
 import com.chamrong.iecommerce.staff.StaffTerminatedEvent;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 
 /** Listener for domain events across the system to populate audit logs. */
 @Slf4j
@@ -401,5 +405,27 @@ public class AuditEventListener {
   public void onStaffReactivated(StaffReactivatedEvent event) {
     auditService.log(
         getCurrentUserId(), "STAFF_REACTIVATE", "STAFF", event.staffId().toString(), null);
+  }
+
+  // --- Order & Booking ---
+
+  @EventListener
+  public void onOrderCompleted(OrderCompletedEvent event) {
+    auditService.log(
+        getCurrentUserId(),
+        "ORDER_COMPLETE",
+        "ORDER",
+        event.orderId().toString(),
+        "Tenant: " + event.tenantId());
+  }
+
+  @EventListener
+  public void onBookingConfirmed(BookingConfirmedEvent event) {
+    auditService.log(
+        getCurrentUserId(),
+        "BOOKING_CONFIRM",
+        "BOOKING",
+        event.bookingId().toString(),
+        "Tenant: " + event.tenantId());
   }
 }

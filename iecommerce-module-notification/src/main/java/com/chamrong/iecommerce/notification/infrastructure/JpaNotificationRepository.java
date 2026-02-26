@@ -2,6 +2,7 @@ package com.chamrong.iecommerce.notification.infrastructure;
 
 import com.chamrong.iecommerce.notification.domain.Notification;
 import com.chamrong.iecommerce.notification.domain.NotificationRepository;
+import com.chamrong.iecommerce.notification.domain.NotificationStatus;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -10,6 +11,13 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface JpaNotificationRepository
     extends JpaRepository<Notification, Long>, NotificationRepository {
+
   @Override
   List<Notification> findByRecipient(String recipient);
+
+  @Override
+  List<Notification> findByTenantId(String tenantId);
+
+  @Override
+  List<Notification> findByTenantIdAndStatus(String tenantId, NotificationStatus status);
 }

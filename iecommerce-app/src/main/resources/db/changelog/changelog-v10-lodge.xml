@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="30-booking-lodge-extensions" author="chamrong">
+        <addColumn tableName="booking_reservation">
+            <column name="lodge_version_id" type="BIGINT"/>
+            <column name="applied_discount_rule_ids" type="VARCHAR(255)"/>
+            <column name="guest_first_name" type="VARCHAR(255)"/>
+            <column name="guest_last_name" type="VARCHAR(255)"/>
+            <column name="guest_email" type="VARCHAR(255)"/>
+            <column name="guest_phone" type="VARCHAR(50)"/>
+            <column name="guest_telegram" type="VARCHAR(50)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="31-booking-blocked-slot-platform" author="chamrong">
+        <addColumn tableName="booking_blocked_slot">
+            <column name="source_platform" type="VARCHAR(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="32-review-granular-ratings" author="chamrong">
+        <addColumn tableName="product_review">
+            <column name="booking_id" type="BIGINT"/>
+            <column name="is_anonymous" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="cleanliness_rating" type="INTEGER"/>
+            <column name="accuracy_rating" type="INTEGER"/>
+            <column name="communication_rating" type="INTEGER"/>
+            <column name="location_rating" type="INTEGER"/>
+            <column name="check_in_rating" type="INTEGER"/>
+            <column name="value_rating" type="INTEGER"/>
+            <column name="media_keys" type="VARCHAR(500)"/>
+            <column name="flagged_by_owner" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="flag_reason" type="VARCHAR(50)"/>
+            <column name="owner_reply" type="TEXT"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="33-booking-stay-policy" author="chamrong">
+        <createTable tableName="booking_stay_policy">
+            <column name="id" type="BIGSERIAL"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="tenant_id" type="VARCHAR(255)"><constraints nullable="false"/></column>
+            <column name="resource_product_id" type="BIGINT"><constraints nullable="false"/></column>
+            <column name="resource_variant_id" type="BIGINT"/>
+            <column name="start_date" type="DATE"/>
+            <column name="end_date" type="DATE"/>
+            <column name="min_stay_nights" type="INTEGER"/>
+            <column name="max_stay_nights" type="INTEGER"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
+            <column name="deleted" type="BOOLEAN" defaultValueBoolean="false"><constraints nullable="false"/></column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="34-booking-lodge-operation-rule" author="chamrong">
+        <createTable tableName="booking_lodge_operation_rule">
+            <column name="id" type="BIGSERIAL"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="tenant_id" type="VARCHAR(255)"><constraints nullable="false"/></column>
+            <column name="resource_product_id" type="BIGINT"><constraints nullable="false"/></column>
+            <column name="check_in_time" type="TIME"><constraints nullable="false"/></column>
+            <column name="check_out_time" type="TIME"><constraints nullable="false"/></column>
+            <column name="early_check_in_allowed" type="BOOLEAN" defaultValueBoolean="false"><constraints nullable="false"/></column>
+            <column name="early_check_in_grace_period_mins" type="INTEGER"/>
+            <column name="check_in_method" type="VARCHAR(50)"/>
+            <column name="arrival_details" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
+            <column name="deleted" type="BOOLEAN" defaultValueBoolean="false"><constraints nullable="false"/></column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="35-promotion-lodge-discount-rule" author="chamrong">
+        <createTable tableName="promotion_lodge_discount_rule">
+            <column name="id" type="BIGSERIAL"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="tenant_id" type="VARCHAR(255)"><constraints nullable="false"/></column>
+            <column name="resource_product_id" type="BIGINT"><constraints nullable="false"/></column>
+            <column name="name" type="VARCHAR(255)"><constraints nullable="false"/></column>
+            <column name="rule_type" type="VARCHAR(50)"><constraints nullable="false"/></column>
+            <column name="priority" type="INTEGER"><constraints nullable="false"/></column>
+            <column name="is_stackable" type="BOOLEAN" defaultValueBoolean="false"><constraints nullable="false"/></column>
+            <column name="value" type="DECIMAL(19,4)"><constraints nullable="false"/></column>
+            <column name="value_type" type="VARCHAR(20)"><constraints nullable="false"/></column>
+            <column name="min_nights" type="INTEGER"/>
+            <column name="max_nights" type="INTEGER"/>
+            <column name="min_days_in_advance" type="INTEGER"/>
+            <column name="max_days_in_advance" type="INTEGER"/>
+            <column name="start_date" type="DATE"/>
+            <column name="end_date" type="DATE"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"><constraints nullable="false"/></column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
+            <column name="deleted" type="BOOLEAN" defaultValueBoolean="false"><constraints nullable="false"/></column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="36-payment-financial-ledger" author="chamrong">
+        <createTable tableName="payment_financial_ledger">
+            <column name="id" type="BIGSERIAL"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="tenant_id" type="VARCHAR(255)"><constraints nullable="false"/></column>
+            <column name="order_id" type="BIGINT"/>
+            <column name="destination_user_id" type="BIGINT"/>
+            <column name="type" type="VARCHAR(20)"><constraints nullable="false"/></column>
+            <column name="category" type="VARCHAR(50)"><constraints nullable="false"/></column>
+            <column name="amount" type="DECIMAL(19,4)"><constraints nullable="false"/></column>
+            <column name="currency" type="VARCHAR(3)"><constraints nullable="false"/></column>
+            <column name="status" type="VARCHAR(50)"><constraints nullable="false"/></column>
+            <column name="execution_date" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="admin_reference_id" type="VARCHAR(255)"/>
+            <column name="bank_transaction_id" type="VARCHAR(255)"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
+            <column name="deleted" type="BOOLEAN" defaultValueBoolean="false"><constraints nullable="false"/></column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

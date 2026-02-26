@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Optimistic Locking: version column on ecommerce_order
+         Prevents the "last-write-wins" concurrency bug.
+         If two transactions read version=3 and both try to update,
+         the second will fail with OptimisticLockException. -->
+    <changeSet id="33-order-optimistic-lock" author="chamrong">
+        <addColumn tableName="ecommerce_order">
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- Banking-grade Audit Log: append-only, never updated or deleted.
+         Provides tamper-evident history of every order state transition.
+         PostgreSQL WAL (Write-Ahead Log) is the underlying durability guarantee. -->
+    <changeSet id="34-order-audit-log" author="chamrong">
+        <createTable tableName="order_audit_log">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="from_state" type="VARCHAR(50)"/>
+            <column name="to_state" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="action" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="performed_by" type="VARCHAR(255)"/>
+            <column name="context" type="TEXT"/>
+            <column name="occurred_at" type="TIMESTAMPTZ" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Efficient lookup: "show me full history of order X" -->
+        <createIndex tableName="order_audit_log" indexName="idx_order_audit_log_order_id">
+            <column name="order_id"/>
+            <column name="occurred_at"/>
+        </createIndex>
+
+        <!-- Security lookup: "find all access attempts by tenant Y" -->
+        <createIndex tableName="order_audit_log" indexName="idx_order_audit_log_tenant_action">
+            <column name="tenant_id"/>
+            <column name="action"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Outbox Pattern: reliable at-least-once event delivery.
+         Events are written here atomically with the Order update.
+         The OutboxRelayScheduler polls PENDING rows and delivers them.
+         Even a server crash after commit won't lose events (PostgreSQL WAL). -->
+    <changeSet id="35-order-outbox" author="chamrong">
+        <createTable tableName="order_outbox_event">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="payload" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+            <column name="retry_count" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="processed_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <!-- Primary access pattern: relay polls PENDING rows in creation order -->
+        <createIndex tableName="order_outbox_event" indexName="idx_outbox_status_created">
+            <column name="status"/>
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

@@ -2,13 +2,22 @@ package com.chamrong.iecommerce.invoice.domain;
 
 import com.chamrong.iecommerce.common.BaseEntity;
 import com.chamrong.iecommerce.common.Money;
-import jakarta.persistence.*;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "invoice_line")
 public class InvoiceLine extends BaseEntity {
 
-  @Column(nullable = false)
+  @Column(nullable = false, length = 255)
   private String productName;
 
   @Column(nullable = false)
@@ -20,28 +29,4 @@ public class InvoiceLine extends BaseEntity {
     @AttributeOverride(name = "currency", column = @Column(name = "currency"))
   })
   private Money unitPrice;
-
-  public String getProductName() {
-    return productName;
-  }
-
-  public void setProductName(String productName) {
-    this.productName = productName;
-  }
-
-  public Integer getQuantity() {
-    return quantity;
-  }
-
-  public void setQuantity(Integer quantity) {
-    this.quantity = quantity;
-  }
-
-  public Money getUnitPrice() {
-    return unitPrice;
-  }
-
-  public void setUnitPrice(Money unitPrice) {
-    this.unitPrice = unitPrice;
-  }
 }

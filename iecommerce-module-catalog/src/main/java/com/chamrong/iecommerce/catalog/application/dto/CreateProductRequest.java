@@ -22,6 +22,8 @@ public record CreateProductRequest(
     Long categoryId,
     String taxCategory,
     String tags,
+    Integer serviceDurationMinutes,
+    Integer requiredStaffCount,
 
     /**
      * At least one locale is required. "en" is required as the platform baseline. Keys are IETF BCP

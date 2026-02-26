@@ -2,11 +2,25 @@ package com.chamrong.iecommerce.payment.domain;
 
 import com.chamrong.iecommerce.common.BaseTenantEntity;
 import com.chamrong.iecommerce.common.Money;
-import jakarta.persistence.*;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
+import lombok.Getter;
 
+@Getter
 @Entity
 @Table(name = "payment_transaction")
 public class Payment extends BaseTenantEntity {
+
+  @Version
+  @Column(nullable = false)
+  private Long version = 0L;
 
   @Column(nullable = false)
   private Long orderId;
@@ -19,51 +33,60 @@ public class Payment extends BaseTenantEntity {
   private Money amount;
 
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
+  @Column(nullable = false, length = 50)
   private PaymentStatus status = PaymentStatus.PENDING;
 
-  @Column(nullable = false)
-  private String method; // e.g., STRIPE, PAYPAL
+  /** Gateway name: STRIPE, PAYPAL, CASH, BANK_TRANSFER, etc. */
+  @Column(nullable = false, length = 50)
+  private String method;
 
+  /** Identifier returned by the payment gateway after processing. */
+  @Column(length = 100)
   private String externalId;
 
-  public Long getOrderId() {
-    return orderId;
+  @Column(columnDefinition = "TEXT")
+  private String checkoutData;
+
+  // ── Domain behaviour ───────────────────────────────────────────────────────
+
+  public void markSucceeded(String externalId) {
+    this.externalId = externalId;
+    this.status = PaymentStatus.SUCCEEDED;
   }
 
+  public void markFailed() {
+    this.status = PaymentStatus.FAILED;
+  }
+
+  public void markRefunded() {
+    if (this.status != PaymentStatus.SUCCEEDED) {
+      throw new IllegalStateException("Only succeeded payments can be refunded");
+    }
+    this.status = PaymentStatus.REFUNDED;
+  }
+
+  // ── Bootstrap/JPA setters (Write-once pattern) ──────────────────────────
+
   public void setOrderId(Long orderId) {
+    if (this.orderId != null) throw new IllegalStateException("orderId already set");
     this.orderId = orderId;
   }
 
-  public Money getAmount() {
-    return amount;
-  }
-
   public void setAmount(Money amount) {
+    if (this.amount != null) throw new IllegalStateException("amount already set");
     this.amount = amount;
   }
 
-  public PaymentStatus getStatus() {
-    return status;
+  public void setMethod(String method) {
+    if (this.method != null) throw new IllegalStateException("method already set");
+    this.method = method;
   }
 
   public void setStatus(PaymentStatus status) {
     this.status = status;
   }
 
-  public String getMethod() {
-    return method;
-  }
-
-  public void setMethod(String method) {
-    this.method = method;
-  }
-
-  public String getExternalId() {
-    return externalId;
-  }
-
-  public void setExternalId(String externalId) {
-    this.externalId = externalId;
+  public void setCheckoutData(String checkoutData) {
+    this.checkoutData = checkoutData;
   }
 }

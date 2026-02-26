@@ -19,5 +19,36 @@
 			<groupId>com.chamrong</groupId>
 			<artifactId>iecommerce-module-catalog</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.chamrong</groupId>
+			<artifactId>iecommerce-module-booking</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.chamrong</groupId>
+			<artifactId>iecommerce-module-promotion</artifactId>
+		</dependency>
+	<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.swagger.core.v3</groupId>
+			<artifactId>swagger-annotations-jakarta</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<scope>provided</scope>
+		</dependency>
+<dependency>
+<groupId>org.springframework.boot</groupId>
+<artifactId>spring-boot-starter-test</artifactId>
+<scope>test</scope>
+</dependency>
+
 	</dependencies>
 </project>

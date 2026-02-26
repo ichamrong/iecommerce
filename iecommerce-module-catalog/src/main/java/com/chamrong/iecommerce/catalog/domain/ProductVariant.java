@@ -82,6 +82,23 @@ public class ProductVariant extends BaseEntity {
   @Getter
   @Setter
   @Column(nullable = false)
+  private int capacity = 1;
+
+  /** Duration for service-based products (BOOKING type). */
+  @Getter
+  @Setter
+  @Column(name = "duration_minutes")
+  private Integer durationMinutes;
+
+  /** Staff member who is required for this variant (optional). */
+  @Getter
+  @Setter
+  @Column(name = "required_staff_id")
+  private Long requiredStaffId;
+
+  @Getter
+  @Setter
+  @Column(nullable = false)
   private boolean enabled = true;
 
   @Getter

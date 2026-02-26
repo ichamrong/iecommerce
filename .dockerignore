@@ -1,0 +1,14 @@
+.git
+.gitignore
+.gitattributes
+.antigravityignore
+.dockerignore
+target/
+*.md
+docs/
+**/target/
+**/.idea/
+**/.vscode/
+**/*.iml
+.env
+.env.*

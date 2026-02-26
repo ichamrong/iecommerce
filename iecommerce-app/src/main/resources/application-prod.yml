@@ -1,0 +1,28 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+server:
+  error:
+    include-stacktrace: never
+    include-exception: false
+
+logging:
+  level:
+    root: INFO
+    com.chamrong.iecommerce: INFO
+
+management:
+  endpoints:
+    web:
+      base-path: /manage
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: never
+
+# Ensure that debug mode is strictly disabled for production as per ASVS Level 1
+debug: false
+trace: false

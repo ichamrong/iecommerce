@@ -9,4 +9,8 @@ public interface NotificationRepository {
   Optional<Notification> findById(Long id);
 
   List<Notification> findByRecipient(String recipient);
+
+  List<Notification> findByTenantId(String tenantId);
+
+  List<Notification> findByTenantIdAndStatus(String tenantId, NotificationStatus status);
 }

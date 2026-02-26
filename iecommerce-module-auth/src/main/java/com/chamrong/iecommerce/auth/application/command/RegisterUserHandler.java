@@ -42,6 +42,12 @@ public class RegisterUserHandler {
       throw new DuplicateUserException("Email already exists in this tenant: " + cmd.email());
     }
 
+    // OWASP ASVS 5.0 Level 1 - Requirement V6
+    if (cmd.password() == null || cmd.password().length() < 8) {
+      throw new com.chamrong.iecommerce.auth.application.exception.InvalidPasswordException(
+          "Password must be at least 8 characters long.");
+    }
+
     RealmResource realmResource = keycloak.realm(properties.getRealm());
 
     UserRepresentation userRep = new UserRepresentation();

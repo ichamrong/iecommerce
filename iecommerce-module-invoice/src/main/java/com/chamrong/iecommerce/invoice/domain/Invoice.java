@@ -2,16 +2,30 @@ package com.chamrong.iecommerce.invoice.domain;
 
 import com.chamrong.iecommerce.common.BaseTenantEntity;
 import com.chamrong.iecommerce.common.Money;
-import jakarta.persistence.*;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "invoice")
 public class Invoice extends BaseTenantEntity {
 
-  @Column(unique = true, nullable = false)
+  @Column(unique = true, nullable = false, length = 50)
   private String invoiceNumber;
 
   @Column(nullable = false)
@@ -19,6 +33,10 @@ public class Invoice extends BaseTenantEntity {
 
   @Column(nullable = false)
   private Instant invoiceDate = Instant.now();
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 30)
+  private InvoiceStatus status = InvoiceStatus.DRAFT;
 
   @Embedded
   @AttributeOverrides({
@@ -31,43 +49,24 @@ public class Invoice extends BaseTenantEntity {
   @JoinColumn(name = "invoice_id")
   private List<InvoiceLine> lines = new ArrayList<>();
 
-  public String getInvoiceNumber() {
-    return invoiceNumber;
+  // ── Domain behaviour ───────────────────────────────────────────────────────
+
+  public void issue() {
+    if (this.status != InvoiceStatus.DRAFT) {
+      throw new IllegalStateException("Only DRAFT invoices can be issued");
+    }
+    this.status = InvoiceStatus.ISSUED;
+    this.invoiceDate = Instant.now();
   }
 
-  public void setInvoiceNumber(String invoiceNumber) {
-    this.invoiceNumber = invoiceNumber;
+  public void markPaid() {
+    this.status = InvoiceStatus.PAID;
   }
 
-  public Long getOrderId() {
-    return orderId;
-  }
-
-  public void setOrderId(Long orderId) {
-    this.orderId = orderId;
-  }
-
-  public Instant getInvoiceDate() {
-    return invoiceDate;
-  }
-
-  public void setInvoiceDate(Instant invoiceDate) {
-    this.invoiceDate = invoiceDate;
-  }
-
-  public Money getTotalAmount() {
-    return totalAmount;
-  }
-
-  public void setTotalAmount(Money totalAmount) {
-    this.totalAmount = totalAmount;
-  }
-
-  public List<InvoiceLine> getLines() {
-    return lines;
-  }
-
-  public void setLines(List<InvoiceLine> lines) {
-    this.lines = lines;
+  public void void_() {
+    if (this.status == InvoiceStatus.PAID) {
+      throw new IllegalStateException("Cannot void a PAID invoice");
+    }
+    this.status = InvoiceStatus.VOID;
   }
 }

@@ -11,9 +11,16 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface JpaStockLevelRepository
     extends JpaRepository<StockLevel, Long>, StockLevelRepository {
+
   @Override
   Optional<StockLevel> findByProductIdAndWarehouseId(Long productId, Long warehouseId);
 
   @Override
   List<StockLevel> findByProductId(Long productId);
+
+  @Override
+  List<StockLevel> findByWarehouseId(Long warehouseId);
+
+  @Override
+  List<StockLevel> findByTenantIdAndQuantityLessThanEqual(String tenantId, int quantity);
 }

@@ -1,3 +1,2 @@
-/** Package com.chamrong.iecommerce.setting.application. */
-@org.springframework.lang.NonNullApi
+/** Application layer for platform and tenant setting management. */
 package com.chamrong.iecommerce.setting.application;

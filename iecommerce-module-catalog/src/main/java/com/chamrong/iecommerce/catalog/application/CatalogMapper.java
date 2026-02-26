@@ -53,6 +53,8 @@ public class CatalogMapper {
         product.getCompareAtPrice().getCurrency(),
         product.getTaxCategory(),
         product.getTags(),
+        product.getServiceDurationMinutes(),
+        product.getRequiredStaffCount(),
         resolvedLocale,
         t != null ? t.getName() : null,
         t != null ? t.getDescription() : null,

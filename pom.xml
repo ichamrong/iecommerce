@@ -34,6 +34,7 @@
 		<module>iecommerce-module-promotion</module>
 		<module>iecommerce-module-review</module>
 		<module>iecommerce-module-booking</module>
+		<module>iecommerce-module-subscription</module>
 		<module>iecommerce-app</module>
 	</modules>
 
@@ -48,6 +49,8 @@
 		<dependency-check.version>12.1.0</dependency-check.version>
 		<snyk.version>2.0.0</snyk.version>
 		<sonar.host.url>http://localhost:9000</sonar.host.url>
+		<bakong.version>1.0.0.9</bakong.version>
+		<aws.sdk.version>2.29.2</aws.sdk.version>
 	</properties>
 
 	<dependencyManagement>
@@ -143,6 +146,11 @@
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
+				<groupId>com.chamrong</groupId>
+				<artifactId>iecommerce-module-subscription</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
 				<groupId>org.springframework.modulith</groupId>
 				<artifactId>spring-modulith-bom</artifactId>
 				<version>${spring-modulith.version}</version>
@@ -176,6 +184,11 @@
 				<version>4.31.0</version>
 			</dependency>
 			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+				<version>3.4.3</version>
+			</dependency>
+			<dependency>
 				<groupId>org.springdoc</groupId>
 				<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 				<version>2.8.5</version>
@@ -196,11 +209,47 @@
 				<version>${lombok.version}</version>
 				<optional>true</optional>
 			</dependency>
+			<!-- Note: Ensure this artifact is installed in your local/private Maven repo if not on Central -->
+			<dependency>
+				<groupId>kh.gov.nbc.bakong_khqr</groupId>
+				<artifactId>sdk-java</artifactId>
+				<version>1.0.0.16</version>
+			</dependency>
+			<dependency>
+				<groupId>software.amazon.awssdk</groupId>
+				<artifactId>s3</artifactId>
+				<version>${aws.sdk.version}</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>${lombok.version}</version>
+						</path>
+						<!-- MapStruct processor to generate the mapping implementation during compilation -->
+						<path>
+							<groupId>org.mapstruct</groupId>
+							<artifactId>mapstruct-processor</artifactId>
+							<version>${mapstruct.version}</version>
+						</path>
+						<!-- Binding for Lombok and MapStruct to work together nicely -->
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok-mapstruct-binding</artifactId>
+							<version>0.2.0</version>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>com.diffplug.spotless</groupId>
 				<artifactId>spotless-maven-plugin</artifactId>

@@ -2,8 +2,20 @@ package com.chamrong.iecommerce.order.domain;
 
 import com.chamrong.iecommerce.common.BaseEntity;
 import com.chamrong.iecommerce.common.Money;
-import jakarta.persistence.*;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "ecommerce_order_item")
 public class OrderItem extends BaseEntity {
@@ -12,8 +24,11 @@ public class OrderItem extends BaseEntity {
   @JoinColumn(name = "order_id")
   private Order order;
 
-  private Long productVariantId; // Reference by ID to maintain boundary
+  /** Cross-boundary reference to catalog's ProductVariant. */
+  @Column(name = "product_variant_id")
+  private Long productVariantId;
 
+  @Column(nullable = false)
   private Integer quantity;
 
   @Embedded
@@ -23,35 +38,8 @@ public class OrderItem extends BaseEntity {
   })
   private Money unitPrice;
 
-  public Order getOrder() {
-    return order;
-  }
+  /** For time-based items (bookings, accommodations). */
+  private java.time.Instant startAt;
 
-  public void setOrder(Order order) {
-    this.order = order;
-  }
-
-  public Long getProductVariantId() {
-    return productVariantId;
-  }
-
-  public void setProductVariantId(Long productVariantId) {
-    this.productVariantId = productVariantId;
-  }
-
-  public Integer getQuantity() {
-    return quantity;
-  }
-
-  public void setQuantity(Integer quantity) {
-    this.quantity = quantity;
-  }
-
-  public Money getUnitPrice() {
-    return unitPrice;
-  }
-
-  public void setUnitPrice(Money unitPrice) {
-    this.unitPrice = unitPrice;
-  }
+  private java.time.Instant endAt;
 }

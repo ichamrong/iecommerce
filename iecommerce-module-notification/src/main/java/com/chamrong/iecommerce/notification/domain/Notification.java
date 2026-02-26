@@ -1,76 +1,49 @@
 package com.chamrong.iecommerce.notification.domain;
 
 import com.chamrong.iecommerce.common.BaseTenantEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "notification_log")
 public class Notification extends BaseTenantEntity {
 
-  @Column(nullable = false)
+  @Column(nullable = false, length = 255)
   private String recipient;
 
-  @Column(nullable = false)
+  @Column(nullable = false, length = 255)
   private String subject;
 
   @Column(columnDefinition = "TEXT", nullable = false)
   private String content;
 
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
+  @Column(nullable = false, length = 50)
   private NotificationType type;
 
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
+  @Column(nullable = false, length = 50)
   private NotificationStatus status = NotificationStatus.PENDING;
 
+  @Column(columnDefinition = "TEXT")
   private String errorMessage;
 
-  public String getRecipient() {
-    return recipient;
+  // ── Domain behaviour ───────────────────────────────────────────────────────
+
+  public void markSent() {
+    this.status = NotificationStatus.SENT;
+    this.errorMessage = null;
   }
 
-  public void setRecipient(String recipient) {
-    this.recipient = recipient;
-  }
-
-  public String getSubject() {
-    return subject;
-  }
-
-  public void setSubject(String subject) {
-    this.subject = subject;
-  }
-
-  public String getContent() {
-    return content;
-  }
-
-  public void setContent(String content) {
-    this.content = content;
-  }
-
-  public NotificationType getType() {
-    return type;
-  }
-
-  public void setType(NotificationType type) {
-    this.type = type;
-  }
-
-  public NotificationStatus getStatus() {
-    return status;
-  }
-
-  public void setStatus(NotificationStatus status) {
-    this.status = status;
-  }
-
-  public String getErrorMessage() {
-    return errorMessage;
-  }
-
-  public void setErrorMessage(String errorMessage) {
-    this.errorMessage = errorMessage;
+  public void markFailed(String reason) {
+    this.status = NotificationStatus.FAILED;
+    this.errorMessage = reason;
   }
 }

@@ -3,6 +3,8 @@ package com.chamrong.iecommerce.staff.api;
 import com.chamrong.iecommerce.auth.domain.Permissions;
 import com.chamrong.iecommerce.staff.application.command.CreateStaffCommand;
 import com.chamrong.iecommerce.staff.application.command.CreateStaffHandler;
+import com.chamrong.iecommerce.staff.application.command.UpdateStaffCommand;
+import com.chamrong.iecommerce.staff.application.command.UpdateStaffProfileHandler;
 import com.chamrong.iecommerce.staff.application.command.UpdateStaffTenantsCommand;
 import com.chamrong.iecommerce.staff.application.command.UpdateStaffTenantsHandler;
 import com.chamrong.iecommerce.staff.application.dto.StaffResponse;
@@ -33,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class StaffController {
 
   private final CreateStaffHandler createStaffHandler;
+  private final UpdateStaffProfileHandler updateProfileHandler;
   private final UpdateStaffTenantsHandler updateTenantsHandler;
   private final StaffQueryHandler staffQueryHandler;
   private final com.chamrong.iecommerce.staff.application.command.SuspendStaffHandler
@@ -44,6 +47,7 @@ public class StaffController {
 
   public StaffController(
       CreateStaffHandler createStaffHandler,
+      UpdateStaffProfileHandler updateProfileHandler,
       UpdateStaffTenantsHandler updateTenantsHandler,
       StaffQueryHandler staffQueryHandler,
       com.chamrong.iecommerce.staff.application.command.SuspendStaffHandler suspendStaffHandler,
@@ -52,6 +56,7 @@ public class StaffController {
       com.chamrong.iecommerce.staff.application.command.TerminateStaffHandler
           terminateStaffHandler) {
     this.createStaffHandler = createStaffHandler;
+    this.updateProfileHandler = updateProfileHandler;
     this.updateTenantsHandler = updateTenantsHandler;
     this.staffQueryHandler = staffQueryHandler;
     this.suspendStaffHandler = suspendStaffHandler;
@@ -103,6 +108,28 @@ public class StaffController {
   public ResponseEntity<?> getStaff(@PathVariable Long id) {
     try {
       return ResponseEntity.ok(staffQueryHandler.findById(id));
+    } catch (EntityNotFoundException e) {
+      return ResponseEntity.notFound().build();
+    }
+  }
+
+  /**
+   * Update a staff member's profile information.
+   *
+   * <p>PUT /api/v1/admin/staff/{id}
+   */
+  @Operation(
+      summary = "Update staff profile",
+      description = "Updates a staff member's profile (name, phone, department, branch, role).")
+  @PutMapping("/{id}")
+  public ResponseEntity<?> updateProfile(
+      @PathVariable Long id, @RequestBody UpdateStaffCommand cmd) {
+    try {
+      // Ensure the path variable and body ID are consistent
+      UpdateStaffCommand resolved =
+          new UpdateStaffCommand(
+              id, cmd.fullName(), cmd.phone(), cmd.department(), cmd.branch(), cmd.role());
+      return ResponseEntity.ok(updateProfileHandler.handle(resolved));
     } catch (EntityNotFoundException e) {
       return ResponseEntity.notFound().build();
     }

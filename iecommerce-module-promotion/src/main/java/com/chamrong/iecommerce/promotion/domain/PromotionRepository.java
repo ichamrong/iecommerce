@@ -9,4 +9,10 @@ public interface PromotionRepository {
   Optional<Promotion> findById(Long id);
 
   List<Promotion> findAll();
+
+  void delete(Promotion promotion);
+
+  List<Promotion> findByTenantId(String tenantId);
+
+  Optional<Promotion> findByTenantIdAndCode(String tenantId, String code);
 }

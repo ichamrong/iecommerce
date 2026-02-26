@@ -1,66 +1,40 @@
 package com.chamrong.iecommerce.asset.domain;
 
-import com.chamrong.iecommerce.common.BaseEntity;
-import jakarta.persistence.*;
+import com.chamrong.iecommerce.common.BaseTenantEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "ecommerce_asset")
-public class Asset extends BaseEntity {
+public class Asset extends BaseTenantEntity {
 
+  @Column(nullable = false, length = 255)
   private String name;
+
+  @Column(nullable = false, length = 255)
   private String fileName;
+
+  @Column(nullable = false, length = 100)
   private String mimeType;
+
+  @Column(nullable = false)
   private Long fileSize;
-  private String source; // Storage provider path or local path
+
+  /** Storage provider path, URL, or S3/MinIO object key. */
+  @Column(nullable = false, columnDefinition = "TEXT")
+  private String source;
 
   @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 30)
   private AssetType type;
 
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public String getFileName() {
-    return fileName;
-  }
-
-  public void setFileName(String fileName) {
-    this.fileName = fileName;
-  }
-
-  public String getMimeType() {
-    return mimeType;
-  }
-
-  public void setMimeType(String mimeType) {
-    this.mimeType = mimeType;
-  }
-
-  public Long getFileSize() {
-    return fileSize;
-  }
-
-  public void setFileSize(Long fileSize) {
-    this.fileSize = fileSize;
-  }
-
-  public String getSource() {
-    return source;
-  }
-
-  public void setSource(String source) {
-    this.source = source;
-  }
-
-  public AssetType getType() {
-    return type;
-  }
-
-  public void setType(AssetType type) {
-    this.type = type;
-  }
+  @Column(length = 255)
+  private String path; // e.g., "products/shoes", "invoices/2024"
 }

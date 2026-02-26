@@ -41,6 +41,9 @@ public class UpdateProductHandler {
     if (req.categoryId() != null) product.setCategoryId(req.categoryId());
     if (req.taxCategory() != null) product.setTaxCategory(req.taxCategory());
     if (req.tags() != null) product.setTags(req.tags());
+    if (req.serviceDurationMinutes() != null)
+      product.setServiceDurationMinutes(req.serviceDurationMinutes());
+    if (req.requiredStaffCount() != null) product.setRequiredStaffCount(req.requiredStaffCount());
 
     if (req.translations() != null) {
       req.translations()

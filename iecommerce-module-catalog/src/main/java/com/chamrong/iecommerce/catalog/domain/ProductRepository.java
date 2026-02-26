@@ -13,6 +13,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
   /** Storefront slug lookup — unique per tenant. */
   Optional<Product> findByTenantIdAndSlug(String tenantId, String slug);
 
+  /** Quota check helper. */
+  long countByTenantId(String tenantId);
+
   /** Check slug availability before creating/updating. */
   boolean existsByTenantIdAndSlugAndIdNot(String tenantId, String slug, Long excludeId);
 

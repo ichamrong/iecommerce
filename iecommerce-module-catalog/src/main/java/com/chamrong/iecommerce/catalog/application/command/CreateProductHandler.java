@@ -9,6 +9,7 @@ import com.chamrong.iecommerce.catalog.domain.ProductRepository;
 import com.chamrong.iecommerce.catalog.domain.ProductType;
 import com.chamrong.iecommerce.common.Money;
 import com.chamrong.iecommerce.common.TenantContext;
+import com.chamrong.iecommerce.subscription.SubscriptionApi;
 import java.text.Normalizer;
 import java.util.Locale;
 import java.util.Map;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>Steps:
  *
  * <ol>
+ *   <li>Enforce tenant product quota limit
  *   <li>Validate "en" translation is present
  *   <li>Auto-generate slug from English name if not supplied
  *   <li>Check slug uniqueness per tenant
@@ -41,9 +43,14 @@ public class CreateProductHandler {
   private final ProductRepository productRepository;
   private final CatalogMapper mapper;
   private final ApplicationEventPublisher eventPublisher;
+  private final SubscriptionApi subscriptionApi;
 
   public ProductResponse handle(CreateProductRequest req) {
     var tenantId = TenantContext.requireTenantId();
+
+    // 0. Enforce quota
+    long currentCount = productRepository.countByTenantId(tenantId);
+    subscriptionApi.checkQuota(tenantId, "maxProducts", currentCount);
 
     // 1. Validate at least "en" translation
     validateTranslations(req.translations());
@@ -62,6 +69,8 @@ public class CreateProductHandler {
     product.setTaxCategory(req.taxCategory() != null ? req.taxCategory() : "STANDARD");
     product.setTags(req.tags());
     product.setCategoryId(req.categoryId());
+    product.setServiceDurationMinutes(req.serviceDurationMinutes());
+    product.setRequiredStaffCount(req.requiredStaffCount());
 
     if (req.compareAtPriceAmount() != null) {
       product.setCompareAtPrice(Money.of(req.compareAtPriceAmount(), req.compareAtPriceCurrency()));

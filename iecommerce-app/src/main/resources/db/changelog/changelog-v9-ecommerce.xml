@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="29-order-fulfillment" author="chamrong">
+        <addColumn tableName="ecommerce_order">
+            <column name="shipping_address" type="TEXT"/>
+            <column name="tracking_number" type="VARCHAR(100)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="30-order-customer-id-fix" author="chamrong">
+        <addColumn tableName="ecommerce_order">
+            <column name="customer_id" type="BIGINT"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="31-order-promotion" author="chamrong">
+        <addColumn tableName="ecommerce_order">
+            <column name="voucher_code" type="VARCHAR(50)"/>
+            <column name="discount_amount" type="DECIMAL(19,4)"/>
+            <column name="discount_currency" type="VARCHAR(3)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="32-inventory-reserved-stock" author="chamrong">
+        <addColumn tableName="inventory_stock_level">
+            <column name="reserved_quantity" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

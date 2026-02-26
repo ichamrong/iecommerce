@@ -20,6 +20,10 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>com.chamrong</groupId>
+			<artifactId>iecommerce-module-subscription</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>io.swagger.core.v3</groupId>
 			<artifactId>swagger-annotations-jakarta</artifactId>
 		</dependency>
