@@ -5,11 +5,15 @@ import com.chamrong.iecommerce.asset.domain.Asset;
 import com.chamrong.iecommerce.asset.domain.AssetRepository;
 import com.chamrong.iecommerce.asset.domain.AssetType;
 import com.chamrong.iecommerce.asset.domain.StorageConstants;
+import com.chamrong.iecommerce.asset.domain.exception.AssetErrorCode;
+import com.chamrong.iecommerce.asset.domain.exception.AssetException;
+import com.chamrong.iecommerce.asset.domain.exception.SecurityValidationException;
+import com.chamrong.iecommerce.asset.domain.exception.StorageException;
 import com.chamrong.iecommerce.common.TenantContext;
 import com.chamrong.iecommerce.common.event.AssetAccessedEvent;
 import com.chamrong.iecommerce.common.event.EventDispatcher;
-import jakarta.persistence.EntityNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -61,34 +65,40 @@ public class AssetService {
     String originalName =
         file.getOriginalFilename() != null ? file.getOriginalFilename() : StorageConstants.UNKNOWN;
 
-    try {
-      java.io.InputStream inputStream = file.getInputStream();
+    try (InputStream inputStream = file.getInputStream()) {
       long finalSize = file.getSize();
 
       fileSecurityValidator.validate(originalName, mimeType, inputStream);
 
+      InputStream processedStream = inputStream;
       if (mimeType.startsWith(StorageConstants.MIME_IMAGE_PREFIX)
           && width != null
           && height != null) {
-        inputStream = processImage(file, inputStream, mimeType, width, height, crop);
+        processedStream = processImage(file, inputStream, mimeType, width, height, crop);
         // Estimated, we'd need to re-read to get exact bytes but for streaming we can use approx
-        finalSize = inputStream.available();
+        finalSize = processedStream.available();
       }
 
-      String source = storageService.upload(originalName, mimeType, inputStream, finalSize);
+      String source = storageService.upload(originalName, mimeType, processedStream, finalSize);
 
       Asset asset = createAsset(tenantId, originalName, mimeType, finalSize, source, type, path);
 
       log.info(
           "Asset uploaded to storage name={} size={} type={} path={}",
           originalName,
-          file.getSize(),
+          finalSize,
           type,
           path);
       return toResponse(assetRepository.save(asset));
-    } catch (java.io.IOException e) {
+    } catch (IOException e) {
       log.error("Failed to read upload file stream", e);
-      throw new RuntimeException("Upload failed", e);
+      throw new StorageException(
+          AssetErrorCode.STORAGE_OPERATION_FAILED, "Upload failed: " + e.getMessage());
+    } catch (SecurityValidationException e) {
+      throw e; // Pass through security exceptions
+    } catch (Exception e) {
+      log.error("Unexpected error during asset upload", e);
+      throw new AssetException(AssetErrorCode.INTERNAL_ERROR, e.getMessage());
     }
   }
 
@@ -97,7 +107,8 @@ public class AssetService {
     Asset asset =
         assetRepository
             .findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Asset not found"));
+            .orElseThrow(
+                () -> new AssetException(AssetErrorCode.ASSET_NOT_FOUND, "Asset ID " + id));
 
     validateTenant(asset);
     if (asset.isFolder()) {
@@ -128,7 +139,10 @@ public class AssetService {
       Asset parent =
           assetRepository
               .findById(parentId)
-              .orElseThrow(() -> new EntityNotFoundException("Parent folder not found"));
+              .orElseThrow(
+                  () ->
+                      new AssetException(
+                          AssetErrorCode.ASSET_NOT_FOUND, "Parent folder not found"));
       folderPath = parent.getSource() + folderPath;
       materializedPath =
           parent.getPath() + StorageConstants.PATH_DELIMITER + name; // Append to parent's path
@@ -149,7 +163,7 @@ public class AssetService {
     Asset sourceAsset =
         assetRepository
             .findById(assetId)
-            .orElseThrow(() -> new EntityNotFoundException("Asset not found"));
+            .orElseThrow(() -> new AssetException(AssetErrorCode.ASSET_NOT_FOUND));
 
     validateTenant(sourceAsset);
 
@@ -162,7 +176,10 @@ public class AssetService {
       Asset targetFolder =
           assetRepository
               .findById(targetFolderId)
-              .orElseThrow(() -> new EntityNotFoundException("Target folder not found"));
+              .orElseThrow(
+                  () ->
+                      new AssetException(
+                          AssetErrorCode.ASSET_NOT_FOUND, "Target folder not found"));
       validateTenant(targetFolder);
       destinationPath = targetFolder.getSource() + sourceAsset.getFileName();
     }
@@ -181,7 +198,7 @@ public class AssetService {
     Asset asset =
         assetRepository
             .findById(assetId)
-            .orElseThrow(() -> new EntityNotFoundException("Asset not found"));
+            .orElseThrow(() -> new AssetException(AssetErrorCode.ASSET_NOT_FOUND));
 
     validateTenant(asset);
 
@@ -196,7 +213,10 @@ public class AssetService {
       Asset targetFolder =
           assetRepository
               .findById(targetFolderId)
-              .orElseThrow(() -> new EntityNotFoundException("Target folder not found"));
+              .orElseThrow(
+                  () ->
+                      new AssetException(
+                          AssetErrorCode.ASSET_NOT_FOUND, "Target folder not found"));
       validateTenant(targetFolder);
 
       if (!targetFolder.isFolder()) {
@@ -231,7 +251,7 @@ public class AssetService {
     Asset asset =
         assetRepository
             .findById(assetId)
-            .orElseThrow(() -> new EntityNotFoundException("Asset not found"));
+            .orElseThrow(() -> new AssetException(AssetErrorCode.ASSET_NOT_FOUND));
 
     validateTenant(asset);
     asset.setName(newName);
@@ -265,7 +285,10 @@ public class AssetService {
       Asset targetFolder =
           assetRepository
               .findById(targetFolderId)
-              .orElseThrow(() -> new EntityNotFoundException("Target folder not found"));
+              .orElseThrow(
+                  () ->
+                      new AssetException(
+                          AssetErrorCode.ASSET_NOT_FOUND, "Target folder not found"));
       if (!targetFolder.isFolder()) {
         throw new IllegalArgumentException("Target must be a folder");
       }
@@ -316,7 +339,8 @@ public class AssetService {
     Asset asset =
         assetRepository
             .findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Asset not found: " + id));
+            .orElseThrow(
+                () -> new AssetException(AssetErrorCode.ASSET_NOT_FOUND, "Asset not found: " + id));
 
     validateTenant(asset);
 
@@ -337,7 +361,7 @@ public class AssetService {
     Asset asset =
         assetRepository
             .findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Asset not found"));
+            .orElseThrow(() -> new AssetException(AssetErrorCode.ASSET_NOT_FOUND));
 
     validateTenant(asset);
     return storageService.download(asset.getSource());

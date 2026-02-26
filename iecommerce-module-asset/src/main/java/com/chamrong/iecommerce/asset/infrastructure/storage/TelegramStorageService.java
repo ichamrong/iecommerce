@@ -1,8 +1,15 @@
 package com.chamrong.iecommerce.asset.infrastructure.storage;
 
+import com.chamrong.iecommerce.asset.domain.StorageConstants;
+import com.chamrong.iecommerce.asset.domain.StorageService;
+import com.chamrong.iecommerce.asset.domain.exception.AssetErrorCode;
+import com.chamrong.iecommerce.asset.domain.exception.StorageException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -10,16 +17,6 @@ import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-
-import com.chamrong.iecommerce.asset.domain.StorageConstants;
-import com.chamrong.iecommerce.asset.domain.StorageService;
-import com.chamrong.iecommerce.asset.domain.exception.AssetErrorCode;
-import com.chamrong.iecommerce.asset.domain.exception.StorageException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -78,7 +75,8 @@ public class TelegramStorageService implements StorageService {
       }
     } catch (IOException | RuntimeException e) {
       log.error("Failed to upload asset to Telegram", e);
-      throw new StorageException(AssetErrorCode.STORAGE_OPERATION_FAILED, "Storage upload failed: " + e.getMessage());
+      throw new StorageException(
+          AssetErrorCode.STORAGE_OPERATION_FAILED, "Storage upload failed: " + e.getMessage());
     }
   }
 
