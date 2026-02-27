@@ -1,6 +1,8 @@
 package com.chamrong.iecommerce.asset.domain;
 
 import java.io.InputStream;
+import java.util.Map;
+import java.util.Optional;
 
 public interface StorageService {
 
@@ -9,6 +11,34 @@ public interface StorageService {
 
   /** Generates a public URL for the asset. */
   String getPublicUrl(String source);
+
+  /** Generates a temporary pre-signed URL for direct download, if supported by provider. */
+  default Optional<String> generatePresignedUrl(String source) {
+    return Optional.empty();
+  }
+
+  // --- Multipart Upload Support ---
+
+  /** Initiates a multipart upload and returns an upload ID. */
+  default String initiateMultipartUpload(String fileName, String contentType) {
+    throw new UnsupportedOperationException("Multipart upload not supported by this provider");
+  }
+
+  /** Uploads a single part/chunk of a multipart upload. Returns the part's ETag. */
+  default String uploadPart(
+      String uploadId, String key, int partNumber, InputStream inputStream, long size) {
+    throw new UnsupportedOperationException("Multipart upload not supported by this provider");
+  }
+
+  /** Completes a multipart upload using the accumulated part ETags. */
+  default String completeMultipartUpload(String uploadId, String key, Map<Integer, String> parts) {
+    throw new UnsupportedOperationException("Multipart upload not supported by this provider");
+  }
+
+  /** Aborts a multipart upload and cleans up uploaded parts. */
+  default void abortMultipartUpload(String uploadId, String key) {
+    throw new UnsupportedOperationException("Multipart upload not supported by this provider");
+  }
 
   void delete(String source);
 

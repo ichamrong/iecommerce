@@ -1,4 +1,4 @@
-package com.chamrong.iecommerce.asset.application;
+package com.chamrong.iecommerce.asset.application.security;
 
 import com.chamrong.iecommerce.asset.domain.StorageConstants;
 import com.chamrong.iecommerce.asset.domain.exception.AssetErrorCode;
@@ -25,7 +25,7 @@ public class FileSecurityValidator {
           StorageConstants.EXT_PNG, FileSecurityValidator::isPng,
           StorageConstants.EXT_PDF, FileSecurityValidator::isPdf);
 
-  public void validate(String fileName, String contentType, InputStream inputStream) {
+  public void validate(String fileName, InputStream inputStream) {
     if (fileName == null || fileName.isBlank()) {
       throw new SecurityValidationException(
           AssetErrorCode.VALIDATION_ERROR, "File name cannot be empty");
@@ -74,11 +74,10 @@ public class FileSecurityValidator {
       }
 
       stream.mark(8);
-      byte[] header = new byte[8];
-      int read = stream.read(header, 0, 8);
+      byte[] header = stream.readNBytes(8);
       stream.reset();
 
-      if (read < 4) {
+      if (header.length < 4) {
         log.debug("File too small for signature validation, relying on extension only.");
         return;
       }

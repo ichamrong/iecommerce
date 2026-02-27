@@ -11,4 +11,5 @@ public record AssetResponse(
     String source,
     String url,
     String type,
+    boolean isPublic,
     Instant createdAt) {}

@@ -1,4 +1,4 @@
-package com.chamrong.iecommerce.asset.application;
+package com.chamrong.iecommerce.asset.application.processing;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -30,5 +30,21 @@ public class ImageProcessingService {
         .toOutputStream(os);
     log.debug("Cropped image to {}x{} format {}", width, height, format);
     return new ByteArrayInputStream(os.toByteArray());
+  }
+
+  public InputStream convertToWebP(InputStream input) throws Exception {
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    Thumbnails.of(input)
+        .scale(1.0) // Keep original scale
+        .outputFormat("webp")
+        .toOutputStream(os);
+    log.debug("Converted image to WebP");
+    return new ByteArrayInputStream(os.toByteArray());
+  }
+
+  public InputStream convertToAvif(InputStream input) throws Exception {
+    log.warn(
+        "AVIF conversion requested but scrimage-format-avif is not available. Returning original.");
+    return input;
   }
 }

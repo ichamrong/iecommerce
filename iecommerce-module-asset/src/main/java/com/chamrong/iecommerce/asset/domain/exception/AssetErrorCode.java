@@ -17,6 +17,7 @@ public enum AssetErrorCode {
   // ── Storage Infrastructure Errors ───────────────────────────────────────
   STORAGE_UNAVAILABLE("STORAGE-503", "The storage backend is currently unavailable."),
   STORAGE_OPERATION_FAILED("STORAGE-500", "A storage backend operation failed unexpectedly."),
+  STORAGE_QUOTA_EXCEEDED("STORAGE-400", "The storage quota for this tenant has been exceeded."),
   INVALID_STORAGE_PROVIDER(
       "STORAGE-400", "The specified storage provider is invalid or not registered."),
   // ── Security & Validation Errors ────────────────────────────────────────

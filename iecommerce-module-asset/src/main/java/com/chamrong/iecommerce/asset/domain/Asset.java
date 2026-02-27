@@ -6,8 +6,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
+import java.time.Instant;
+import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Getter
 @Setter
@@ -35,6 +40,9 @@ public class Asset extends BaseTenantEntity {
   @Column(nullable = false)
   private Long fileSize = 0L;
 
+  @Column(name = "is_public", nullable = false)
+  private boolean isPublic = false;
+
   /** Storage provider path, URL, or S3/MinIO object key. Null for virtual folders. */
   @Column(columnDefinition = "TEXT")
   private String source;
@@ -53,4 +61,13 @@ public class Asset extends BaseTenantEntity {
 
   @Column(name = "is_folder", nullable = false)
   private boolean isFolder = false;
+
+  @Column(name = "deleted_at")
+  private Instant deletedAt;
+
+  @Version private Integer version;
+
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(columnDefinition = "jsonb")
+  private Map<String, Object> metadata;
 }

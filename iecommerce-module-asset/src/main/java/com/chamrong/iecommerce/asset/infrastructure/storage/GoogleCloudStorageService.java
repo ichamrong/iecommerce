@@ -2,13 +2,17 @@ package com.chamrong.iecommerce.asset.infrastructure.storage;
 
 import com.chamrong.iecommerce.asset.domain.StorageConstants;
 import com.chamrong.iecommerce.asset.domain.StorageService;
+import com.chamrong.iecommerce.asset.domain.exception.AssetErrorCode;
+import com.chamrong.iecommerce.asset.domain.exception.StorageException;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,22 +37,140 @@ public class GoogleCloudStorageService implements StorageService {
       return key;
     } catch (com.google.cloud.storage.StorageException | java.io.IOException e) {
       log.error("Failed to upload file to GCS", e);
-      throw new RuntimeException("Failed to upload file to Google Cloud Storage", e);
+      throw new StorageException(
+          AssetErrorCode.STORAGE_OPERATION_FAILED, "Failed to upload file to Google Cloud Storage");
+    }
+  }
+
+  @Override
+  public String initiateMultipartUpload(String fileName, String contentType) {
+    String key = UUID.randomUUID() + StorageConstants.KEY_SEPARATOR + fileName;
+    String uploadId = UUID.randomUUID().toString();
+    log.info("Initiated simulated multipart upload for GCS: key={}, uploadId={}", key, uploadId);
+    return uploadId + "|" + key;
+  }
+
+  @Override
+  public String uploadPart(
+      String uploadId, String key, int partNumber, InputStream inputStream, long size) {
+    try {
+      String partKey = key + "_part_" + uploadId + "_" + partNumber;
+      BlobId blobId = BlobId.of(config.getBucketName(), partKey);
+      BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
+
+      storage.createFrom(blobInfo, inputStream);
+      log.debug("Uploaded part {} for GCS key {}, partKey: {}", partNumber, key, partKey);
+
+      return partKey; // Returning partKey as the token for complete.
+    } catch (com.google.cloud.storage.StorageException | java.io.IOException e) {
+      log.error("Failed to upload part {} for GCS key: {}", partNumber, key, e);
+      throw new StorageException(
+          AssetErrorCode.STORAGE_OPERATION_FAILED, "Part upload failed in GCS");
+    }
+  }
+
+  @Override
+  public String completeMultipartUpload(String uploadId, String key, Map<Integer, String> parts) {
+    try {
+      java.util.List<String> sortedPartKeys =
+          parts.entrySet().stream()
+              .sorted(Map.Entry.comparingByKey())
+              .map(Map.Entry::getValue)
+              .collect(Collectors.toList());
+
+      if (sortedPartKeys.isEmpty()) {
+        throw new StorageException(AssetErrorCode.VALIDATION_ERROR, "No parts to complete");
+      }
+
+      int batchSize = 32;
+      java.util.List<String> currentLayer = sortedPartKeys;
+      int iteration = 0;
+
+      while (currentLayer.size() > 1) {
+        java.util.List<String> nextLayer = new java.util.ArrayList<>();
+        for (int i = 0; i < currentLayer.size(); i += batchSize) {
+          int end = Math.min(i + batchSize, currentLayer.size());
+          java.util.List<String> batch = currentLayer.subList(i, end);
+
+          String targetKey = key + "_compose_" + uploadId + "_" + iteration + "_" + i;
+          if (currentLayer.size() <= batchSize && iteration == 0) {
+            targetKey = key;
+          } else if (currentLayer.size() <= batchSize && iteration > 0) {
+            targetKey = key;
+          }
+
+          BlobId targetBlobId = BlobId.of(config.getBucketName(), targetKey);
+          BlobInfo targetBlobInfo = BlobInfo.newBuilder(targetBlobId).build();
+
+          Storage.ComposeRequest.Builder composeBuilder =
+              Storage.ComposeRequest.newBuilder().setTarget(targetBlobInfo);
+          for (String pKey : batch) {
+            composeBuilder.addSource(pKey);
+          }
+
+          storage.compose(composeBuilder.build());
+          nextLayer.add(targetKey);
+        }
+
+        if (iteration > 0) {
+          for (String tempKey : currentLayer) {
+            storage.delete(BlobId.of(config.getBucketName(), tempKey));
+          }
+        }
+        currentLayer = nextLayer;
+        iteration++;
+      }
+
+      for (String pKey : sortedPartKeys) {
+        storage.delete(BlobId.of(config.getBucketName(), pKey));
+      }
+
+      log.info("Completed simulated multipart upload for GCS key: {}", key);
+      return key;
+    } catch (com.google.cloud.storage.StorageException e) {
+      log.error("Failed to complete multipart upload for GCS key: {}", key, e);
+      throw new StorageException(
+          AssetErrorCode.STORAGE_OPERATION_FAILED, "Completion failed in GCS");
+    }
+  }
+
+  @Override
+  public void abortMultipartUpload(String uploadId, String key) {
+    try {
+      Iterable<com.google.cloud.storage.Blob> blobs =
+          storage
+              .list(
+                  config.getBucketName(), Storage.BlobListOption.prefix(key + "_part_" + uploadId))
+              .iterateAll();
+      for (com.google.cloud.storage.Blob blob : blobs) {
+        blob.delete();
+      }
+      log.info("Aborted simulated multipart upload for GCS key: {}", key);
+    } catch (com.google.cloud.storage.StorageException e) {
+      log.warn("Failed to abort multipart upload for GCS key: {}", key, e);
     }
   }
 
   @Override
   public String getPublicUrl(String source) {
+    return "https://storage.googleapis.com/"
+        + config.getBucketName()
+        + StorageConstants.PATH_DELIMITER
+        + source;
+  }
+
+  @Override
+  public java.util.Optional<String> generatePresignedUrl(String source) {
     try {
       BlobId blobId = BlobId.of(config.getBucketName(), source);
       BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
       // Pre-signed URL valid for 1 hour.
       URL signedUrl =
           storage.signUrl(blobInfo, 1, TimeUnit.HOURS, Storage.SignUrlOption.withV4Signature());
-      return signedUrl.toString();
+      return java.util.Optional.of(signedUrl.toString());
     } catch (com.google.cloud.storage.StorageException e) {
       log.error("Failed to generate pre-signed URL for GCS asset: {}", source, e);
-      throw new RuntimeException("Failed to generate GCS pre-signed URL", e);
+      return java.util.Optional.empty();
     }
   }
 

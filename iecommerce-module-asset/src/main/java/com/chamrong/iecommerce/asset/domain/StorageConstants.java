@@ -38,6 +38,8 @@ public final class StorageConstants {
 
   // ── HTTP Headers & Values ────────────────────────────────────────────────
   public static final String HEADER_X_CONTENT_TYPE_OPTIONS = "X-Content-Type-Options";
+  public static final String HEADER_CONTENT_SECURITY_POLICY = "Content-Security-Policy";
+  public static final String HEADER_X_FRAME_OPTIONS = "X-Frame-Options";
   public static final String VALUE_NOSNIFF = "nosniff";
 
   // ── Common MIME Types ────────────────────────────────────────────────────
@@ -62,4 +64,5 @@ public final class StorageConstants {
   public static final String COPY_PREFIX = "Copy of ";
   public static final String DOT = ".";
   public static final String KEY_SEPARATOR = "-";
+  public static final int BUFFER_SIZE = 8 * 1024; // 8KB
 }

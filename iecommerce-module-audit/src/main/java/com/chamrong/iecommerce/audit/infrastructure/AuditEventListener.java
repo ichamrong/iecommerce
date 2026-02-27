@@ -31,6 +31,7 @@ import com.chamrong.iecommerce.catalog.VariantUpdatedEvent;
 import com.chamrong.iecommerce.common.event.OrderCompletedEvent;
 import com.chamrong.iecommerce.common.event.PaymentFailedEvent;
 import com.chamrong.iecommerce.common.event.PaymentSucceededEvent;
+import com.chamrong.iecommerce.common.event.StorageOperationEvent;
 import com.chamrong.iecommerce.customer.AddressAddedEvent;
 import com.chamrong.iecommerce.customer.AddressRemovedEvent;
 import com.chamrong.iecommerce.customer.AddressUpdatedEvent;
@@ -453,5 +454,22 @@ public class AuditEventListener {
         "PAYMENT",
         event.paymentId().toString(),
         "Payment Failed. OrderID: " + event.orderId() + ", Reason: " + event.reason());
+  }
+
+  // --- Storage & Assets ---
+
+  @EventListener
+  public void onStorageOperation(StorageOperationEvent event) {
+    String metadata =
+        String.format(
+            "Provider: %s, Duration: %dms, Status: %s, Message: %s",
+            event.provider(), event.durationMs(), event.status(), event.errorMessage());
+
+    auditService.log(
+        getCurrentUserId(),
+        "STORAGE_" + event.operation().toUpperCase(),
+        "STORAGE",
+        event.source(),
+        metadata);
   }
 }

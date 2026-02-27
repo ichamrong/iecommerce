@@ -1,5 +1,7 @@
 package com.chamrong.iecommerce.asset.domain;
 
+import java.util.Collections;
+import java.util.List;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.Nullable;
@@ -11,12 +13,13 @@ import org.springframework.lang.Nullable;
 @Getter
 @RequiredArgsConstructor
 public enum StorageProvider {
-  R2(StorageConstants.PROVIDER_R2),
-  GCS(StorageConstants.PROVIDER_GCS),
-  TELEGRAM(StorageConstants.PROVIDER_TELEGRAM),
-  ROUTER(StorageConstants.PROVIDER_ROUTER);
+  R2(StorageConstants.PROVIDER_R2, List.of(StorageConstants.ALIAS_S3)),
+  GCS(StorageConstants.PROVIDER_GCS, List.of(StorageConstants.ALIAS_GOOGLE)),
+  TELEGRAM(StorageConstants.PROVIDER_TELEGRAM, Collections.emptyList()),
+  ROUTER(StorageConstants.PROVIDER_ROUTER, Collections.emptyList());
 
   private final String key;
+  private final List<String> aliases;
 
   /**
    * Look up provider by key (case-insensitive).
