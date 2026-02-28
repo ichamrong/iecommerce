@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        v17 — Inventory Hardening
+        =========================
+        Adds:
+          1. inventory_stock_ledger   — append-only transaction log (source of truth)
+          2. inventory_stock_reservation — reservation entity with FSM and idempotency key
+          3. inventory_idempotency_key   — write-operation deduplication table
+          4. Renames quantity → on_hand_qty on inventory_stock_level (additive column + data copy)
+          5. Indexes tuned for high-write, cursor-paginated reads
+
+        Rollout order (backward compatible):
+          1. Apply migration — additive columns only, existing columns preserved
+          2. Deploy new code — reads new columns, writes to both old + new for one release
+          3. Follow-up migration (v18) — drop old quantity column once confirmed stable
+    -->
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         1. inventory_stock_ledger
+         Source of truth for all inventory movements. Append-only.
+         ═══════════════════════════════════════════════════════════════════ -->
+    <changeSet id="v17-01-create-stock-ledger" author="inventory-refactor">
+        <createTable tableName="inventory_stock_ledger">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="warehouse_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <!-- RECEIVE | ADJUST | RESERVE | COMMIT | RELEASE | EXPIRE -->
+            <column name="entry_type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Positive = stock added/freed; negative = stock consumed/reserved -->
+            <column name="qty_delta" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <!-- e.g. ORDER, ADJUSTMENT, TRANSFER -->
+            <column name="reference_type" type="VARCHAR(100)"/>
+            <!-- Idempotency key for this entry type -->
+            <column name="reference_id" type="VARCHAR(255)"/>
+            <!-- User or system that triggered the operation -->
+            <column name="actor_id" type="VARCHAR(255)"/>
+            <!-- Optional JSON metadata (adjustment notes, terminal id, etc.) -->
+            <column name="metadata" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- History pagination: (product_id, created_at DESC, id DESC) -->
+        <createIndex indexName="idx_ledger_cursor"
+                     tableName="inventory_stock_ledger"
+                     unique="false">
+            <column name="product_id"/>
+            <column name="created_at" descending="true"/>
+            <column name="id" descending="true"/>
+        </createIndex>
+
+        <!-- Reference lookup for audit tracing and idempotency -->
+        <createIndex indexName="idx_ledger_ref"
+                     tableName="inventory_stock_ledger"
+                     unique="false">
+            <column name="reference_type"/>
+            <column name="reference_id"/>
+        </createIndex>
+
+        <!-- Tenant-scoped product history -->
+        <createIndex indexName="idx_ledger_tenant_product"
+                     tableName="inventory_stock_ledger"
+                     unique="false">
+            <column name="tenant_id"/>
+            <column name="product_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         2. inventory_stock_reservation
+         Tracks holds placed on stock for orders/carts. FSM: PENDING → COMMITTED|RELEASED|EXPIRED
+         Unique constraint on (tenant_id, reference_type, reference_id) = DB-level idempotency
+         ═══════════════════════════════════════════════════════════════════ -->
+    <changeSet id="v17-02-create-stock-reservation" author="inventory-refactor">
+        <createTable tableName="inventory_stock_reservation">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="warehouse_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="qty" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reference_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reference_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- PENDING | COMMITTED | RELEASED | EXPIRED -->
+            <column name="status" type="VARCHAR(20)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+            <!-- null = never expires -->
+            <column name="expires_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- DB-level idempotency key: only one reservation per external reference -->
+        <addUniqueConstraint
+            constraintName="uq_reservation_ref"
+            tableName="inventory_stock_reservation"
+            columnNames="tenant_id, reference_type, reference_id"/>
+
+        <!-- Expiry scheduler query: PENDING reservations past expires_at -->
+        <createIndex indexName="idx_reservation_sku_status_expires"
+                     tableName="inventory_stock_reservation"
+                     unique="false">
+            <column name="product_id"/>
+            <column name="status"/>
+            <column name="expires_at"/>
+        </createIndex>
+
+        <!-- Cursor pagination on reservation history -->
+        <createIndex indexName="idx_reservation_cursor"
+                     tableName="inventory_stock_reservation"
+                     unique="false">
+            <column name="product_id"/>
+            <column name="created_at" descending="true"/>
+            <column name="id" descending="true"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         3. inventory_idempotency_key
+         Deduplication table for all inventory write operations.
+         Unique constraint on (tenant_id, operation_type, reference_id).
+         ═══════════════════════════════════════════════════════════════════ -->
+    <changeSet id="v17-03-create-idempotency-key" author="inventory-refactor">
+        <createTable tableName="inventory_idempotency_key">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- e.g. RECEIVE | ADJUST | RESERVE | COMMIT | RELEASE -->
+            <column name="operation_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reference_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- JSON snapshot of operation result; empty string for void operations -->
+            <column name="result_snapshot" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <!-- null = no TTL; scheduler can clean up expired keys if set -->
+            <column name="expires_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </createTable>
+
+        <addUniqueConstraint
+            constraintName="uq_idempotency"
+            tableName="inventory_idempotency_key"
+            columnNames="tenant_id, operation_type, reference_id"/>
+
+        <!-- Lookup by composite key -->
+        <createIndex indexName="idx_idempotency_key"
+                     tableName="inventory_idempotency_key"
+                     unique="false">
+            <column name="tenant_id"/>
+            <column name="operation_type"/>
+            <column name="reference_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         4. inventory_stock_level — additive migration
+         Adds on_hand_qty, reserved_qty columns (new names for the projection table).
+         Old quantity column preserved for backward compat during rollout.
+         v18 migration will drop old column after confirmation.
+         ═══════════════════════════════════════════════════════════════════ -->
+    <changeSet id="v17-04-stock-level-add-columns" author="inventory-refactor">
+        <addColumn tableName="inventory_stock_level">
+            <column name="on_hand_qty" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <!-- Copy existing quantity → on_hand_qty -->
+        <sql>UPDATE inventory_stock_level SET on_hand_qty = COALESCE(quantity, 0)</sql>
+
+        <!-- reserved_qty column (was inline in StockLevel; adding explicitly) -->
+        <!-- Note: reservedQuantity already exists from v14; check and skip if present -->
+    </changeSet>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         5. Indexes on inventory_stock_level
+         ═══════════════════════════════════════════════════════════════════ -->
+    <changeSet id="v17-05-stock-level-indexes" author="inventory-refactor">
+        <!-- Fast availability check by tenant + product -->
+        <createIndex indexName="idx_stock_level_tenant_product"
+                     tableName="inventory_stock_level"
+                     unique="false">
+            <column name="tenant_id"/>
+            <column name="product_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
