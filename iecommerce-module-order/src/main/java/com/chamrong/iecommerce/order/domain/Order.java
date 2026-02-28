@@ -15,6 +15,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -81,6 +82,17 @@ public class Order extends BaseTenantEntity {
 
   @Column(columnDefinition = "TEXT")
   private String shippingAddress;
+
+  // ── Lifecycle timestamps (immutable after set) ─────────────────────────────
+
+  @Column(name = "confirmed_at")
+  private Instant confirmedAt;
+
+  @Column(name = "cancelled_at")
+  private Instant cancelledAt;
+
+  @Column(name = "shipped_at")
+  private Instant shippedAt;
 
   @Column(length = 100)
   private String trackingNumber;
@@ -204,12 +216,30 @@ public class Order extends BaseTenantEntity {
 
   // ── State transitions — all validated through OrderStateMachine ────────────
 
+  /** Starts online payment flow: AddingItems → ArrangingPayment. */
+  public void arrangePayment() {
+    OrderStateMachine.assertCanTransition(this.state, OrderState.ArrangingPayment);
+    if (this.items.isEmpty()) {
+      throw new IllegalStateException("Cannot arrange payment for an order with no items");
+    }
+    this.state = OrderState.ArrangingPayment;
+  }
+
+  /** Payment gateway authorised the hold: ArrangingPayment → PaymentAuthorized. */
+  public void authorizePayment() {
+    OrderStateMachine.assertCanTransition(this.state, OrderState.PaymentAuthorized);
+    this.state = OrderState.PaymentAuthorized;
+  }
+
   public void confirm() {
     OrderStateMachine.assertCanTransition(this.state, OrderState.Confirmed);
-    if (this.items.isEmpty()) {
+    if (this.state != OrderState.PaymentAuthorized && this.items.isEmpty()) {
       throw new IllegalStateException("Cannot confirm an order with no items");
     }
     this.state = OrderState.Confirmed;
+    if (this.confirmedAt == null) {
+      this.confirmedAt = Instant.now();
+    }
   }
 
   public void pick() {
@@ -229,6 +259,9 @@ public class Order extends BaseTenantEntity {
     }
     this.trackingNumber = trackingNumber.trim();
     this.state = OrderState.Shipped;
+    if (this.shippedAt == null) {
+      this.shippedAt = Instant.now();
+    }
   }
 
   public void deliver() {
@@ -259,6 +292,9 @@ public class Order extends BaseTenantEntity {
   public void cancel() {
     OrderStateMachine.assertCanTransition(this.state, OrderState.Cancelled);
     this.state = OrderState.Cancelled;
+    if (this.cancelledAt == null) {
+      this.cancelledAt = Instant.now();
+    }
   }
 
   // ── Financial calculations ─────────────────────────────────────────────────

@@ -9,17 +9,22 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * Immutable audit log entry for every Order state transition.
  *
  * <p>This follows the banking-grade "append-only ledger" pattern. Rows are NEVER updated or deleted
  * — only inserted. This provides a full, tamper-evident history of every change to every order.
- *
- * <p>Combined with PostgreSQL WAL (Write-Ahead Log), this ensures that even if a server crashes
- * mid-write, no committed audit record is ever lost.
  */
 @Entity
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "order_audit_log")
 public class OrderAuditLog {
 
@@ -41,27 +46,21 @@ public class OrderAuditLog {
   @Column(nullable = false, length = 50)
   private OrderState toState;
 
-  /** The event/action that caused this transition. e.g., "ORDER_CONFIRMED", "ITEM_ADDED" */
   @Column(nullable = false, length = 100)
   private String action;
 
-  /**
-   * The principal (user ID or system identifier) who performed the action. Populated from the JWT
-   * subject claim.
-   */
   @Column(length = 255)
   private String performedBy;
 
-  /** Snapshot of relevant context — e.g. item count, total amount at time of event. */
   @Column(columnDefinition = "TEXT")
   private String context;
 
+  @Builder.Default
   @Column(nullable = false, updatable = false)
   private Instant occurredAt = Instant.now();
 
-  // ── Factory methods ───────────────────────────────────────────────────────
-
-  public static OrderAuditLog of(
+  /** Standard constructor for JpaOrderAuditAdapter. */
+  public OrderAuditLog(
       Long orderId,
       String tenantId,
       OrderState from,
@@ -69,53 +68,13 @@ public class OrderAuditLog {
       String action,
       String performedBy,
       String context) {
-    OrderAuditLog log = new OrderAuditLog();
-    log.orderId = orderId;
-    log.tenantId = tenantId;
-    log.fromState = from;
-    log.toState = to;
-    log.action = action;
-    log.performedBy = performedBy;
-    log.context = context;
-    log.occurredAt = Instant.now();
-    return log;
-  }
-
-  // ── Getters (no setters — immutable record) ───────────────────────────────
-
-  public Long getId() {
-    return id;
-  }
-
-  public Long getOrderId() {
-    return orderId;
-  }
-
-  public String getTenantId() {
-    return tenantId;
-  }
-
-  public OrderState getFromState() {
-    return fromState;
-  }
-
-  public OrderState getToState() {
-    return toState;
-  }
-
-  public String getAction() {
-    return action;
-  }
-
-  public String getPerformedBy() {
-    return performedBy;
-  }
-
-  public String getContext() {
-    return context;
-  }
-
-  public Instant getOccurredAt() {
-    return occurredAt;
+    this.orderId = orderId;
+    this.tenantId = tenantId;
+    this.fromState = from;
+    this.toState = to;
+    this.action = action;
+    this.performedBy = performedBy;
+    this.context = context;
+    this.occurredAt = Instant.now();
   }
 }

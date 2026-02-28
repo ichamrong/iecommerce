@@ -56,7 +56,7 @@ public class BookingEventListener {
 
     // Banking-grade audit log for traceability
     auditLogRepository.save(
-        OrderAuditLog.of(
+        new OrderAuditLog(
             saved.getId(),
             saved.getTenantId(),
             OrderState.AddingItems,

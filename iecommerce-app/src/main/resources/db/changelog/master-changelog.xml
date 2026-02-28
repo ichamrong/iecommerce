@@ -22,4 +22,5 @@
     <include file="db/changelog/changelog-v15-staff-architecture.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/changelog-v16-catalog-hardening.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/changelog-v17-inventory-hardening.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v18-order-hardening.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>

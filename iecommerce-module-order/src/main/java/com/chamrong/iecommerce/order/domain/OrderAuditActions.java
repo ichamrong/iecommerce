@@ -14,6 +14,8 @@ public final class OrderAuditActions {
   public static final String ITEM_ADDED = "ITEM_ADDED";
   public static final String VOUCHER_APPLIED = "VOUCHER_APPLIED";
   public static final String ORDER_CONFIRMED = "ORDER_CONFIRMED";
+  public static final String ORDER_ARRANGING_PAYMENT = "ORDER_ARRANGING_PAYMENT";
+  public static final String ORDER_PAYMENT_AUTHORIZED = "ORDER_PAYMENT_AUTHORIZED";
   public static final String ORDER_PICKING = "ORDER_PICKING";
   public static final String ORDER_PACKING = "ORDER_PACKING";
   public static final String ORDER_SHIPPED = "ORDER_SHIPPED";

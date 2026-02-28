@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Outbox Hardening: next_attempt_at for exponential backoff, aggregate_id for debugging, trace_id for correlation -->
+    <changeSet id="36-order-outbox-hardening" author="chamrong">
+        <addColumn tableName="order_outbox_event">
+            <column name="aggregate_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="next_attempt_at" type="TIMESTAMPTZ" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trace_id" type="VARCHAR(64)"/>
+        </addColumn>
+        
+        <!-- Index for hardened relay: poll PENDING rows that are due for delivery -->
+        <createIndex tableName="order_outbox_event" indexName="idx_outbox_pending_backoff">
+            <column name="status"/>
+            <column name="next_attempt_at"/>
+        </createIndex>
+
+        <!-- Index for finding events by aggregate (Order ID) -->
+        <createIndex tableName="order_outbox_event" indexName="idx_outbox_aggregate">
+            <column name="aggregate_id"/>
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Idempotency: prevents duplicate command processing -->
+    <changeSet id="37-order-idempotency" author="chamrong">
+        <createTable tableName="order_idempotency">
+            <column name="operation_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reference_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="result_snapshot" type="TEXT"/>
+            <column name="recorded_at" type="TIMESTAMPTZ" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="order_idempotency" columnNames="operation_type, reference_id" constraintName="pk_order_idempotency"/>
+    </changeSet>
+
+    <!-- Saga State: observability of the choreography -->
+    <changeSet id="38-order-saga-state" author="chamrong">
+        <createTable tableName="order_saga_state">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="BIGINT">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="current_step" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="correlation_id" type="VARCHAR(255)"/>
+            <column name="retry_count" type="INTEGER" defaultValueNumeric="0"/>
+            <column name="last_reason" type="TEXT"/>
+            <column name="updated_at" type="TIMESTAMPTZ" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- Index for Keyset Pagination on Order List (Customer Dashboard) -->
+    <changeSet id="39-order-indices-hardening" author="chamrong">
+        <!-- Keyset cursor: (created_at DESC, id DESC) hits index directly -->
+        <createIndex tableName="ecommerce_order" indexName="idx_order_customer_cursor">
+            <column name="tenant_id"/>
+            <column name="customerId"/>
+            <column name="created_at" descending="true"/>
+            <column name="id" descending="true"/>
+        </createIndex>
+
+        <!-- Keyset cursor for Audit Log -->
+        <createIndex tableName="order_audit_log" indexName="idx_audit_cursor">
+            <column name="order_id"/>
+            <column name="occurred_at" descending="true"/>
+            <column name="id" descending="true"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

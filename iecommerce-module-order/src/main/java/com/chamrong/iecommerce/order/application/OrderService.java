@@ -390,7 +390,7 @@ public class OrderService implements OrderApi {
           order.getTenantId());
       // Audit even IDOR attempts so security teams can alert on them
       var idor =
-          OrderAuditLog.of(
+          new OrderAuditLog(
               id,
               currentTenant,
               order.getState(),
@@ -407,7 +407,7 @@ public class OrderService implements OrderApi {
   /** Write an audit log entry. Called after every successful state transition. */
   private void audit(Order order, OrderState from, OrderState to, String action, String context) {
     var entry =
-        OrderAuditLog.of(
+        new OrderAuditLog(
             order.getId(), order.getTenantId(), from, to, action, currentPrincipal(), context);
     auditLogRepository.save(entry);
   }

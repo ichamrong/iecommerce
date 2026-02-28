@@ -34,14 +34,36 @@ public final class OrderStateMachine {
 
   static {
     final Map<OrderState, Set<OrderState>> t = new EnumMap<>(OrderState.class);
+
+    // AddingItems: direct confirm (POS/trusted), online payment flow, or cancel
     t.put(
         OrderState.AddingItems,
         java.util.Collections.unmodifiableSet(
-            EnumSet.of(OrderState.Confirmed, OrderState.Completed, OrderState.Cancelled)));
+            EnumSet.of(
+                OrderState.ArrangingPayment, // online payment: redirect to payment provider
+                OrderState.Confirmed, // direct confirm (POS / pre-auth)
+                OrderState.Completed, // POS immediate completion
+                OrderState.Cancelled)));
+
+    // ArrangingPayment: customer reviewing payment, can be authorized or cancelled
+    t.put(
+        OrderState.ArrangingPayment,
+        java.util.Collections.unmodifiableSet(
+            EnumSet.of(OrderState.PaymentAuthorized, OrderState.Cancelled)));
+
+    // PaymentAuthorized: payment held, awaiting merchant confirmation → move to Confirmed
+    t.put(
+        OrderState.PaymentAuthorized,
+        java.util.Collections.unmodifiableSet(
+            EnumSet.of(OrderState.Confirmed, OrderState.Cancelled)));
+
+    // Confirmed: stock reserved, ready for picking (or immediate pick if payment already settled)
     t.put(
         OrderState.Confirmed,
         java.util.Collections.unmodifiableSet(
             EnumSet.of(OrderState.Picking, OrderState.PaymentSettled, OrderState.Cancelled)));
+
+    // PaymentSettled: payment captured, ready for fulfillment
     t.put(
         OrderState.PaymentSettled,
         java.util.Collections.unmodifiableSet(
@@ -50,6 +72,7 @@ public final class OrderStateMachine {
                 OrderState.Shipped,
                 OrderState.Completed,
                 OrderState.Cancelled)));
+
     t.put(
         OrderState.Picking,
         java.util.Collections.unmodifiableSet(
