@@ -22,7 +22,8 @@ import java.time.Duration;
  * </pre>
  *
  * <p>The schedule is intentionally not exponential (which would reach impractical values quickly).
- * It is a configurable step function — override via {@link LoginLockConfig} properties.
+ * It is a configurable step function — override via {@link
+ * com.chamrong.iecommerce.auth.infrastructure.config.LoginLockConfig} properties.
  */
 public interface LoginLockPolicy {
 

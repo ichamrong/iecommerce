@@ -68,7 +68,7 @@ public class TenantProvisionHandler {
         tempPassword);
   }
 
-  private Role ensureTenantAdminRole(String tenantCode) {
+  private void ensureTenantAdminRole(String tenantCode) {
     Permission profileRead =
         permissionRepository
             .findByName(Permissions.PROFILE_READ)
@@ -85,6 +85,6 @@ public class TenantProvisionHandler {
                   return r;
                 });
     role.setPermissions(Set.of(profileRead));
-    return roleRepository.save(role);
+    roleRepository.save(role);
   }
 }

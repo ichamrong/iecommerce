@@ -3,12 +3,18 @@ package com.chamrong.iecommerce.auth.api;
 import com.chamrong.iecommerce.auth.application.command.ChangePasswordCommand;
 import com.chamrong.iecommerce.auth.application.command.LoginCommand;
 import com.chamrong.iecommerce.auth.application.command.RegisterCommand;
-import com.chamrong.iecommerce.auth.application.command.auth.ChangePasswordHandler;
 import com.chamrong.iecommerce.auth.application.command.auth.LoginUserHandler;
+import com.chamrong.iecommerce.auth.application.command.auth.LogoutCommand;
+import com.chamrong.iecommerce.auth.application.command.auth.LogoutHandler;
+import com.chamrong.iecommerce.auth.application.command.auth.RefreshTokenCommand;
+import com.chamrong.iecommerce.auth.application.command.auth.RefreshTokenHandler;
 import com.chamrong.iecommerce.auth.application.command.password.ForgotPasswordCommand;
 import com.chamrong.iecommerce.auth.application.command.password.ForgotPasswordHandler;
+import com.chamrong.iecommerce.auth.application.command.security.ChangePasswordHandler;
 import com.chamrong.iecommerce.auth.application.command.user.RegisterUserHandler;
 import com.chamrong.iecommerce.auth.application.dto.AuthResponse;
+import com.chamrong.iecommerce.auth.application.query.ListSocialProvidersQueryHandler;
+import com.chamrong.iecommerce.auth.domain.idp.SocialProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -17,8 +23,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,16 +46,25 @@ public class AuthController {
   private final LoginUserHandler loginUserHandler;
   private final ForgotPasswordHandler forgotPasswordHandler;
   private final ChangePasswordHandler changePasswordHandler;
+  private final RefreshTokenHandler refreshTokenHandler;
+  private final LogoutHandler logoutHandler;
+  private final ListSocialProvidersQueryHandler listSocialProvidersQueryHandler;
 
   public AuthController(
       RegisterUserHandler registerUserHandler,
       LoginUserHandler loginUserHandler,
       ForgotPasswordHandler forgotPasswordHandler,
-      ChangePasswordHandler changePasswordHandler) {
+      ChangePasswordHandler changePasswordHandler,
+      RefreshTokenHandler refreshTokenHandler,
+      LogoutHandler logoutHandler,
+      ListSocialProvidersQueryHandler listSocialProvidersQueryHandler) {
     this.registerUserHandler = registerUserHandler;
     this.loginUserHandler = loginUserHandler;
     this.forgotPasswordHandler = forgotPasswordHandler;
     this.changePasswordHandler = changePasswordHandler;
+    this.refreshTokenHandler = refreshTokenHandler;
+    this.logoutHandler = logoutHandler;
+    this.listSocialProvidersQueryHandler = listSocialProvidersQueryHandler;
   }
 
   /**
@@ -101,6 +118,61 @@ public class AuthController {
   public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginCommand cmd) {
     var response = loginUserHandler.handle(cmd);
     return ResponseEntity.ok(response);
+  }
+
+  /**
+   * Refresh an access token.
+   *
+   * <p>POST /api/v1/auth/refresh-token
+   */
+  @Operation(
+      summary = "Refresh Token",
+      description =
+          "Exchanges a valid refresh token for a new access token and refresh token pair.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "Token refreshed successfully",
+        content = @Content(schema = @Schema(implementation = AuthResponse.class))),
+    @ApiResponse(
+        responseCode = "401",
+        description = "Invalid or expired refresh token",
+        content = @Content)
+  })
+  @PostMapping("/refresh-token")
+  public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenCommand cmd) {
+    return ResponseEntity.ok(refreshTokenHandler.handle(cmd));
+  }
+
+  /**
+   * Log out a user.
+   *
+   * <p>POST /api/v1/auth/logout
+   */
+  @Operation(
+      summary = "Log out user",
+      description = "Logs out a user by revoking their refresh token via the Identity Provider.")
+  @ApiResponses({@ApiResponse(responseCode = "204", description = "User logged out successfully")})
+  @PostMapping("/logout")
+  public ResponseEntity<Void> logout(@Valid @RequestBody LogoutCommand cmd) {
+    logoutHandler.handle(cmd);
+    return ResponseEntity.noContent().build();
+  }
+
+  /**
+   * Get social providers.
+   *
+   * <p>GET /api/v1/auth/social-providers
+   */
+  @Operation(
+      summary = "List social providers",
+      description =
+          "Retrieves a list of configured and enabled social identity providers (e.g., Google,"
+              + " GitHub).")
+  @ApiResponses({@ApiResponse(responseCode = "200", description = "List of social providers")})
+  @GetMapping("/social-providers")
+  public ResponseEntity<List<SocialProvider>> getSocialProviders() {
+    return ResponseEntity.ok(listSocialProvidersQueryHandler.handle());
   }
 
   /**

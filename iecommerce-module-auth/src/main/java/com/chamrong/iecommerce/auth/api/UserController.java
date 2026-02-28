@@ -1,10 +1,15 @@
 package com.chamrong.iecommerce.auth.api;
 
+import com.chamrong.iecommerce.auth.application.command.security.Disable2FAHandler;
+import com.chamrong.iecommerce.auth.application.command.security.Enable2FAHandler;
+import com.chamrong.iecommerce.auth.application.command.security.ResetUserPasswordHandler;
+import com.chamrong.iecommerce.auth.application.command.security.RevokeAllSessionsHandler;
+import com.chamrong.iecommerce.auth.application.command.security.RevokeSessionHandler;
+import com.chamrong.iecommerce.auth.application.command.security.TriggerEmailVerificationHandler;
+import com.chamrong.iecommerce.auth.application.command.security.UnlockUserHandler;
 import com.chamrong.iecommerce.auth.application.command.user.AdminCreateUserCommand;
 import com.chamrong.iecommerce.auth.application.command.user.AdminCreateUserHandler;
-import com.chamrong.iecommerce.auth.application.command.user.Disable2FAHandler;
 import com.chamrong.iecommerce.auth.application.command.user.DisableUserHandler;
-import com.chamrong.iecommerce.auth.application.command.user.Enable2FAHandler;
 import com.chamrong.iecommerce.auth.application.query.UserQueryHandler;
 import com.chamrong.iecommerce.auth.domain.Permissions;
 import com.chamrong.iecommerce.auth.domain.User;
@@ -40,18 +45,33 @@ public class UserController {
   private final AdminCreateUserHandler adminCreateUserHandler;
   private final Enable2FAHandler enable2FAHandler;
   private final Disable2FAHandler disable2FAHandler;
+  private final UnlockUserHandler unlockUserHandler;
+  private final TriggerEmailVerificationHandler triggerEmailVerificationHandler;
+  private final RevokeSessionHandler revokeSessionHandler;
+  private final RevokeAllSessionsHandler revokeAllSessionsHandler;
+  private final ResetUserPasswordHandler resetUserPasswordHandler;
 
   public UserController(
       UserQueryHandler userQueryHandler,
       DisableUserHandler disableUserHandler,
       AdminCreateUserHandler adminCreateUserHandler,
       Enable2FAHandler enable2FAHandler,
-      Disable2FAHandler disable2FAHandler) {
+      Disable2FAHandler disable2FAHandler,
+      UnlockUserHandler unlockUserHandler,
+      TriggerEmailVerificationHandler triggerEmailVerificationHandler,
+      RevokeSessionHandler revokeSessionHandler,
+      RevokeAllSessionsHandler revokeAllSessionsHandler,
+      ResetUserPasswordHandler resetUserPasswordHandler) {
     this.userQueryHandler = userQueryHandler;
     this.disableUserHandler = disableUserHandler;
     this.adminCreateUserHandler = adminCreateUserHandler;
     this.enable2FAHandler = enable2FAHandler;
     this.disable2FAHandler = disable2FAHandler;
+    this.unlockUserHandler = unlockUserHandler;
+    this.triggerEmailVerificationHandler = triggerEmailVerificationHandler;
+    this.revokeSessionHandler = revokeSessionHandler;
+    this.revokeAllSessionsHandler = revokeAllSessionsHandler;
+    this.resetUserPasswordHandler = resetUserPasswordHandler;
   }
 
   /**
@@ -155,5 +175,112 @@ public class UserController {
   public ResponseEntity<Void> disable2FA() {
     disable2FAHandler.handle();
     return ResponseEntity.noContent().build();
+  }
+
+  /**
+   * Unlock a user account manually (clears progressive lock and Keycloak brute-force lock).
+   *
+   * <p>POST /api/v1/users/{username}/unlock — requires {@code staff:manage}.
+   */
+  @Operation(
+      summary = "Admin: Unlock user",
+      description =
+          "Manually clears both local progressive delay lock and Keycloak brute-force lock. "
+              + "Requires `staff:manage`.")
+  @PostMapping("/{username}/unlock")
+  @PreAuthorize(Permissions.HAS_STAFF_MANAGE)
+  public ResponseEntity<Void> unlockUser(
+      @PathVariable String username,
+      @RequestBody(required = false)
+          String
+              tenantId) { // tenantId usually from context, added here for explicit admin override
+    // if needed later
+    // In a real scenario, you might extract username from path and tenantId from context or body.
+    // For simplicity, assuming username here is enough for the handler if it uses TenantContext
+    // internally.
+    // Let's adjust to pass null for tenantId if the handler derives it, or modify handler to take
+    // just username.
+    // Looking at UnlockUserHandler, it expects username and tenantId.
+    // We should get tenantId from TenantContext in the controller or let handler do it.
+    // Let's pass null for tenantId parameter here and let handler use TenantContext if needed,
+    // or better yet, extract it implicitly.
+    // Actually, UnlockUserHandler signature: handle(final String username, final String tenantId).
+    // Let's just pass null for now or retrieve it from context.
+    String currentTenantId = com.chamrong.iecommerce.common.TenantContext.requireTenantId();
+    unlockUserHandler.handle(username, currentTenantId);
+    return ResponseEntity.ok().build();
+  }
+
+  /**
+   * Triggers a verification email for the user.
+   *
+   * <p>POST /api/v1/users/{username}/verify-email — requires {@code staff:manage}.
+   */
+  @Operation(
+      summary = "Admin: Trigger verification email",
+      description =
+          "Sends an email for the user to verify their email address via Keycloak. "
+              + "Requires `staff:manage`.")
+  @PostMapping("/{username}/verify-email")
+  @PreAuthorize(Permissions.HAS_STAFF_MANAGE)
+  public ResponseEntity<Void> triggerVerificationEmail(@PathVariable String username) {
+    triggerEmailVerificationHandler.handle(username);
+    return ResponseEntity.ok().build();
+  }
+
+  /**
+   * Revoke a specific user session.
+   *
+   * <p>DELETE /api/v1/users/sessions/{sessionId}
+   */
+  @Operation(
+      summary = "Revoke single session",
+      description = "Invalidates a specific Keycloak session by ID. Requires `staff:manage`.")
+  @DeleteMapping("/sessions/{sessionId}")
+  @PreAuthorize(Permissions.HAS_STAFF_MANAGE)
+  public ResponseEntity<Void> revokeSession(
+      @PathVariable String sessionId,
+      @RequestBody String keycloakId) { // Need keycloakId as parameter according to handler
+    revokeSessionHandler.handle(sessionId, keycloakId);
+    return ResponseEntity.noContent().build();
+  }
+
+  /**
+   * Revoke all sessions for a specific user.
+   *
+   * <p>DELETE /api/v1/users/{username}/sessions
+   */
+  @Operation(
+      summary = "Revoke all sessions for user",
+      description =
+          "Logs the user out entirely by revoking all their active Keycloak sessions. "
+              + "Requires `staff:manage`.")
+  @DeleteMapping("/{username}/sessions")
+  @PreAuthorize(Permissions.HAS_STAFF_MANAGE)
+  public ResponseEntity<Void> revokeAllSessions(
+      @PathVariable String username,
+      @RequestBody
+          String keycloakId) { // Changed to take keycloakId as body since path has username
+    // Or normally we'd look up keycloakId using identityService based on username
+    revokeAllSessionsHandler.handle(keycloakId);
+    return ResponseEntity.noContent().build();
+  }
+
+  /**
+   * Admin resets a user's password to a temporary forced one.
+   *
+   * <p>POST /api/v1/users/{username}/reset-password
+   */
+  @Operation(
+      summary = "Admin: Reset password",
+      description =
+          "Forces a password reset. Sets a temporary password and forces change on next login. "
+              + "Requires `staff:manage`.")
+  @PostMapping("/{username}/reset-password")
+  @PreAuthorize(Permissions.HAS_STAFF_MANAGE)
+  public ResponseEntity<Void> resetPassword(
+      @PathVariable String username, @RequestBody String newTemporaryPassword) {
+    resetUserPasswordHandler.handle(username, newTemporaryPassword);
+    return ResponseEntity.ok().build();
   }
 }

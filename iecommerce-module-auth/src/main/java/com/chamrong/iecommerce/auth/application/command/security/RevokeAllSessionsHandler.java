@@ -1,4 +1,4 @@
-package com.chamrong.iecommerce.auth.application.command.user;
+package com.chamrong.iecommerce.auth.application.command.security;
 
 import com.chamrong.iecommerce.auth.domain.IdentityService;
 import lombok.RequiredArgsConstructor;

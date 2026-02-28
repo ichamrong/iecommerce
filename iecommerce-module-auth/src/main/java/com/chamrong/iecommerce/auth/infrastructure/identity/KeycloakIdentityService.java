@@ -132,6 +132,66 @@ public class KeycloakIdentityService implements IdentityService {
     }
   }
 
+  @Override
+  public AuthResponse refreshToken(String refreshToken) {
+    String tokenUrl =
+        properties.getServerUrl()
+            + "/realms/"
+            + properties.getRealm()
+            + "/protocol/openid-connect/token";
+
+    MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+    formData.add("client_id", properties.getClients().getWeb());
+    formData.add("grant_type", "refresh_token");
+    formData.add("refresh_token", refreshToken);
+
+    try {
+      var response =
+          restClient
+              .post()
+              .uri(tokenUrl)
+              .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+              .body(formData)
+              .retrieve()
+              .body(AuthResponse.class);
+
+      if (response == null) {
+        throw new BadCredentialsException("Invalid refresh token.");
+      }
+      return response;
+    } catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.BadRequest e) {
+      throw new BadCredentialsException("Invalid or expired refresh token.");
+    }
+  }
+
+  @Override
+  public void logout(String refreshToken) {
+    String logoutUrl =
+        properties.getServerUrl()
+            + "/realms/"
+            + properties.getRealm()
+            + "/protocol/openid-connect/logout";
+
+    MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+    formData.add("client_id", properties.getClients().getWeb());
+    formData.add("refresh_token", refreshToken);
+
+    try {
+      restClient
+          .post()
+          .uri(logoutUrl)
+          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+          .body(formData)
+          .retrieve()
+          .toBodilessEntity();
+      log.info("Successfully logged out via IDP");
+    } catch (HttpClientErrorException.BadRequest e) {
+      log.warn("Failed to logout: Invalid refresh token.");
+    } catch (Exception e) {
+      log.error("Failed to logout via IDP", e);
+    }
+  }
+
   // ─── Password Management ──────────────────────────────────────────────────
 
   @Override
@@ -223,6 +283,22 @@ public class KeycloakIdentityService implements IdentityService {
     var user = new UserRepresentation();
     user.setEnabled(true);
     keycloak.realm(properties.getRealm()).users().get(keycloakId).update(user);
+  }
+
+  @Override
+  public void unlockUser(String keycloakId) {
+    keycloak.realm(properties.getRealm()).attackDetection().clearBruteForceForUser(keycloakId);
+    log.info("Brute force failures cleared for Keycloak user '{}'", keycloakId);
+  }
+
+  @Override
+  public void sendVerificationEmail(String keycloakId) {
+    keycloak
+        .realm(properties.getRealm())
+        .users()
+        .get(keycloakId)
+        .executeActionsEmail(List.of("VERIFY_EMAIL"));
+    log.info("Verification email triggered for Keycloak user '{}'", keycloakId);
   }
 
   // ─── Session Management ───────────────────────────────────────────────────

@@ -1,7 +1,8 @@
-package com.chamrong.iecommerce.auth.application.command.auth;
+package com.chamrong.iecommerce.auth.application.command.security;
 
 import com.chamrong.iecommerce.auth.application.command.ChangePasswordCommand;
 import com.chamrong.iecommerce.auth.application.command.LoginCommand;
+import com.chamrong.iecommerce.auth.application.command.auth.LoginUserHandler;
 import com.chamrong.iecommerce.auth.domain.IdentityService;
 import com.chamrong.iecommerce.common.TenantContext;
 import lombok.RequiredArgsConstructor;

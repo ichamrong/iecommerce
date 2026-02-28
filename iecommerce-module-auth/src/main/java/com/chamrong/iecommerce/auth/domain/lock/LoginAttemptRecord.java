@@ -59,6 +59,6 @@ public record LoginAttemptRecord(
 
   /** Returns a clean record — resets all counters after a successful login. */
   public LoginAttemptRecord recordSuccess() {
-    return LoginAttemptRecord.clean(username, tenantId);
+    return clean(username, tenantId);
   }
 }

@@ -1,6 +1,7 @@
 package com.chamrong.iecommerce.auth.application.exception;
 
 import java.time.Duration;
+import lombok.Getter;
 
 /**
  * Thrown when a login attempt is rejected because the account is temporarily locked.
@@ -12,8 +13,12 @@ import java.time.Duration;
  * <p>The {@link #remainingLockDuration} can be used to generate a standard {@code Retry-After}
  * response header.
  */
+@Getter
 public class AccountLockedException extends RuntimeException {
 
+  /**
+   * -- GETTER -- How long until the account unlocks itself. Use this to generate a response header.
+   */
   private final Duration remainingLockDuration;
 
   public AccountLockedException(final String username, final Duration remainingLockDuration) {
@@ -28,13 +33,5 @@ public class AccountLockedException extends RuntimeException {
   public AccountLockedException(final String message) {
     super(message);
     this.remainingLockDuration = Duration.ZERO;
-  }
-
-  /**
-   * How long until the account unlocks itself. Use this to generate a {@code Retry-After} response
-   * header.
-   */
-  public Duration getRemainingLockDuration() {
-    return remainingLockDuration;
   }
 }

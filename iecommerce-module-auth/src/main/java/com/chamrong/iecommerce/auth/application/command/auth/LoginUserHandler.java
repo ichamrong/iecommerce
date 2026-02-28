@@ -145,7 +145,6 @@ public class LoginUserHandler {
   private void detectConcurrentSessions(final LoginCommand cmd) {
     try {
       final String keycloakId = identityService.lookupId(cmd.username());
-      if (keycloakId == null) return;
 
       final List<com.chamrong.iecommerce.auth.domain.UserSession> sessions =
           identityService.listActiveSessions(keycloakId);
@@ -171,7 +170,6 @@ public class LoginUserHandler {
   private int countSessions(final LoginCommand cmd) {
     try {
       final String keycloakId = identityService.lookupId(cmd.username());
-      if (keycloakId == null) return 0;
       return identityService.listActiveSessions(keycloakId).size();
     } catch (Exception ex) {
       return 0;

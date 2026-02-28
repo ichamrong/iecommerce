@@ -2,6 +2,7 @@ package com.chamrong.iecommerce.auth.application.dto;
 
 import com.chamrong.iecommerce.auth.domain.TenantPlan;
 import com.chamrong.iecommerce.auth.domain.TenantStatus;
+import org.springframework.lang.Nullable;
 
 /**
  * Response returned after tenant provisioning.
@@ -20,4 +21,4 @@ public record TenantResponse(
     TenantPlan plan,
     TenantStatus status,
     String ownerEmail,
-    String tempPassword) {}
+    @Nullable String tempPassword) {}

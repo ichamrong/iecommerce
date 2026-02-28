@@ -26,9 +26,7 @@ public class DisableUserHandler {
     user.setEnabled(false);
     userRepository.save(user);
 
-    if (user.getKeycloakId() != null) {
-      identityService.disableUser(user.getKeycloakId());
-    }
+    identityService.disableUser(user.getKeycloakId());
 
     eventPublisher.publishEvent(new UserDisabledEvent(id, user.getTenantId()));
   }

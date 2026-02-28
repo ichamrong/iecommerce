@@ -54,11 +54,6 @@ public class ForgotPasswordHandler {
         .findByEmailAndTenantId(cmd.email(), cmd.tenantId())
         .ifPresentOrElse(
             user -> {
-              if (user.getKeycloakId() == null) {
-                auditLog.forgotPasswordTriggered(cmd.tenantId(), false);
-                return;
-              }
-
               // 1. Trigger Keycloak reset email
               identityService.sendPasswordResetEmail(user.getKeycloakId());
 

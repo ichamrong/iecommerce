@@ -23,7 +23,7 @@ public class AuthUserDetailsService implements UserDetailsService {
    */
   @Override
   @Transactional(readOnly = true)
-  @SuppressWarnings("deprecation") // intentional: no tenant context available at this stage
+  @SuppressWarnings("removal") // intentional: no tenant context available at this stage
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
     var user =
         userRepository
