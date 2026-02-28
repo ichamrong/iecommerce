@@ -1,7 +1,15 @@
 package com.chamrong.iecommerce.customer.domain;
 
 import com.chamrong.iecommerce.common.BaseTenantEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -9,10 +17,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "customer")
 @Getter
 @Setter
 @NoArgsConstructor
+@Table(
+    name = "customer",
+    indexes = {@Index(name = "idx_customer_cursor", columnList = "created_at DESC, id DESC")})
 public class Customer extends BaseTenantEntity {
 
   @Column(nullable = true)
@@ -28,6 +38,9 @@ public class Customer extends BaseTenantEntity {
 
   @Column(name = "auth_user_id")
   private Long authUserId; // Link to Auth module's User
+
+  @Column(name = "token_version", nullable = false)
+  private long tokenVersion = 1L;
 
   @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "customer_id")
@@ -88,5 +101,9 @@ public class Customer extends BaseTenantEntity {
 
   public void removeAddress(Address address) {
     this.addresses.remove(address);
+  }
+
+  public void incrementTokenVersion() {
+    this.tokenVersion++;
   }
 }

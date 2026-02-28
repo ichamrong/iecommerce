@@ -11,6 +11,9 @@ public interface CustomerApi {
   /** Returns a customer by ID. */
   Optional<CustomerInfo> getCustomer(Long id);
 
+  com.chamrong.iecommerce.customer.api.dto.CursorResponse<CustomerResponse> listCustomers(
+      String cursor, int limit);
+
   CustomerResponse getCustomerFull(Long id);
 
   CustomerResponse updateCustomer(Long id, UpdateCustomerRequest req);

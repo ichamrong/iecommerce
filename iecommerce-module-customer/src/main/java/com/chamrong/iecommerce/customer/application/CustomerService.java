@@ -1,6 +1,8 @@
 package com.chamrong.iecommerce.customer.application;
 
 import com.chamrong.iecommerce.customer.CustomerApi;
+import com.chamrong.iecommerce.customer.api.dto.CursorResponse;
+import com.chamrong.iecommerce.customer.api.util.CursorEncoder;
 import com.chamrong.iecommerce.customer.application.dto.AddAddressRequest;
 import com.chamrong.iecommerce.customer.application.dto.AddressResponse;
 import com.chamrong.iecommerce.customer.application.dto.CustomerResponse;
@@ -8,6 +10,7 @@ import com.chamrong.iecommerce.customer.application.dto.UpdateCustomerRequest;
 import com.chamrong.iecommerce.customer.domain.Address;
 import com.chamrong.iecommerce.customer.domain.Customer;
 import com.chamrong.iecommerce.customer.domain.CustomerRepository;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +32,27 @@ public class CustomerService implements CustomerApi {
             c ->
                 new com.chamrong.iecommerce.customer.CustomerInfo(
                     c.getId(), c.getFirstName(), c.getEmail()));
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public CursorResponse<CustomerResponse> listCustomers(String cursorStr, int limit) {
+    CursorEncoder.Cursor cursor = CursorEncoder.decode(cursorStr);
+
+    // Fetch limit + 1 to know if there is a next page
+    List<Customer> customers = customerRepository.findNextPage(cursor, limit + 1);
+
+    boolean hasNext = customers.size() > limit;
+    List<Customer> dataPage = hasNext ? customers.subList(0, limit) : customers;
+
+    String nextCursor = null;
+    if (hasNext && !dataPage.isEmpty()) {
+      Customer lastItem = dataPage.get(dataPage.size() - 1);
+      nextCursor = CursorEncoder.encode(lastItem.getCreatedAt(), lastItem.getId());
+    }
+
+    List<CustomerResponse> dtoList = dataPage.stream().map(this::mapToResponse).toList();
+    return new CursorResponse<>(dtoList, nextCursor, hasNext);
   }
 
   @Override

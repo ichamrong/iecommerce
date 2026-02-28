@@ -19,4 +19,5 @@
     <include file="db/changelog/changelog-v12-booking-catalog.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/changelog-v13-order-reliability.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/changelog-v14-inventory-reliability.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v15-staff-architecture.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>

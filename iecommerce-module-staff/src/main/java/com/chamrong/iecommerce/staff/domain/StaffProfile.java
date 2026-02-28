@@ -8,8 +8,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
@@ -24,11 +26,19 @@ import lombok.Setter;
  * tenant assignment list lives here. The {@code userId} field is the link between the two.
  */
 @Entity
-@Table(name = "staff_profile")
+@Table(
+    name = "staff_profile",
+    indexes = {
+      @Index(name = "idx_staff_cursor", columnList = "created_at DESC, id DESC"),
+      @Index(name = "idx_staff_status", columnList = "status"),
+      @Index(name = "idx_staff_role", columnList = "role")
+    })
 @Getter
 @Setter
 @NoArgsConstructor
 public class StaffProfile extends BaseEntity {
+
+  @Version private Long version;
 
   public StaffProfile(String userId, String fullName, StaffRole role) {
     this.userId = userId;
@@ -67,13 +77,31 @@ public class StaffProfile extends BaseEntity {
    * enforcement — no DB lookup required per request.
    */
   @ElementCollection(fetch = FetchType.EAGER)
-  @CollectionTable(name = "staff_assigned_tenants", joinColumns = @JoinColumn(name = "staff_id"))
+  @CollectionTable(
+      name = "staff_assigned_tenants",
+      joinColumns = @JoinColumn(name = "staff_id"),
+      indexes = {@Index(name = "idx_staff_tenant", columnList = "tenant_code")})
   @Column(name = "tenant_code")
   private Set<String> assignedTenants = new HashSet<>();
 
   // ── Domain Methods ────────────────────────────────────────────────────────
 
+  private void checkNotTerminated() {
+    if (this.status == StaffStatus.TERMINATED) {
+      throw new IllegalStateException("Cannot modify a terminated staff member.");
+    }
+  }
+
+  public void updateProfile(String fullName, String phone, String department, String branch) {
+    checkNotTerminated();
+    this.fullName = fullName;
+    this.phone = phone;
+    this.department = department;
+    this.branch = branch;
+  }
+
   public void suspend() {
+    checkNotTerminated();
     this.status = StaffStatus.SUSPENDED;
   }
 

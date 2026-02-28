@@ -1,6 +1,7 @@
 package com.chamrong.iecommerce.customer.infrastructure;
 
 import com.chamrong.iecommerce.customer.CustomerApi;
+import com.chamrong.iecommerce.customer.api.dto.CursorResponse;
 import com.chamrong.iecommerce.customer.application.dto.AddAddressRequest;
 import com.chamrong.iecommerce.customer.application.dto.CustomerResponse;
 import com.chamrong.iecommerce.customer.application.dto.UpdateCustomerRequest;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -25,6 +27,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class CustomerController {
 
   private final CustomerApi customerApi;
+
+  @GetMapping
+  @Operation(summary = "List customers with cursor pagination")
+  public ResponseEntity<CursorResponse<CustomerResponse>> listCustomers(
+      @RequestParam(required = false) String cursor, @RequestParam(defaultValue = "20") int limit) {
+    return ResponseEntity.ok(customerApi.listCustomers(cursor, limit));
+  }
 
   @GetMapping("/{id}")
   @Operation(summary = "Get full customer profile")
