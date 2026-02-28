@@ -2,7 +2,7 @@ package com.chamrong.iecommerce.catalog.application.command;
 
 import com.chamrong.iecommerce.catalog.ProductAddedToCollectionEvent;
 import com.chamrong.iecommerce.catalog.domain.CollectionRepository;
-import com.chamrong.iecommerce.catalog.domain.ProductRepository;
+import com.chamrong.iecommerce.catalog.domain.ProductRepositoryPort;
 import com.chamrong.iecommerce.common.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AddProductToCollectionHandler {
 
   private final CollectionRepository collectionRepository;
-  private final ProductRepository productRepository;
+  private final ProductRepositoryPort productRepository;
   private final ApplicationEventPublisher eventPublisher;
 
   public void handle(Long collectionId, Long productId) {

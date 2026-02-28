@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.Version;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -35,6 +36,11 @@ import org.hibernate.annotations.SQLRestriction;
 @SQLDelete(sql = "UPDATE catalog_categories SET deleted = TRUE, deleted_at = NOW() WHERE id = ?")
 @SQLRestriction("deleted = FALSE")
 public class Category extends BaseTenantEntity {
+
+  @Version
+  @Getter
+  @Column(nullable = false)
+  private Long version = 0L;
 
   @Getter
   @Setter

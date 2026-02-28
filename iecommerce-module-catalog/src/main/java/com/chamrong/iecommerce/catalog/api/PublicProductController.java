@@ -1,11 +1,11 @@
 package com.chamrong.iecommerce.catalog.api;
 
+import com.chamrong.iecommerce.catalog.application.dto.CatalogCursorResponse;
 import com.chamrong.iecommerce.catalog.application.dto.ProductResponse;
 import com.chamrong.iecommerce.catalog.application.query.ProductQueryHandler;
 import com.chamrong.iecommerce.catalog.domain.ProductStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,10 +25,15 @@ public class PublicProductController {
 
   private final ProductQueryHandler queryHandler;
 
-  @Operation(summary = "List active products", description = "Returns published products.")
+  @Operation(
+      summary = "List active products",
+      description = "Returns published products (cursor-paginated).")
   @GetMapping
-  public List<ProductResponse> list(@RequestParam(defaultValue = "en") String locale) {
-    return queryHandler.listByStatus(ProductStatus.ACTIVE, locale);
+  public CatalogCursorResponse<ProductResponse> list(
+      @RequestParam(required = false) String cursor,
+      @RequestParam(defaultValue = "20") int limit,
+      @RequestParam(defaultValue = "en") String locale) {
+    return queryHandler.list(cursor, limit, ProductStatus.ACTIVE, null, null, locale);
   }
 
   @Operation(

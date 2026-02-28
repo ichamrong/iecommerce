@@ -3,7 +3,7 @@ package com.chamrong.iecommerce.catalog.application.command;
 import com.chamrong.iecommerce.catalog.ProductRelationshipsUpdatedEvent;
 import com.chamrong.iecommerce.catalog.application.dto.SetRelationshipsRequest;
 import com.chamrong.iecommerce.catalog.domain.ProductRelationship;
-import com.chamrong.iecommerce.catalog.domain.ProductRepository;
+import com.chamrong.iecommerce.catalog.domain.ProductRepositoryPort;
 import com.chamrong.iecommerce.common.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class SetRelationshipsHandler {
 
-  private final ProductRepository productRepository;
+  private final ProductRepositoryPort productRepository;
   private final ApplicationEventPublisher eventPublisher;
 
   public void handle(Long productId, List<SetRelationshipsRequest> relationships) {

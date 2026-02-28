@@ -4,8 +4,9 @@ import com.chamrong.iecommerce.catalog.ProductCreatedEvent;
 import com.chamrong.iecommerce.catalog.application.CatalogMapper;
 import com.chamrong.iecommerce.catalog.application.dto.CreateProductRequest;
 import com.chamrong.iecommerce.catalog.application.dto.ProductResponse;
+import com.chamrong.iecommerce.catalog.domain.CatalogCachePort;
 import com.chamrong.iecommerce.catalog.domain.Product;
-import com.chamrong.iecommerce.catalog.domain.ProductRepository;
+import com.chamrong.iecommerce.catalog.domain.ProductRepositoryPort;
 import com.chamrong.iecommerce.catalog.domain.ProductType;
 import com.chamrong.iecommerce.common.Money;
 import com.chamrong.iecommerce.common.TenantContext;
@@ -40,7 +41,8 @@ public class CreateProductHandler {
 
   private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-z0-9]+");
 
-  private final ProductRepository productRepository;
+  private final ProductRepositoryPort productRepository;
+  private final CatalogCachePort cache;
   private final CatalogMapper mapper;
   private final ApplicationEventPublisher eventPublisher;
   private final SubscriptionApi subscriptionApi;
@@ -107,8 +109,10 @@ public class CreateProductHandler {
     }
 
     var saved = productRepository.save(product);
+    ProductResponse res = mapper.toProductResponse(saved, "en");
+    cache.putProduct(saved.getId(), res);
     eventPublisher.publishEvent(new ProductCreatedEvent(tenantId, saved.getId()));
-    return mapper.toProductResponse(saved, "en");
+    return res;
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

@@ -4,8 +4,9 @@ import com.chamrong.iecommerce.catalog.ProductUpdatedEvent;
 import com.chamrong.iecommerce.catalog.application.CatalogMapper;
 import com.chamrong.iecommerce.catalog.application.dto.ProductResponse;
 import com.chamrong.iecommerce.catalog.application.dto.UpdateProductRequest;
+import com.chamrong.iecommerce.catalog.domain.CatalogCachePort;
 import com.chamrong.iecommerce.catalog.domain.Product;
-import com.chamrong.iecommerce.catalog.domain.ProductRepository;
+import com.chamrong.iecommerce.catalog.domain.ProductRepositoryPort;
 import com.chamrong.iecommerce.common.Money;
 import com.chamrong.iecommerce.common.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
@@ -24,7 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UpdateProductHandler {
 
-  private final ProductRepository productRepository;
+  private final ProductRepositoryPort productRepository;
+  private final CatalogCachePort cache;
   private final CatalogMapper mapper;
   private final ApplicationEventPublisher eventPublisher;
 
@@ -59,6 +61,7 @@ public class UpdateProductHandler {
     }
 
     var saved = productRepository.save(product);
+    cache.evictProduct(saved.getId());
     eventPublisher.publishEvent(new ProductUpdatedEvent(tenantId, saved.getId()));
     return mapper.toProductResponse(saved, locale);
   }

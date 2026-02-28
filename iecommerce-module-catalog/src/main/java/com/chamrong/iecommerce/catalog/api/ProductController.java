@@ -10,6 +10,7 @@ import com.chamrong.iecommerce.catalog.application.command.UpdateProductHandler;
 import com.chamrong.iecommerce.catalog.application.command.UpdateVariantHandler;
 import com.chamrong.iecommerce.catalog.application.command.UpsertProductTranslationHandler;
 import com.chamrong.iecommerce.catalog.application.dto.AddVariantRequest;
+import com.chamrong.iecommerce.catalog.application.dto.CatalogCursorResponse;
 import com.chamrong.iecommerce.catalog.application.dto.CreateProductRequest;
 import com.chamrong.iecommerce.catalog.application.dto.CreateProductRequest.TranslationRequest;
 import com.chamrong.iecommerce.catalog.application.dto.ProductResponse;
@@ -24,6 +25,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -68,16 +70,24 @@ public class ProductController {
     @ApiResponse(responseCode = "403", description = "Forbidden")
   })
   @GetMapping
-  public List<ProductResponse> list(
+  public CatalogCursorResponse<ProductResponse> list(
+      @Parameter(description = "Opaque cursor from previous response; omit for first page")
+          @RequestParam(required = false)
+          String cursor,
+      @Parameter(description = "Page size (1–100, default 20)") @RequestParam(defaultValue = "20")
+          int limit,
       @Parameter(description = "Filter by status: DRAFT, ACTIVE, ARCHIVED")
           @RequestParam(required = false)
           ProductStatus status,
+      @Parameter(description = "Filter by category ID") @RequestParam(required = false)
+          Long categoryId,
+      @Parameter(description = "Full-text keyword search (uses GIN index)")
+          @RequestParam(required = false)
+          String keyword,
       @Parameter(description = "Locale for translation (default: en)")
           @RequestParam(defaultValue = "en")
           String locale) {
-    return status != null
-        ? queryHandler.listByStatus(status, locale)
-        : queryHandler.listByTenant(locale);
+    return queryHandler.list(cursor, limit, status, categoryId, keyword, locale);
   }
 
   @Operation(summary = "Get product", description = "Returns a single product by ID.")
@@ -98,7 +108,7 @@ public class ProductController {
     @ApiResponse(responseCode = "409", description = "Slug conflict")
   })
   @PostMapping
-  public ResponseEntity<ProductResponse> create(@RequestBody CreateProductRequest req) {
+  public ResponseEntity<ProductResponse> create(@Valid @RequestBody CreateProductRequest req) {
     var response = createHandler.handle(req);
     return ResponseEntity.created(URI.create("/api/v1/admin/products/" + response.id()))
         .body(response);
@@ -112,7 +122,7 @@ public class ProductController {
   @PutMapping("/{id}")
   public ProductResponse update(
       @PathVariable Long id,
-      @RequestBody UpdateProductRequest req,
+      @Valid @RequestBody UpdateProductRequest req,
       @RequestParam(defaultValue = "en") String locale) {
     return updateHandler.handle(id, req, locale);
   }

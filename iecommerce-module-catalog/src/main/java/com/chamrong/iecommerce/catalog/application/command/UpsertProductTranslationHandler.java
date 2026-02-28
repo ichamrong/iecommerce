@@ -1,7 +1,7 @@
 package com.chamrong.iecommerce.catalog.application.command;
 
 import com.chamrong.iecommerce.catalog.application.dto.CreateProductRequest.TranslationRequest;
-import com.chamrong.iecommerce.catalog.domain.ProductRepository;
+import com.chamrong.iecommerce.catalog.domain.ProductRepositoryPort;
 import com.chamrong.iecommerce.common.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UpsertProductTranslationHandler {
 
-  private final ProductRepository productRepository;
+  private final ProductRepositoryPort productRepository;
 
   public void handle(Long productId, String locale, TranslationRequest req) {
     var tenantId = TenantContext.requireTenantId();

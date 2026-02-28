@@ -13,6 +13,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.Version;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -47,6 +48,11 @@ public class Product extends BaseTenantEntity {
   @Setter
   @Column(nullable = false, length = 255)
   private String slug;
+
+  @Version
+  @Getter
+  @Column(nullable = false)
+  private Long version = 0L;
 
   @Getter
   @Enumerated(EnumType.STRING)

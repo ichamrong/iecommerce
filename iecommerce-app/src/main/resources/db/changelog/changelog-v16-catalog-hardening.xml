@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        CATALOG MODULE — V16 Hardening
+        Changes:
+          1. Add `version` column for JPA optimistic locking on catalog_products and catalog_categories
+          2. Add composite cursor index (tenant_id, created_at DESC, id DESC) on catalog_products
+          3. Add composite cursor index (tenant_id, created_at DESC, id DESC) on catalog_categories
+        All changes are additive — zero downtime, backward compatible.
+    -->
+
+    <!-- CS-1: optimistic locking columns -->
+    <changeSet id="cs16-1-catalog-version-columns" author="chamrong">
+        <sql splitStatements="false">
+            -- Optimistic locking version for catalog_products
+            -- Starts at 0; Hibernate increments on every UPDATE.
+            ALTER TABLE catalog_products
+                ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 0;
+
+            -- Same for categories
+            ALTER TABLE catalog_categories
+                ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 0;
+        </sql>
+        <rollback>
+            <sql>
+                ALTER TABLE catalog_products   DROP COLUMN IF EXISTS version;
+                ALTER TABLE catalog_categories DROP COLUMN IF EXISTS version;
+            </sql>
+        </rollback>
+    </changeSet>
+
+    <!-- CS-2: cursor pagination index on catalog_products
+         Backs the keyset query:
+           WHERE tenant_id = ? AND (created_at < ? OR (created_at = ? AND id < ?))
+           ORDER BY created_at DESC, id DESC
+         Uses a partial index (deleted = FALSE) so it is as small as possible.
+         NB: catalog_products is partitioned by deleted; this index is created on the
+         *parent* table and PostgreSQL propagates it to all partitions automatically.
+    -->
+    <changeSet id="cs16-2-catalog-products-cursor-index" author="chamrong">
+        <sql splitStatements="false">
+            CREATE INDEX IF NOT EXISTS idx_products_cursor
+                ON catalog_products (tenant_id, created_at DESC, id DESC)
+                WHERE deleted = FALSE;
+        </sql>
+        <rollback>
+            <sql>DROP INDEX IF EXISTS idx_products_cursor;</sql>
+        </rollback>
+    </changeSet>
+
+    <!-- CS-3: cursor pagination index on catalog_categories -->
+    <changeSet id="cs16-3-catalog-categories-cursor-index" author="chamrong">
+        <sql splitStatements="false">
+            CREATE INDEX IF NOT EXISTS idx_categories_cursor
+                ON catalog_categories (tenant_id, created_at DESC, id DESC)
+                WHERE deleted = FALSE;
+        </sql>
+        <rollback>
+            <sql>DROP INDEX IF EXISTS idx_categories_cursor;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

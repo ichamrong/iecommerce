@@ -1,8 +1,9 @@
 package com.chamrong.iecommerce.catalog.application.command;
 
 import com.chamrong.iecommerce.catalog.ProductPublishedEvent;
+import com.chamrong.iecommerce.catalog.domain.CatalogCachePort;
 import com.chamrong.iecommerce.catalog.domain.Product;
-import com.chamrong.iecommerce.catalog.domain.ProductRepository;
+import com.chamrong.iecommerce.catalog.domain.ProductRepositoryPort;
 import com.chamrong.iecommerce.common.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PublishProductHandler {
 
-  private final ProductRepository productRepository;
+  private final ProductRepositoryPort productRepository;
+  private final CatalogCachePort cache;
   private final ApplicationEventPublisher eventPublisher;
 
   public void handle(Long productId) {
@@ -24,6 +26,7 @@ public class PublishProductHandler {
     var product = findOwned(productId, tenantId);
     product.publish();
     productRepository.save(product);
+    cache.evictProduct(productId);
     eventPublisher.publishEvent(new ProductPublishedEvent(tenantId, product.getId()));
   }
 

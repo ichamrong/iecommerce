@@ -4,7 +4,7 @@ import com.chamrong.iecommerce.catalog.VariantUpdatedEvent;
 import com.chamrong.iecommerce.catalog.application.CatalogMapper;
 import com.chamrong.iecommerce.catalog.application.dto.ProductResponse;
 import com.chamrong.iecommerce.catalog.application.dto.UpdateVariantRequest;
-import com.chamrong.iecommerce.catalog.domain.ProductRepository;
+import com.chamrong.iecommerce.catalog.domain.ProductRepositoryPort;
 import com.chamrong.iecommerce.common.Money;
 import com.chamrong.iecommerce.common.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UpdateVariantHandler {
 
-  private final ProductRepository productRepository;
+  private final ProductRepositoryPort productRepository;
   private final CatalogMapper catalogMapper;
   private final ApplicationEventPublisher eventPublisher;
 
