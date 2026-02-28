@@ -1,6 +1,6 @@
 package com.chamrong.iecommerce.common.outbox;
 
-import com.chamrong.iecommerce.common.event.EventDispatcher;
+import com.chamrong.iecommerce.common.EventDispatcher;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

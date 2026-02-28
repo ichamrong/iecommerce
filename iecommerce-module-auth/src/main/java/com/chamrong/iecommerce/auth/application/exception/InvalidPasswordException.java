@@ -1,11 +1,10 @@
 package com.chamrong.iecommerce.auth.application.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import com.chamrong.iecommerce.auth.domain.exception.AuthErrorCode;
+import com.chamrong.iecommerce.auth.domain.exception.AuthException;
 
-@ResponseStatus(HttpStatus.BAD_REQUEST)
-public class InvalidPasswordException extends RuntimeException {
+public class InvalidPasswordException extends AuthException {
   public InvalidPasswordException(String message) {
-    super(message);
+    super(AuthErrorCode.INVALID_CREDENTIALS, message);
   }
 }

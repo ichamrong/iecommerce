@@ -5,9 +5,6 @@ import com.chamrong.iecommerce.asset.domain.StorageProvider;
 import com.chamrong.iecommerce.asset.domain.StorageService;
 import com.chamrong.iecommerce.asset.domain.exception.AssetErrorCode;
 import com.chamrong.iecommerce.asset.domain.exception.StorageException;
-import com.chamrong.iecommerce.asset.infrastructure.storage.decorator.AuditedStorageService;
-import com.chamrong.iecommerce.asset.infrastructure.storage.decorator.CachingStorageService;
-import com.chamrong.iecommerce.common.event.EventDispatcher;
 import jakarta.annotation.PostConstruct;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -16,7 +13,6 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
@@ -28,8 +24,6 @@ public class StorageRoutingService implements StorageService {
 
   private final List<StorageService> allServices;
   private final StorageRoutingConfiguration config;
-  private final EventDispatcher eventDispatcher;
-  private final CacheManager cacheManager;
 
   private final Map<String, StorageService> providers = new HashMap<>();
 
@@ -53,19 +47,17 @@ public class StorageRoutingService implements StorageService {
           "Duplicate storage provider registration for key: " + key);
     }
 
-    StorageService auditedService = new AuditedStorageService(service, eventDispatcher);
-    StorageService cachedService = new CachingStorageService(auditedService, cacheManager);
-    providers.put(key, cachedService);
+    providers.put(key, service);
 
     // Unified alias registration using StorageProvider mapping
     for (String alias : provider.getAliases()) {
       if (providers.containsKey(alias)) {
         log.warn("Storage provider alias overlap detected and overridden for alias: {}", alias);
       }
-      providers.put(alias, cachedService);
+      providers.put(alias, service);
     }
 
-    log.info("Registered audited and cached storage provider: {}", providerName);
+    log.info("Registered storage provider: {}", providerName);
   }
 
   @Override

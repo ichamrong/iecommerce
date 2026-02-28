@@ -22,7 +22,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 /** UAT-AUTH-03 (Strict): Verify that an Admin from Tenant A cannot see users from Tenant B. */
@@ -36,7 +35,6 @@ class UAT_AUTH_07_TenantIsolationStrictTest {
   @Autowired private UserRepository userRepository;
   @Autowired private RoleRepository roleRepository;
   @Autowired private PermissionRepository permissionRepository;
-  @Autowired private PasswordEncoder passwordEncoder;
 
   @Test
   @DisplayName("UAT-AUTH-03: Admin A should NOT see users from Tenant B")
@@ -97,7 +95,6 @@ class UAT_AUTH_07_TenantIsolationStrictTest {
     User user = new User();
     user.setUsername(username);
     user.setEmail(username + "@test.com");
-    user.setPassword(passwordEncoder.encode("Pass123!"));
     user.setTenantId(tenantId);
     user.setRoles(Set.of(adminRole));
     user.setEnabled(true);

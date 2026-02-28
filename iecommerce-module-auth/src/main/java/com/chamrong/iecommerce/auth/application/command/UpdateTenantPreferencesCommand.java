@@ -1,8 +1,10 @@
 package com.chamrong.iecommerce.auth.application.command;
 
+import org.springframework.lang.Nullable;
+
 public record UpdateTenantPreferencesCommand(
     String tenantId,
-    String logoUrl,
-    String primaryColor,
-    String secondaryColor,
-    String fontFamily) {}
+    @Nullable String logoUrl,
+    @Nullable String primaryColor,
+    @Nullable String secondaryColor,
+    @Nullable String fontFamily) {}

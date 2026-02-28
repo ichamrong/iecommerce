@@ -1,5 +1,7 @@
 package com.chamrong.iecommerce.common;
 
+import org.springframework.lang.Nullable;
+
 public class TenantContext {
 
   private static final ThreadLocal<String> CURRENT_TENANT = new ThreadLocal<>();
@@ -8,6 +10,7 @@ public class TenantContext {
     CURRENT_TENANT.set(tenantId);
   }
 
+  @Nullable
   public static String getCurrentTenant() {
     return CURRENT_TENANT.get();
   }

@@ -1,21 +1,21 @@
 package com.chamrong.iecommerce.auth.api;
 
 import com.chamrong.iecommerce.auth.application.command.TenantProvisionCommand;
-import com.chamrong.iecommerce.auth.application.command.TenantProvisionHandler;
 import com.chamrong.iecommerce.auth.application.command.TenantSignupCommand;
-import com.chamrong.iecommerce.auth.application.command.TenantSignupHandler;
 import com.chamrong.iecommerce.auth.application.command.UpdateTenantPreferencesCommand;
-import com.chamrong.iecommerce.auth.application.command.UpdateTenantPreferencesHandler;
 import com.chamrong.iecommerce.auth.application.command.UpdateTenantStatusCommand;
-import com.chamrong.iecommerce.auth.application.command.UpdateTenantStatusHandler;
+import com.chamrong.iecommerce.auth.application.command.tenant.TenantProvisionHandler;
+import com.chamrong.iecommerce.auth.application.command.tenant.TenantSignupHandler;
+import com.chamrong.iecommerce.auth.application.command.tenant.UpdateTenantPreferencesHandler;
+import com.chamrong.iecommerce.auth.application.command.tenant.UpdateTenantStatusHandler;
 import com.chamrong.iecommerce.auth.application.dto.TenantPreferencesResponse;
 import com.chamrong.iecommerce.auth.application.dto.TenantResponse;
-import com.chamrong.iecommerce.auth.application.exception.DuplicateUserException;
 import com.chamrong.iecommerce.auth.application.query.GetTenantPreferencesHandler;
 import com.chamrong.iecommerce.auth.domain.Permissions;
 import com.chamrong.iecommerce.common.TenantContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -59,13 +59,10 @@ public class TenantController {
           "Public endpoint. Registers a new tenant and their admin user. No authentication"
               + " required.")
   @PostMapping("/api/v1/tenants/register")
-  public ResponseEntity<?> selfServiceSignup(@RequestBody TenantSignupCommand cmd) {
-    try {
-      TenantResponse response = signupHandler.handle(cmd);
-      return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    } catch (DuplicateUserException e) {
-      return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-    }
+  public ResponseEntity<TenantResponse> selfServiceSignup(
+      @Valid @RequestBody TenantSignupCommand cmd) {
+    TenantResponse response = signupHandler.handle(cmd);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
   /** Admin-provisioned tenant creation. */
@@ -74,13 +71,10 @@ public class TenantController {
       description = "Admin-only. Creates a new tenant. Requires `tenant:create` permission.")
   @PostMapping("/api/v1/admin/tenants")
   @PreAuthorize(Permissions.HAS_TENANT_CREATE)
-  public ResponseEntity<?> adminProvision(@RequestBody TenantProvisionCommand cmd) {
-    try {
-      TenantResponse response = provisionHandler.handle(cmd);
-      return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    } catch (DuplicateUserException e) {
-      return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-    }
+  public ResponseEntity<TenantResponse> adminProvision(
+      @Valid @RequestBody TenantProvisionCommand cmd) {
+    TenantResponse response = provisionHandler.handle(cmd);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
   /** Updates a tenant's billing/operational status. */
@@ -91,12 +85,13 @@ public class TenantController {
               + " `tenant:create` permission.")
   @PutMapping("/api/v1/admin/tenants/{id}/status")
   @PreAuthorize(Permissions.HAS_TENANT_CREATE)
-  public ResponseEntity<?> updateStatus(
+  public ResponseEntity<Void> updateStatus(
       @PathVariable("id") String tenantId, @RequestBody UpdateTenantStatusCommand cmd) {
     try {
       statusHandler.handle(new UpdateTenantStatusCommand(tenantId, cmd.status()));
       return ResponseEntity.ok().build();
     } catch (IllegalArgumentException e) {
+      // Future-proof: We can map this to AuthException(TENANT_NOT_FOUND) later
       return ResponseEntity.notFound().build();
     }
   }

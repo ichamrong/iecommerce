@@ -38,5 +38,9 @@ public class Tenant extends BaseEntity {
 
   @Embedded private TenantPreferences preferences = new TenantPreferences();
 
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private TenantProvisioningStatus provisioningStatus = TenantProvisioningStatus.COMPLETED;
+
   private boolean enabled = true;
 }

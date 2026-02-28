@@ -1,6 +1,6 @@
 package com.chamrong.iecommerce.staff.application.command;
 
-import com.chamrong.iecommerce.auth.StaffTenantsUpdatedEvent;
+import com.chamrong.iecommerce.auth.domain.event.StaffTenantsUpdatedEvent;
 import com.chamrong.iecommerce.staff.application.StaffMapper;
 import com.chamrong.iecommerce.staff.application.dto.StaffResponse;
 import com.chamrong.iecommerce.staff.domain.StaffProfileRepository;

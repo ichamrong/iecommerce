@@ -1,8 +1,12 @@
 package com.chamrong.iecommerce.auth.infrastructure.security;
 
 import com.chamrong.iecommerce.auth.domain.Permissions;
+import com.chamrong.iecommerce.auth.infrastructure.aop.MdcLoggingFilter;
+import com.chamrong.iecommerce.auth.infrastructure.ratelimit.IpRateLimitFilter;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,7 +17,20 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+/**
+ * Central Spring Security configuration.
+ *
+ * <h3>Filter order</h3>
+ *
+ * <ol>
+ *   <li>{@link MdcLoggingFilter} — MDC population (requestId, tenantId, clientIp) — runs first
+ *   <li>{@link IpRateLimitFilter} — IP-based rate limiting (OWASP A07)
+ *   <li>{@link BearerTokenAuthenticationFilter} — JWT extraction &amp; SecurityContext population
+ *   <li>{@link TenantContextFilter} — Tenant ID propagation from JWT claim
+ * </ol>
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -22,14 +39,30 @@ public class SecurityConfig {
   private final TenantContextFilter tenantContextFilter;
   private final CustomAuthenticationEntryPoint authenticationEntryPoint;
   private final CustomAccessDeniedHandler accessDeniedHandler;
+  private final IpRateLimitFilter ipRateLimitFilter;
 
   public SecurityConfig(
       TenantContextFilter tenantContextFilter,
       CustomAuthenticationEntryPoint authenticationEntryPoint,
-      CustomAccessDeniedHandler accessDeniedHandler) {
+      CustomAccessDeniedHandler accessDeniedHandler,
+      IpRateLimitFilter ipRateLimitFilter) {
     this.tenantContextFilter = tenantContextFilter;
     this.authenticationEntryPoint = authenticationEntryPoint;
     this.accessDeniedHandler = accessDeniedHandler;
+    this.ipRateLimitFilter = ipRateLimitFilter;
+  }
+
+  /**
+   * Registers the MDC logging filter at the very highest servlet filter order so every subsequent
+   * filter and handler benefits from the populated MDC context.
+   */
+  @Bean
+  public FilterRegistrationBean<MdcLoggingFilter> mdcLoggingFilterRegistration() {
+    final FilterRegistrationBean<MdcLoggingFilter> reg =
+        new FilterRegistrationBean<>(new MdcLoggingFilter());
+    reg.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
+    reg.addUrlPatterns("/*");
+    return reg;
   }
 
   @Bean
@@ -44,9 +77,14 @@ public class SecurityConfig {
                             csp.policyDirectives(
                                 "default-src 'self'; frame-ancestors 'none'; sandbox"))
                     .frameOptions(frameOptions -> frameOptions.deny())
-                    .xssProtection(xss -> xss.disable()) // Relying on CSP for XSS protection
+                    .xssProtection(xss -> xss.disable()) // CSP handles XSS
                     .httpStrictTransportSecurity(
-                        hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000)))
+                        hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31_536_000))
+                    .referrerPolicy(
+                        ref ->
+                            ref.policy(
+                                org.springframework.security.web.header.writers
+                                    .ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER)))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .oauth2ResourceServer(
@@ -57,17 +95,22 @@ public class SecurityConfig {
                             jwt.jwtAuthenticationConverter(
                                 new KeycloakJwtAuthenticationConverter()))
                     .authenticationEntryPoint(authenticationEntryPoint))
-        // Register TenantContextFilter to run AFTER Spring extracts the Bearer token and sets the
-        // SecurityContext
+        // ① MDC filter registered as servlet-level filter (FilterRegistrationBean above)
+        // ② IP Rate Limiter — before any auth processing
+        .addFilterBefore(ipRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+        // ③ TenantContextFilter — after Spring sets the SecurityContext
         .addFilterAfter(tenantContextFilter, BearerTokenAuthenticationFilter.class)
         .exceptionHandling(ex -> ex.accessDeniedHandler(accessDeniedHandler))
         .authorizeHttpRequests(
             auth ->
                 auth
-                    // Public auth endpoints
+                    // ── Public auth endpoints ────────────────────────────────────
                     .requestMatchers(HttpMethod.POST, "/api/v1/auth/**")
                     .permitAll()
-                    // Self-service tenant registration — public
+                    // Social providers list — public (needed before login)
+                    .requestMatchers(HttpMethod.GET, "/api/v1/auth/social/providers")
+                    .permitAll()
+                    // Self-service tenant registration
                     .requestMatchers(HttpMethod.POST, "/api/v1/tenants/register")
                     .permitAll()
                     // OpenAPI / Swagger
@@ -77,9 +120,17 @@ public class SecurityConfig {
                     // Custom error pages
                     .requestMatchers("/error", "/error/**")
                     .permitAll()
-                    // Permission-based rules (defence in depth alongside @PreAuthorize)
+                    // ── Session management — authenticated users only ─────────────
+                    .requestMatchers("/api/v1/users/me/sessions", "/api/v1/users/me/sessions/**")
+                    .authenticated()
+                    // ── 2FA, OTP, passkey — authenticated users only ─────────────
+                    .requestMatchers("/api/v1/users/me/2fa", "/api/v1/users/me/passkey")
+                    .authenticated()
+                    // ── Permission-gated endpoints (defence-in-depth) ────────────
                     .requestMatchers(HttpMethod.GET, "/api/v1/users", "/api/v1/users/*")
                     .hasAuthority(Permissions.USER_READ)
+                    .requestMatchers(HttpMethod.POST, "/api/v1/users")
+                    .hasAuthority(Permissions.STAFF_MANAGE)
                     .requestMatchers(HttpMethod.PATCH, "/api/v1/users/*/disable")
                     .hasAuthority(Permissions.USER_DISABLE)
                     .requestMatchers("/api/v1/admin/staff", "/api/v1/admin/staff/**")
@@ -93,7 +144,7 @@ public class SecurityConfig {
                     .requestMatchers(
                         HttpMethod.GET, "/api/v1/customers/*", "/api/v1/customers/auth/*")
                     .hasAuthority(Permissions.PROFILE_READ)
-                    // Deny-by-Default Strategy: Everything else requires a valid JWT
+                    // ── Deny-by-Default ───────────────────────────────────────────
                     .anyRequest()
                     .authenticated())
         .build();
@@ -101,8 +152,6 @@ public class SecurityConfig {
 
   @Bean
   public PasswordEncoder passwordEncoder() {
-    // Maintained for backward compatibility or edge cases, though Keycloak typically handles core
-    // hashing
     return new BCryptPasswordEncoder();
   }
 }

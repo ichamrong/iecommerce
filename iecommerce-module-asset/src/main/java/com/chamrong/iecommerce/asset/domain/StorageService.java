@@ -10,6 +10,7 @@ public interface StorageService {
   String upload(String fileName, String contentType, InputStream inputStream, long size);
 
   /** Generates a public URL for the asset. */
+  @org.springframework.cache.annotation.Cacheable(value = "storage_urls", key = "#source")
   String getPublicUrl(String source);
 
   /** Generates a temporary pre-signed URL for direct download, if supported by provider. */

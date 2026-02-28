@@ -3,7 +3,9 @@ package com.chamrong.iecommerce.inventory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.chamrong.iecommerce.inventory.application.InventoryService;
 import com.chamrong.iecommerce.inventory.application.dto.AdjustStockRequest;
@@ -46,7 +48,7 @@ class InventoryServiceTest {
 
   @Test
   void testReserveStock_Success() {
-    when(stockLevelRepository.findByProductId(100L)).thenReturn(List.of(stockLevel));
+    when(stockLevelRepository.findForUpdateByProductId(100L)).thenReturn(List.of(stockLevel));
 
     inventoryService.reserveStock("t1", 100L, 10);
 
@@ -58,7 +60,7 @@ class InventoryServiceTest {
 
   @Test
   void testReserveStock_NotEnoughStock_ThrowsException() {
-    when(stockLevelRepository.findByProductId(100L)).thenReturn(List.of(stockLevel));
+    when(stockLevelRepository.findForUpdateByProductId(100L)).thenReturn(List.of(stockLevel));
 
     assertThrows(OutOfStockException.class, () -> inventoryService.reserveStock("t1", 100L, 60));
 
@@ -68,7 +70,7 @@ class InventoryServiceTest {
   @Test
   void testReleaseStock_Success() {
     stockLevel.reserve(15);
-    when(stockLevelRepository.findByProductId(100L)).thenReturn(List.of(stockLevel));
+    when(stockLevelRepository.findForUpdateByProductId(100L)).thenReturn(List.of(stockLevel));
 
     inventoryService.releaseStock("t1", 100L, 10);
 
@@ -81,7 +83,7 @@ class InventoryServiceTest {
   @Test
   void testDeductStock_Success() {
     stockLevel.reserve(10);
-    when(stockLevelRepository.findByProductId(100L)).thenReturn(List.of(stockLevel));
+    when(stockLevelRepository.findForUpdateByProductId(100L)).thenReturn(List.of(stockLevel));
 
     inventoryService.deductStock("t1", 100L, 10);
 

@@ -42,7 +42,7 @@ public class AuthUserDetailsService implements UserDetailsService {
 
     return org.springframework.security.core.userdetails.User.builder()
         .username(user.getUsername())
-        .password(user.getPassword())
+        .password("") // no local password — Keycloak owns credential storage
         .authorities(authorities)
         .build();
   }

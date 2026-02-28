@@ -23,7 +23,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest(
@@ -36,7 +35,6 @@ public class UAT_AUTH_08_PaginationSafeguardsTest {
   @Autowired private UserRepository userRepository;
   @Autowired private RoleRepository roleRepository;
   @Autowired private PermissionRepository permissionRepository;
-  @Autowired private PasswordEncoder passwordEncoder;
   @Autowired private ObjectMapper objectMapper;
 
   @Test
@@ -122,7 +120,6 @@ public class UAT_AUTH_08_PaginationSafeguardsTest {
     User user = new User();
     user.setUsername(username);
     user.setEmail(username + "@test.com");
-    user.setPassword(passwordEncoder.encode("Pass123!"));
     user.setTenantId(tenantId);
     user.setRoles(Set.of(adminRole));
     user.setEnabled(true);

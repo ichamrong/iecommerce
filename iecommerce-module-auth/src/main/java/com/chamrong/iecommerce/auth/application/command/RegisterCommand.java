@@ -1,5 +1,8 @@
 package com.chamrong.iecommerce.auth.application.command;
 
+import com.chamrong.iecommerce.common.annotation.Masked;
+import org.springframework.lang.Nullable;
+
 /**
  * Command to register a new user within a specific tenant.
  *
@@ -9,7 +12,11 @@ package com.chamrong.iecommerce.auth.application.command;
  * @param tenantId the tenant this user belongs to
  */
 public record RegisterCommand(
-    String username, String email, String password, String tenantId, String role) {
+    String username,
+    String email,
+    @Masked String password,
+    String tenantId,
+    @Nullable String role) {
   public RegisterCommand(String username, String email, String password, String tenantId) {
     this(username, email, password, tenantId, null);
   }

@@ -151,7 +151,8 @@ public class OrderSagaIntegrationTest extends AbstractIntegrationTest {
     Thread.sleep(6000);
 
     // 8. Pay for Order
-    PaymentRequest payReq = new PaymentRequest(orderId, new BigDecimal("1998.00"), "USD", "STRIPE");
+    PaymentRequest payReq =
+        new PaymentRequest(orderId, new BigDecimal("1998.00"), "USD", "STRIPE", "saga-stripe-123");
     ResponseEntity<PaymentResponse> payResp =
         restTemplate.exchange(
             "/api/v1/payments?tenantId=" + tenantId,

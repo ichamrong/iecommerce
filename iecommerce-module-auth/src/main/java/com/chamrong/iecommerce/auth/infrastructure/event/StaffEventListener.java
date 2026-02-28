@@ -1,16 +1,16 @@
 package com.chamrong.iecommerce.auth.infrastructure.event;
 
-import com.chamrong.iecommerce.auth.StaffAccountCreatedEvent;
-import com.chamrong.iecommerce.auth.StaffTenantsUpdatedEvent;
 import com.chamrong.iecommerce.auth.application.command.RegisterCommand;
-import com.chamrong.iecommerce.auth.application.command.RegisterUserHandler;
+import com.chamrong.iecommerce.auth.application.command.user.RegisterUserHandler;
 import com.chamrong.iecommerce.auth.domain.Permission;
 import com.chamrong.iecommerce.auth.domain.PermissionRepository;
 import com.chamrong.iecommerce.auth.domain.Permissions;
 import com.chamrong.iecommerce.auth.domain.Role;
 import com.chamrong.iecommerce.auth.domain.RoleRepository;
 import com.chamrong.iecommerce.auth.domain.UserRepository;
-import com.chamrong.iecommerce.auth.infrastructure.init.KeycloakProperties;
+import com.chamrong.iecommerce.auth.domain.event.StaffAccountCreatedEvent;
+import com.chamrong.iecommerce.auth.domain.event.StaffTenantsUpdatedEvent;
+import com.chamrong.iecommerce.auth.infrastructure.identity.KeycloakProperties;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -69,16 +69,13 @@ public class StaffEventListener {
             .findByName(Permissions.PROFILE_READ)
             .orElseGet(() -> permissionRepository.save(new Permission(Permissions.PROFILE_READ)));
 
-    roleRepository
-        .findByName(Role.ROLE_PLATFORM_STAFF)
-        .orElseGet(
-            () -> {
-              Role r = new Role(Role.ROLE_PLATFORM_STAFF);
-              r.setDescription("Platform staff — manages assigned tenant stores");
-              r.setTenantId(SYSTEM_TENANT);
-              r.setPermissions(Set.of(profileRead));
-              return roleRepository.save(r);
-            });
+    if (roleRepository.findByName(Role.ROLE_PLATFORM_STAFF).isEmpty()) {
+      Role r = new Role(Role.ROLE_PLATFORM_STAFF);
+      r.setDescription("Platform staff — manages assigned tenant stores");
+      r.setTenantId(SYSTEM_TENANT);
+      r.setPermissions(Set.of(profileRead));
+      roleRepository.save(r);
+    }
 
     // 2. Register the user in Keycloak and local database
     RegisterCommand cmd =
@@ -109,10 +106,6 @@ public class StaffEventListener {
     }
 
     String keycloakId = userOpt.get().getKeycloakId();
-    if (keycloakId == null) {
-      log.error("Missing keycloakId for user {}, aborting Keycloak sync", event.username());
-      return;
-    }
 
     try (Keycloak keycloak =
         KeycloakBuilder.builder()

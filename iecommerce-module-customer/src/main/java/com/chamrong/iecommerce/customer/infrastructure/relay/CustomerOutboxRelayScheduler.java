@@ -1,6 +1,6 @@
 package com.chamrong.iecommerce.customer.infrastructure.relay;
 
-import com.chamrong.iecommerce.common.event.EventDispatcher;
+import com.chamrong.iecommerce.common.EventDispatcher;
 import com.chamrong.iecommerce.common.outbox.AbstractOutboxRelay;
 import com.chamrong.iecommerce.customer.domain.CustomerOutboxEvent;
 import com.chamrong.iecommerce.customer.domain.CustomerOutboxRepository;

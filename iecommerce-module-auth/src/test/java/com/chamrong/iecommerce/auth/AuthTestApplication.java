@@ -5,8 +5,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.chamrong.iecommerce.auth.application.command.LoginUserHandler;
+import com.chamrong.iecommerce.auth.application.command.auth.LoginUserHandler;
 import com.chamrong.iecommerce.auth.application.dto.AuthResponse;
+import com.chamrong.iecommerce.auth.infrastructure.ratelimit.RateLimitProperties;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,7 @@ import org.keycloak.admin.client.resource.RolesResource;
 import org.keycloak.admin.client.resource.UsersResource;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
@@ -31,6 +33,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 @EnableJpaRepositories(basePackages = "com.chamrong.iecommerce.auth.infrastructure.persistence")
 @EnableJpaAuditing
 @EnableMethodSecurity
+@EnableConfigurationProperties(RateLimitProperties.class)
 public class AuthTestApplication {
   @Bean
   @Primary
@@ -105,10 +108,16 @@ public class AuthTestApplication {
     when(rolesResource.list()).thenReturn(java.util.Collections.emptyList());
     when(rolesResource.get(anyString())).thenReturn(roleResource);
 
+    org.keycloak.representations.idm.RoleRepresentation adminRoleRep =
+        new org.keycloak.representations.idm.RoleRepresentation();
+    adminRoleRep.setName("ROLE_PLATFORM_ADMIN");
+    when(roleResource.toRepresentation()).thenReturn(adminRoleRep);
+
     when(usersResource.get(anyString())).thenReturn(userResource);
     when(usersResource.searchByUsername(anyString(), any(Boolean.class)))
         .thenReturn(java.util.Collections.emptyList());
     when(userResource.roles()).thenReturn(roleMappingResource);
+    // roleScopeResource.add() is void, no need to stub Mockito mock
     when(roleMappingResource.realmLevel()).thenReturn(roleScopeResource);
 
     // Mock user creation response with unique ID generation

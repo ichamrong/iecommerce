@@ -7,7 +7,6 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 /** Spring Data JPA adapter for the domain {@link UserRepository} port. */
@@ -39,7 +38,7 @@ public interface JpaUserRepository extends JpaRepository<User, Long>, UserReposi
 
   @Override
   @Deprecated(since = "multi-tenant")
-  default @NonNull List<User> findAll() {
+  default List<User> findAll() {
     throw new UnsupportedOperationException(
         "findAll() is forbidden in multi-tenant context. Use findByTenantId(tenantId).");
   }

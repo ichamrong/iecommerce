@@ -5,7 +5,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.chamrong.iecommerce.auth.application.command.LoginUserHandler;
+import com.chamrong.iecommerce.auth.application.command.auth.LoginUserHandler;
 import com.chamrong.iecommerce.auth.application.dto.AuthResponse;
 import java.time.Instant;
 import java.util.List;

@@ -1,6 +1,6 @@
 package com.chamrong.iecommerce.payment.infrastructure;
 
-import com.chamrong.iecommerce.common.event.EventDispatcher;
+import com.chamrong.iecommerce.common.EventDispatcher;
 import com.chamrong.iecommerce.common.outbox.AbstractOutboxRelay;
 import com.chamrong.iecommerce.payment.domain.PaymentOutboxEvent;
 import com.chamrong.iecommerce.payment.domain.PaymentOutboxRepository;

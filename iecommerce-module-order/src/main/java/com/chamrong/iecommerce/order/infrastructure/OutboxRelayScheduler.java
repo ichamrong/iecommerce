@@ -1,6 +1,6 @@
 package com.chamrong.iecommerce.order.infrastructure;
 
-import com.chamrong.iecommerce.common.event.EventDispatcher;
+import com.chamrong.iecommerce.common.EventDispatcher;
 import com.chamrong.iecommerce.common.outbox.AbstractOutboxRelay;
 import com.chamrong.iecommerce.order.domain.OrderOutboxEvent;
 import com.chamrong.iecommerce.order.domain.OrderOutboxRepository;

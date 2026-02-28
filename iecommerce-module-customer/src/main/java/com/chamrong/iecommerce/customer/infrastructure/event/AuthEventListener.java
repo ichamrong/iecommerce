@@ -1,6 +1,6 @@
 package com.chamrong.iecommerce.customer.infrastructure.event;
 
-import com.chamrong.iecommerce.auth.UserRegisteredEvent;
+import com.chamrong.iecommerce.auth.domain.event.UserRegisteredEvent;
 import com.chamrong.iecommerce.customer.application.command.CreateCustomerCommand;
 import com.chamrong.iecommerce.customer.application.command.CreateCustomerHandler;
 import org.slf4j.Logger;

@@ -18,14 +18,23 @@ public interface UserRepository {
 
   Page<User> findByTenantId(String tenantId, Pageable pageable);
 
-  @Deprecated(since = "multi-tenant")
+  /**
+   * @deprecated Use {@link #findByUsernameAndTenantId(String, String)} instead.
+   */
+  @Deprecated(since = "multi-tenant", forRemoval = true)
   Optional<User> findByUsername(String username);
 
-  @Deprecated(since = "multi-tenant")
+  /**
+   * @deprecated Use {@link #findByEmailAndTenantId(String, String)} instead.
+   */
+  @Deprecated(since = "multi-tenant", forRemoval = true)
   Optional<User> findByEmail(String email);
 
   User save(User user);
 
-  @Deprecated(since = "multi-tenant")
+  /**
+   * @deprecated Use {@link #findByTenantId(String)} instead.
+   */
+  @Deprecated(since = "multi-tenant", forRemoval = true)
   List<User> findAll();
 }

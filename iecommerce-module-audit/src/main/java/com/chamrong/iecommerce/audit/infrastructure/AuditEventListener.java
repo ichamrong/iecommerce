@@ -1,13 +1,13 @@
 package com.chamrong.iecommerce.audit.infrastructure;
 
 import com.chamrong.iecommerce.audit.application.AuditService;
-import com.chamrong.iecommerce.auth.TenantPreferencesUpdatedEvent;
-import com.chamrong.iecommerce.auth.TenantRegisteredEvent;
-import com.chamrong.iecommerce.auth.TenantStatusUpdatedEvent;
-import com.chamrong.iecommerce.auth.UserDisabledEvent;
-import com.chamrong.iecommerce.auth.UserLoggedInEvent;
-import com.chamrong.iecommerce.auth.UserLoginFailedEvent;
-import com.chamrong.iecommerce.auth.UserRegisteredEvent;
+import com.chamrong.iecommerce.auth.domain.event.TenantPreferencesUpdatedEvent;
+import com.chamrong.iecommerce.auth.domain.event.TenantRegisteredEvent;
+import com.chamrong.iecommerce.auth.domain.event.TenantStatusUpdatedEvent;
+import com.chamrong.iecommerce.auth.domain.event.UserDisabledEvent;
+import com.chamrong.iecommerce.auth.domain.event.UserLoggedInEvent;
+import com.chamrong.iecommerce.auth.domain.event.UserLoginFailedEvent;
+import com.chamrong.iecommerce.auth.domain.event.UserRegisteredEvent;
 import com.chamrong.iecommerce.booking.BookingConfirmedEvent;
 import com.chamrong.iecommerce.catalog.CategoryCreatedEvent;
 import com.chamrong.iecommerce.catalog.CategoryDeletedEvent;
