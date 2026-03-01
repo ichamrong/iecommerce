@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- P6: Saga State Persistence -->
+    <changeSet id="sale-saga-states" author="chamrong">
+        <createTable tableName="sales_saga_states">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="correlation_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_step" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_updated" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="sales_saga_states"
+                             columnNames="tenant_id, correlation_id"
+                             constraintName="uk_sales_saga_correlation"/>
+    </changeSet>
+
+    <!-- Search Optimization: Return Key Index -->
+    <changeSet id="sale-return-key-index" author="chamrong">
+        <createIndex tableName="sale_returns" indexName="idx_sale_return_key">
+            <column name="tenant_id"/>
+            <column name="return_key"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

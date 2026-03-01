@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <!-- Hardening Sale Module Schema -->
+
+    <!-- 1. Quotations -->
+    <changeSet id="sale-v22-quotations" author="antigravity">
+        <createTable tableName="sales_quotations">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="customer_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expiry_date" type="TIMESTAMP"/>
+            <column name="total_amount" type="DECIMAL(19,4)"/>
+            <column name="total_currency" type="VARCHAR(3)"/>
+            <column name="status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+        <addUniqueConstraint tableName="sales_quotations" columnNames="tenant_id, id" constraintName="uk_sale_quotation_tenant"/>
+        <createIndex tableName="sales_quotations" indexName="idx_sale_quotation_tenant_created">
+            <column name="tenant_id"/>
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="sale-v22-quotation-items" author="antigravity">
+        <createTable tableName="sales_quotation_items">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="quotation_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_sale_qitem_quotation" referencedTableName="sales_quotations" referencedColumnNames="id"/>
+            </column>
+            <column name="product_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="DECIMAL(19,4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="unit_price_amount" type="DECIMAL(19,4)"/>
+            <column name="unit_price_currency" type="VARCHAR(3)"/>
+            <column name="total_price_amount" type="DECIMAL(19,4)"/>
+            <column name="total_price_currency" type="VARCHAR(3)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+    <!-- 2. Shifts -->
+    <changeSet id="sale-v22-shifts" author="antigravity">
+        <createTable tableName="sales_shifts">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="staff_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="terminal_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_time" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_time" type="TIMESTAMP"/>
+            <column name="status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+        <createIndex tableName="sales_shifts" indexName="idx_sale_shift_active">
+            <column name="tenant_id"/>
+            <column name="staff_id"/>
+            <column name="terminal_id"/>
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 3. Sessions -->
+    <changeSet id="sale-v22-sessions" author="antigravity">
+        <createTable tableName="sales_sessions">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="shift_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_sale_session_shift" referencedTableName="sales_shifts" referencedColumnNames="id"/>
+            </column>
+            <column name="cashier_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="terminal_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_time" type="TIMESTAMP"/>
+            <column name="end_time" type="TIMESTAMP"/>
+            <column name="status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expected_amount" type="DECIMAL(19,4)"/>
+            <column name="actual_amount" type="DECIMAL(19,4)"/>
+            <column name="currency" type="VARCHAR(3)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+    <!-- 4. Returns -->
+    <changeSet id="sale-v22-returns" author="antigravity">
+        <createTable tableName="sale_returns">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="original_order_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="return_key" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason" type="TEXT"/>
+            <column name="total_refund_amount" type="DECIMAL(19,4)"/>
+            <column name="currency" type="VARCHAR(3)"/>
+            <column name="requested_at" type="TIMESTAMP"/>
+            <column name="completed_at" type="TIMESTAMP"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+        <addUniqueConstraint tableName="sale_returns" columnNames="tenant_id, return_key" constraintName="uk_sale_return_key"/>
+    </changeSet>
+
+    <changeSet id="sale-v22-return-items" author="antigravity">
+        <createTable tableName="sale_return_items">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="sale_return_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_sale_ritem_return" referencedTableName="sale_returns" referencedColumnNames="id"/>
+            </column>
+            <column name="original_line_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="DECIMAL(19,4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="refund_price" type="DECIMAL(19,4)"/>
+            <column name="total_refund_amount" type="DECIMAL(19,4)"/>
+            <column name="currency" type="VARCHAR(3)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="sale-v22-outbox" author="antigravity">
+        <createTable tableName="sales_outbox_events">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="payload" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="aggregate_id" type="BIGINT"/>
+            <column name="retry_count" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="processed_at" type="TIMESTAMP"/>
+            <column name="next_attempt_at" type="TIMESTAMP"/>
+            <column name="trace_id" type="VARCHAR(64)"/>
+        </createTable>
+        <createIndex tableName="sales_outbox_events" indexName="idx_sale_outbox_scan">
+            <column name="status"/>
+            <column name="next_attempt_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

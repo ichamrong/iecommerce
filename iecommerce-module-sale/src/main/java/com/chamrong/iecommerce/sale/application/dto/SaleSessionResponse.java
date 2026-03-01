@@ -1,13 +1,15 @@
 package com.chamrong.iecommerce.sale.application.dto;
 
+import com.chamrong.iecommerce.common.Money;
 import java.time.Instant;
 
 public record SaleSessionResponse(
     Long id,
     Long shiftId,
-    String customerId,
-    Long orderId,
+    String cashierId,
+    String terminalId,
     Instant startTime,
     Instant endTime,
     String status,
-    String reference) {}
+    Money expectedAmount,
+    Money actualAmount) {}

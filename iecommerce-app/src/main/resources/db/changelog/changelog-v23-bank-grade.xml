@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- BG1: Idempotency Storage -->
+    <changeSet id="sale-bank-grade-idempotency" author="chamrong">
+        <createTable tableName="sales_idempotency">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="idempotency_key" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="endpoint_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="request_hash" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="response_snapshot" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="sales_idempotency" 
+                             columnNames="tenant_id, idempotency_key, endpoint_name"
+                             constraintName="uk_sales_idem_key"/>
+        <createIndex tableName="sales_idempotency" indexName="idx_sales_idem_lookup">
+            <column name="tenant_id"/>
+            <column name="idempotency_key"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- BG4: High-Integrity Audit Log (Hash-Chained) -->
+    <changeSet id="sale-bank-grade-audit-log" author="chamrong">
+        <createTable tableName="sales_audit_logs">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="actor_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="action" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entity_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entity_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="correlation_id" type="VARCHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="before_state_hash" type="VARCHAR(64)"/>
+            <column name="after_state_hash" type="VARCHAR(64)"/>
+            <column name="prev_record_hash" type="VARCHAR(64)"/>
+            <column name="record_hash" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timestamp" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex tableName="sales_audit_logs" indexName="idx_sales_audit_entity">
+            <column name="tenant_id"/>
+            <column name="entity_name"/>
+            <column name="entity_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- BG6: Single active session per terminal/staff -->
+    <changeSet id="sale-bank-grade-session-constraints" author="chamrong">
+        <!-- PostgreSQL partial index for unique active session -->
+        <sql dbms="postgresql">
+            CREATE UNIQUE INDEX uk_active_terminal_session ON sales_sessions (tenant_id, terminal_id) WHERE status != 'CLOSED';
+        </sql>
+        <!-- MySQL alternative: we'll use a functional index or a separate active_sessions table if needed, 
+             but for now, we'll implement a fallback check in application logic for MySQL -->
+    </changeSet>
+
+    <!-- BG2: Optimistic Locking Versions -->
+    <changeSet id="sale-bank-grade-locking" author="chamrong">
+        <addColumn tableName="sales_quotations">
+            <column name="version" type="BIGINT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="sales_sessions">
+            <column name="version" type="BIGINT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="sales_shifts">
+            <column name="version" type="BIGINT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="sale_returns">
+            <column name="version" type="BIGINT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

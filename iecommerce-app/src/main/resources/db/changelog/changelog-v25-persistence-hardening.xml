@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <!-- Hardening Persistence Layer: Keyset Pagination Indexes & Constraints -->
+
+    <changeSet id="sale-v25-keyset-indexes" author="antigravity">
+        <!-- Optimized indexes for Keyset Pagination (tenant_id, created_at DESC, id DESC) -->
+        
+        <createIndex tableName="sales_quotations" indexName="idx_sale_quotation_keyset">
+            <column name="tenant_id"/>
+            <column name="created_at"/>
+            <column name="id"/>
+        </createIndex>
+
+        <createIndex tableName="sales_sessions" indexName="idx_sale_session_keyset">
+            <column name="tenant_id"/>
+            <column name="created_at"/>
+            <column name="id"/>
+        </createIndex>
+
+        <createIndex tableName="sales_shifts" indexName="idx_sale_shift_keyset">
+            <column name="tenant_id"/>
+            <column name="created_at"/>
+            <column name="id"/>
+        </createIndex>
+
+        <createIndex tableName="sale_returns" indexName="idx_sale_return_keyset">
+            <column name="tenant_id"/>
+            <column name="created_at"/>
+            <column name="id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="sale-v25-return-item-integrity" author="antigravity">
+        <!-- Ensure one return record per original line per return aggregate -->
+        <addUniqueConstraint tableName="sale_return_items" 
+                             columnNames="sale_return_id, original_line_id" 
+                             constraintName="uk_sale_return_item_line"/>
+    </changeSet>
+
+</databaseChangeLog>

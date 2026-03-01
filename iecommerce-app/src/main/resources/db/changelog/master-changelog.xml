@@ -26,4 +26,8 @@
     <include file="db/changelog/changelog-v19-promotion-hardening.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/changelog-v20-invoice-enterprise.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/changelog-v21-invoice-email-delivery.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v22-sale-hardening.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v23-bank-grade.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v24-sale-saga-indices.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v25-persistence-hardening.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>

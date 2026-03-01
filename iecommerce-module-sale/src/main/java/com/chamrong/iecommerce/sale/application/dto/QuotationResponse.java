@@ -11,7 +11,6 @@ public record QuotationResponse(
     Money totalAmount,
     String status,
     List<QuotationItemResponse> items) {
-
   public record QuotationItemResponse(
       Long id,
       String productId,
