@@ -1,13 +1,12 @@
-package com.chamrong.iecommerce.catalog.domain;
+package com.chamrong.iecommerce.catalog.domain.ports;
 
+import com.chamrong.iecommerce.catalog.domain.Category;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
 /**
- * Port through which the Application layer interacts with Category persistence.
- *
- * <p>Implementors live in {@code infrastructure/persistence}.
+ * Port for category persistence. Implementations live in infrastructure/persistence.
  */
 public interface CategoryRepositoryPort {
 
@@ -22,7 +21,7 @@ public interface CategoryRepositoryPort {
   List<Category> findDescendants(String materializedPathPrefix, String tenantId);
 
   /**
-   * Keyset paginated category listing sorted by (created_at DESC, id DESC).
+   * Keyset paginated category listing: (created_at DESC, id DESC).
    *
    * @param afterCreatedAt cursor; null → first page
    * @param afterId cursor tie-break; null → first page

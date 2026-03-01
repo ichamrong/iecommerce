@@ -4,7 +4,7 @@ import com.chamrong.iecommerce.catalog.VariantAddedEvent;
 import com.chamrong.iecommerce.catalog.application.CatalogMapper;
 import com.chamrong.iecommerce.catalog.application.dto.AddVariantRequest;
 import com.chamrong.iecommerce.catalog.application.dto.ProductResponse;
-import com.chamrong.iecommerce.catalog.domain.ProductRepositoryPort;
+import com.chamrong.iecommerce.catalog.domain.ports.ProductRepositoryPort;
 import com.chamrong.iecommerce.common.Money;
 import com.chamrong.iecommerce.common.TenantContext;
 import jakarta.persistence.EntityNotFoundException;

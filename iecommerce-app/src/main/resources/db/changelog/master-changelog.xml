@@ -34,4 +34,5 @@
     <include file="db/changelog/changelog-v27-keyset-customer-audit.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/changelog-v28-booking-keyset.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/changelog-v29-audit-event-enterprise.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v30-catalog-barcode-sku.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>

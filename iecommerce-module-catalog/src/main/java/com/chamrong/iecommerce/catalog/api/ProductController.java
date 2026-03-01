@@ -10,7 +10,6 @@ import com.chamrong.iecommerce.catalog.application.command.UpdateProductHandler;
 import com.chamrong.iecommerce.catalog.application.command.UpdateVariantHandler;
 import com.chamrong.iecommerce.catalog.application.command.UpsertProductTranslationHandler;
 import com.chamrong.iecommerce.catalog.application.dto.AddVariantRequest;
-import com.chamrong.iecommerce.catalog.application.dto.CatalogCursorResponse;
 import com.chamrong.iecommerce.catalog.application.dto.CreateProductRequest;
 import com.chamrong.iecommerce.catalog.application.dto.CreateProductRequest.TranslationRequest;
 import com.chamrong.iecommerce.catalog.application.dto.ProductResponse;
@@ -20,6 +19,7 @@ import com.chamrong.iecommerce.catalog.application.dto.UpdateProductRequest;
 import com.chamrong.iecommerce.catalog.application.dto.UpdateVariantRequest;
 import com.chamrong.iecommerce.catalog.application.query.ProductQueryHandler;
 import com.chamrong.iecommerce.catalog.domain.ProductStatus;
+import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -70,7 +70,7 @@ public class ProductController {
     @ApiResponse(responseCode = "403", description = "Forbidden")
   })
   @GetMapping
-  public CatalogCursorResponse<ProductResponse> list(
+  public CursorPageResponse<ProductResponse> list(
       @Parameter(description = "Opaque cursor from previous response; omit for first page")
           @RequestParam(required = false)
           String cursor,
@@ -95,6 +95,24 @@ public class ProductController {
   public ProductResponse getById(
       @PathVariable Long id, @RequestParam(defaultValue = "en") String locale) {
     return queryHandler.getById(id, locale);
+  }
+
+  @Operation(
+      summary = "Get product by SKU",
+      description = "Returns the product that has a variant with the given SKU (tenant-scoped).")
+  @GetMapping("/by-sku/{sku}")
+  public ProductResponse getBySku(
+      @PathVariable String sku, @RequestParam(defaultValue = "en") String locale) {
+    return queryHandler.getBySku(sku, locale);
+  }
+
+  @Operation(
+      summary = "Get product by barcode",
+      description = "Returns the product with the given barcode (tenant-scoped).")
+  @GetMapping("/by-barcode/{barcode}")
+  public ProductResponse getByBarcode(
+      @PathVariable String barcode, @RequestParam(defaultValue = "en") String locale) {
+    return queryHandler.getByBarcode(barcode, locale);
   }
 
   // ── Create ─────────────────────────────────────────────────────────────────

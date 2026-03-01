@@ -1,7 +1,7 @@
 package com.chamrong.iecommerce.catalog.application.command;
 
 import com.chamrong.iecommerce.catalog.VariantRemovedEvent;
-import com.chamrong.iecommerce.catalog.domain.ProductRepositoryPort;
+import com.chamrong.iecommerce.catalog.domain.ports.ProductRepositoryPort;
 import com.chamrong.iecommerce.common.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;

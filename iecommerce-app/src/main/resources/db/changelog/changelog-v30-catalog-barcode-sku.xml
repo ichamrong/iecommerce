@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <!--
+    CATALOG — barcode column + tenant-scoped SKU index
+    - Add barcode to catalog_products for POS scan lookup
+    - Unique (tenant_id, barcode) when barcode is not null
+    - Index for fast by-sku lookup via variant join (tenant_id on product)
+  -->
+
+  <changeSet id="cs30-1-catalog-products-barcode" author="chamrong">
+    <sql splitStatements="false">
+      ALTER TABLE catalog_products
+        ADD COLUMN IF NOT EXISTS barcode VARCHAR(100);
+    </sql>
+    <rollback>
+      <sql>ALTER TABLE catalog_products DROP COLUMN IF EXISTS barcode;</sql>
+    </rollback>
+  </changeSet>
+
+  <changeSet id="cs30-2-catalog-products-barcode-unique" author="chamrong">
+    <sql splitStatements="false">
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_products_tenant_barcode
+        ON catalog_products (tenant_id, barcode)
+        WHERE deleted = FALSE AND barcode IS NOT NULL;
+    </sql>
+    <rollback>
+      <sql>DROP INDEX IF EXISTS idx_products_tenant_barcode;</sql>
+    </rollback>
+  </changeSet>
+
+  <!-- Fast lookup by variant SKU (tenant scoped via product.tenant_id) -->
+  <changeSet id="cs30-3-catalog-variants-tenant-sku-lookup" author="chamrong">
+    <sql splitStatements="false">
+      CREATE INDEX IF NOT EXISTS idx_variants_sku_product
+        ON catalog_product_variants (sku)
+        WHERE deleted = FALSE;
+    </sql>
+    <rollback>
+      <sql>DROP INDEX IF EXISTS idx_variants_sku_product;</sql>
+    </rollback>
+  </changeSet>
+
+</databaseChangeLog>

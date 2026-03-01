@@ -6,7 +6,7 @@ import com.chamrong.iecommerce.catalog.application.dto.CreateProductRequest;
 import com.chamrong.iecommerce.catalog.application.dto.ProductResponse;
 import com.chamrong.iecommerce.catalog.domain.CatalogCachePort;
 import com.chamrong.iecommerce.catalog.domain.Product;
-import com.chamrong.iecommerce.catalog.domain.ProductRepositoryPort;
+import com.chamrong.iecommerce.catalog.domain.ports.ProductRepositoryPort;
 import com.chamrong.iecommerce.catalog.domain.ProductType;
 import com.chamrong.iecommerce.common.Money;
 import com.chamrong.iecommerce.common.TenantContext;

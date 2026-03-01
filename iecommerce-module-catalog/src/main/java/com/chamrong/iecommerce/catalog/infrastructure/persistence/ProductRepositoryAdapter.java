@@ -1,7 +1,7 @@
 package com.chamrong.iecommerce.catalog.infrastructure.persistence;
 
 import com.chamrong.iecommerce.catalog.domain.Product;
-import com.chamrong.iecommerce.catalog.domain.ProductRepositoryPort;
+import com.chamrong.iecommerce.catalog.domain.ports.ProductRepositoryPort;
 import com.chamrong.iecommerce.catalog.domain.ProductStatus;
 import java.time.Instant;
 import java.util.List;
@@ -31,6 +31,16 @@ public class ProductRepositoryAdapter implements ProductRepositoryPort {
   @Override
   public Optional<Product> findByTenantIdAndSlug(String tenantId, String slug) {
     return jpaRepo.findByTenantIdAndSlug(tenantId, slug);
+  }
+
+  @Override
+  public Optional<Product> findByTenantIdAndVariantSku(String tenantId, String sku) {
+    return jpaRepo.findByTenantIdAndVariantSku(tenantId, sku);
+  }
+
+  @Override
+  public Optional<Product> findByTenantIdAndBarcode(String tenantId, String barcode) {
+    return jpaRepo.findByTenantIdAndBarcode(tenantId, barcode);
   }
 
   @Override

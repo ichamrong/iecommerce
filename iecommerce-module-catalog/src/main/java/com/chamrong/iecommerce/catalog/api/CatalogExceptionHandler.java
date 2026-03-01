@@ -1,5 +1,6 @@
 package com.chamrong.iecommerce.catalog.api;
 
+import com.chamrong.iecommerce.common.pagination.InvalidCursorException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Map;
@@ -32,6 +33,14 @@ public class CatalogExceptionHandler {
   public ResponseEntity<CatalogErrorResponse> handleIllegalState(IllegalStateException ex) {
     log.warn("[Catalog] Illegal state: {}", ex.getMessage());
     return conflict("CATALOG_INVALID_STATE", ex.getMessage());
+  }
+
+  /** Invalid cursor (malformed, version, or filter hash mismatch). */
+  @ExceptionHandler(InvalidCursorException.class)
+  public ResponseEntity<CatalogErrorResponse> handleInvalidCursor(InvalidCursorException ex) {
+    log.debug("[Catalog] Invalid cursor: {} - {}", ex.getErrorCode(), ex.getMessage());
+    return badRequest(
+        ex.getErrorCode() != null ? ex.getErrorCode() : "INVALID_CURSOR", ex.getMessage());
   }
 
   /** Slug conflicts, invalid input, malformed cursor. */

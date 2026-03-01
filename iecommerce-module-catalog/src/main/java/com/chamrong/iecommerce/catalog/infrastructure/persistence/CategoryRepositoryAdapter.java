@@ -1,7 +1,7 @@
 package com.chamrong.iecommerce.catalog.infrastructure.persistence;
 
 import com.chamrong.iecommerce.catalog.domain.Category;
-import com.chamrong.iecommerce.catalog.domain.CategoryRepositoryPort;
+import com.chamrong.iecommerce.catalog.domain.ports.CategoryRepositoryPort;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;

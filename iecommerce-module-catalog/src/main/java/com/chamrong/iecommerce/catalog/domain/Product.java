@@ -96,6 +96,12 @@ public class Product extends BaseTenantEntity {
   @Column(length = 50)
   private String taxCategory = "STANDARD";
 
+  /** POS / scan lookup; unique per tenant when present. */
+  @Getter
+  @Setter
+  @Column(length = 100)
+  private String barcode;
+
   /** Comma-separated tags for search/filtering — locale-invariant. */
   @Getter
   @Setter

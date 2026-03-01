@@ -1,7 +1,7 @@
 package com.chamrong.iecommerce.catalog.api;
 
-import com.chamrong.iecommerce.catalog.application.dto.CatalogCursorResponse;
 import com.chamrong.iecommerce.catalog.application.dto.ProductResponse;
+import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
 import com.chamrong.iecommerce.catalog.application.query.ProductQueryHandler;
 import com.chamrong.iecommerce.catalog.domain.ProductStatus;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,7 +29,7 @@ public class PublicProductController {
       summary = "List active products",
       description = "Returns published products (cursor-paginated).")
   @GetMapping
-  public CatalogCursorResponse<ProductResponse> list(
+  public CursorPageResponse<ProductResponse> list(
       @RequestParam(required = false) String cursor,
       @RequestParam(defaultValue = "20") int limit,
       @RequestParam(defaultValue = "en") String locale) {

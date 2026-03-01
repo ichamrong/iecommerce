@@ -1,7 +1,8 @@
 /**
- * REST API controllers and endpoints for the Catalog module.
+ * Catalog API layer — REST controllers and optional CatalogApi facade.
  *
- * <p>Handles HTTP requests, input validation, and maps them to Application tier commands/queries.
+ * <p>Exposes product, category, and (optionally) price-rule and accommodation endpoints. All
+ * endpoints enforce tenant scope and use cursor pagination for list operations.
  */
 @org.springframework.lang.NonNullApi
 package com.chamrong.iecommerce.catalog.api;
