@@ -40,7 +40,7 @@ public class OrderAuditLog {
   private String tenantId;
 
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false, length = 50)
+  @Column(nullable = true, length = 50)
   private OrderState fromState;
 
   @Enumerated(EnumType.STRING)

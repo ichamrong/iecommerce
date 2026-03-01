@@ -74,6 +74,12 @@ public class JpaOrderAdapter implements OrderRepositoryPort {
     return repository.findByTenantNextPage(tenantId, createdAt, id, PageRequest.of(0, limit));
   }
 
+  @Override
+  public List<Order> findByTenantIdAndCreatedAtBetween(
+      String tenantId, Instant start, Instant end) {
+    return repository.findByTenantIdAndCreatedAtBetween(tenantId, start, end);
+  }
+
   /** Inner interface for Spring Data JPA functionality. */
   @Repository
   interface OrderSpringDataRepository extends JpaRepository<Order, Long> {
@@ -121,5 +127,10 @@ public class JpaOrderAdapter implements OrderRepositoryPort {
             + "ORDER BY o.createdAt DESC, o.id DESC")
     List<Order> findByTenantNextPage(
         String tenantId, Instant createdAt, Long id, Pageable pageable);
+
+    @Query(
+        "SELECT o FROM Order o WHERE o.tenantId = :tenantId AND o.createdAt >= :start AND"
+            + " o.createdAt <= :end ORDER BY o.createdAt ASC, o.id ASC")
+    List<Order> findByTenantIdAndCreatedAtBetween(String tenantId, Instant start, Instant end);
   }
 }

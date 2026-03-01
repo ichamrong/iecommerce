@@ -5,7 +5,7 @@ import com.chamrong.iecommerce.common.exception.RateLimitException;
 import com.chamrong.iecommerce.sale.application.command.CreateQuotationCommand;
 import com.chamrong.iecommerce.sale.application.dto.QuotationResponse;
 import com.chamrong.iecommerce.sale.domain.model.Quotation;
-import com.chamrong.iecommerce.sale.domain.repository.QuotationRepositoryPort;
+import com.chamrong.iecommerce.sale.domain.ports.QuotationRepositoryPort;
 import com.chamrong.iecommerce.sale.domain.service.AuditService;
 import com.chamrong.iecommerce.sale.domain.service.IdempotencyService;
 import com.chamrong.iecommerce.sale.domain.service.LogMasker;

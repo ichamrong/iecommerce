@@ -2,7 +2,7 @@ package com.chamrong.iecommerce.promotion.application.service;
 
 import com.chamrong.iecommerce.promotion.domain.event.PromotionEventPublisher;
 import com.chamrong.iecommerce.promotion.domain.model.PromotionOutboxEvent;
-import com.chamrong.iecommerce.promotion.domain.port.PromotionOutboxPort;
+import com.chamrong.iecommerce.promotion.domain.ports.PromotionOutboxPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

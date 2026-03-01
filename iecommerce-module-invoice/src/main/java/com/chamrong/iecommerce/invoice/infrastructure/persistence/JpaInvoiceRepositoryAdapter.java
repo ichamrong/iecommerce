@@ -2,7 +2,7 @@ package com.chamrong.iecommerce.invoice.infrastructure.persistence;
 
 import com.chamrong.iecommerce.invoice.domain.Invoice;
 import com.chamrong.iecommerce.invoice.domain.InvoiceStatus;
-import com.chamrong.iecommerce.invoice.domain.port.InvoiceRepositoryPort;
+import com.chamrong.iecommerce.invoice.domain.ports.InvoiceRepositoryPort;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;

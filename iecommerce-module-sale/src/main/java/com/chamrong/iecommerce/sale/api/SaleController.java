@@ -1,7 +1,8 @@
 package com.chamrong.iecommerce.sale.api;
 
 import com.chamrong.iecommerce.auth.domain.Permissions;
-import com.chamrong.iecommerce.common.dto.CursorPage;
+import com.chamrong.iecommerce.common.TenantContext;
+import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
 import com.chamrong.iecommerce.sale.application.command.OpenSessionCommand;
 import com.chamrong.iecommerce.sale.application.command.OpenShiftCommand;
 import com.chamrong.iecommerce.sale.application.dto.SaleSessionResponse;
@@ -12,6 +13,7 @@ import com.chamrong.iecommerce.sale.application.usecase.ShiftUseCase;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,7 +23,6 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -49,18 +50,17 @@ public class SaleController {
   }
 
   @GetMapping("/shifts")
-  public ResponseEntity<CursorPage<ShiftResponse>> listShifts(
-      @RequestHeader("X-Tenant-Id") String tenantId,
-      @RequestParam(required = false) String cursor,
-      @RequestParam(defaultValue = "20") int limit) {
-    return ResponseEntity.ok(queryService.listShifts(tenantId, cursor, limit));
+  public ResponseEntity<CursorPageResponse<ShiftResponse>> listShifts(
+      @RequestParam(required = false) String cursor, @RequestParam(defaultValue = "20") int limit) {
+    String tenantId = TenantContext.requireTenantId();
+    int clampedLimit = Math.min(100, Math.max(1, limit));
+    return ResponseEntity.ok(queryService.listShifts(tenantId, cursor, clampedLimit, Map.of()));
   }
 
   @PatchMapping("/shifts/{id}/close")
   @PreAuthorize("hasAuthority('" + Permissions.SALE_MANAGE + "')")
-  public ResponseEntity<ShiftResponse> closeShift(
-      @PathVariable @NotNull Long id, @RequestHeader("X-Tenant-Id") String tenantId) {
-    return ResponseEntity.ok(shiftUseCase.closeShift(id, tenantId));
+  public ResponseEntity<ShiftResponse> closeShift(@PathVariable @NotNull Long id) {
+    return ResponseEntity.ok(shiftUseCase.closeShift(id, TenantContext.requireTenantId()));
   }
 
   @PostMapping("/sessions")
@@ -74,18 +74,22 @@ public class SaleController {
   }
 
   @GetMapping("/sessions")
-  public ResponseEntity<CursorPage<SaleSessionResponse>> listSessions(
-      @RequestHeader("X-Tenant-Id") String tenantId,
+  public ResponseEntity<CursorPageResponse<SaleSessionResponse>> listSessions(
       @RequestParam(required = false) String terminalId,
       @RequestParam(required = false) String cursor,
       @RequestParam(defaultValue = "20") int limit) {
-    return ResponseEntity.ok(queryService.listSessions(tenantId, terminalId, cursor, limit));
+    String tenantId = TenantContext.requireTenantId();
+    int clampedLimit = Math.min(100, Math.max(1, limit));
+    Map<String, Object> filters =
+        terminalId != null && !terminalId.isBlank() ? Map.of("terminalId", terminalId) : Map.of();
+    return ResponseEntity.ok(
+        queryService.listSessions(tenantId, terminalId, cursor, clampedLimit, filters));
   }
 
   @PatchMapping("/sessions/{id}/initiate-closing")
   @PreAuthorize("hasAuthority('" + Permissions.SALE_MANAGE + "')")
-  public ResponseEntity<SaleSessionResponse> initiateClosing(
-      @PathVariable Long id, @RequestHeader("X-Tenant-Id") String tenantId) {
+  public ResponseEntity<SaleSessionResponse> initiateClosing(@PathVariable Long id) {
+    String tenantId = TenantContext.requireTenantId();
     var session = sessionUseCase.initiateClosing(id, tenantId, "SYSTEM");
     return ResponseEntity.ok(queryService.toSessionResponse(session));
   }
@@ -93,10 +97,8 @@ public class SaleController {
   @PatchMapping("/sessions/{id}/close")
   @PreAuthorize("hasAuthority('" + Permissions.SALE_MANAGE + "')")
   public ResponseEntity<SaleSessionResponse> closeSession(
-      @PathVariable Long id,
-      @RequestHeader("X-Tenant-Id") String tenantId,
-      @RequestParam BigDecimal actualCash) {
-    // Assuming USD for now or fetch from session
+      @PathVariable Long id, @RequestParam BigDecimal actualCash) {
+    String tenantId = TenantContext.requireTenantId();
     var session =
         sessionUseCase.closeSession(
             id, tenantId, "SYSTEM", new com.chamrong.iecommerce.common.Money(actualCash, "USD"));

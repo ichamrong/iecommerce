@@ -1,7 +1,7 @@
 package com.chamrong.iecommerce.invoice.infrastructure.persistence;
 
 import com.chamrong.iecommerce.invoice.domain.InvoiceAuditEntry;
-import com.chamrong.iecommerce.invoice.domain.port.InvoiceAuditRepositoryPort;
+import com.chamrong.iecommerce.invoice.domain.ports.InvoiceAuditRepositoryPort;
 import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

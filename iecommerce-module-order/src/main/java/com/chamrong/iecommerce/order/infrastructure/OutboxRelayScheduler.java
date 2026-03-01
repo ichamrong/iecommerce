@@ -3,7 +3,7 @@ package com.chamrong.iecommerce.order.infrastructure;
 import com.chamrong.iecommerce.common.EventDispatcher;
 import com.chamrong.iecommerce.common.outbox.AbstractOutboxRelay;
 import com.chamrong.iecommerce.order.domain.OrderOutboxEvent;
-import com.chamrong.iecommerce.order.domain.OrderOutboxRepository;
+import com.chamrong.iecommerce.order.domain.ports.OrderOutboxPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -13,10 +13,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class OutboxRelayScheduler extends AbstractOutboxRelay<OrderOutboxEvent> {
 
-  private final OrderOutboxRepository outboxRepository;
+  private final OrderOutboxPort outboxRepository;
 
   public OutboxRelayScheduler(
-      OrderOutboxRepository outboxRepository,
+      OrderOutboxPort outboxRepository,
       EventDispatcher eventDispatcher,
       ObjectMapper objectMapper) {
     super(eventDispatcher, objectMapper);

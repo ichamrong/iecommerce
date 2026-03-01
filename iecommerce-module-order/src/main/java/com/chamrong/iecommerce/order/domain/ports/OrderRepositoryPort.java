@@ -51,4 +51,10 @@ public interface OrderRepositoryPort {
 
   /** Next page — all orders for tenant. */
   List<Order> findByTenantNextPage(String tenantId, Instant cursorTs, Long cursorId, int fetchSize);
+
+  /**
+   * Finds all orders for a tenant within a time range (e.g. for reconciliation reports). Not
+   * keyset-paginated; use for bounded date ranges.
+   */
+  List<Order> findByTenantIdAndCreatedAtBetween(String tenantId, Instant start, Instant end);
 }

@@ -1,6 +1,6 @@
 package com.chamrong.iecommerce.invoice.infrastructure.email;
 
-import com.chamrong.iecommerce.invoice.domain.port.InvoiceEmailDeliveryPort;
+import com.chamrong.iecommerce.invoice.domain.ports.InvoiceEmailDeliveryPort;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;

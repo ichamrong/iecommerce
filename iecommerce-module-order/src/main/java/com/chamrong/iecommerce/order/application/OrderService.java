@@ -12,13 +12,12 @@ import com.chamrong.iecommerce.order.application.dto.OrderResponse;
 import com.chamrong.iecommerce.order.application.dto.OrderResponse.OrderItemResponse;
 import com.chamrong.iecommerce.order.domain.Order;
 import com.chamrong.iecommerce.order.domain.OrderAuditActions;
-import com.chamrong.iecommerce.order.domain.OrderAuditLog;
-import com.chamrong.iecommerce.order.domain.OrderAuditLogRepository;
 import com.chamrong.iecommerce.order.domain.OrderItem;
 import com.chamrong.iecommerce.order.domain.OrderOutboxEvent;
-import com.chamrong.iecommerce.order.domain.OrderOutboxRepository;
-import com.chamrong.iecommerce.order.domain.OrderRepository;
 import com.chamrong.iecommerce.order.domain.OrderState;
+import com.chamrong.iecommerce.order.domain.ports.OrderAuditPort;
+import com.chamrong.iecommerce.order.domain.ports.OrderOutboxPort;
+import com.chamrong.iecommerce.order.domain.ports.OrderRepositoryPort;
 import com.chamrong.iecommerce.promotion.PromotionApi;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,12 +39,12 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OrderService implements OrderApi {
 
-  private final OrderRepository orderRepository;
+  private final OrderRepositoryPort orderRepository;
   private final ApplicationEventPublisher eventPublisher;
   private final PromotionApi promotionApi;
   private final com.chamrong.iecommerce.catalog.CatalogApi catalogApi;
-  private final OrderAuditLogRepository auditLogRepository;
-  private final OrderOutboxRepository outboxRepository;
+  private final OrderAuditPort auditLogRepository;
+  private final OrderOutboxPort outboxRepository;
   private final ObjectMapper objectMapper;
 
   // ── Commands ───────────────────────────────────────────────────────────────
@@ -391,16 +390,14 @@ public class OrderService implements OrderApi {
           id,
           order.getTenantId());
       // Audit even IDOR attempts so security teams can alert on them
-      var idor =
-          new OrderAuditLog(
-              id,
-              currentTenant,
-              order.getState(),
-              order.getState(),
-              OrderAuditActions.IDOR_ATTEMPT,
-              currentPrincipal(),
-              "blockedTenant=" + order.getTenantId());
-      auditLogRepository.save(idor);
+      auditLogRepository.log(
+          id,
+          currentTenant,
+          order.getState(),
+          order.getState(),
+          OrderAuditActions.IDOR_ATTEMPT,
+          currentPrincipal(),
+          "blockedTenant=" + order.getTenantId());
       throw new org.springframework.security.access.AccessDeniedException("Access denied");
     }
     return order;
@@ -408,10 +405,8 @@ public class OrderService implements OrderApi {
 
   /** Write an audit log entry. Called after every successful state transition. */
   private void audit(Order order, OrderState from, OrderState to, String action, String context) {
-    var entry =
-        new OrderAuditLog(
-            order.getId(), order.getTenantId(), from, to, action, currentPrincipal(), context);
-    auditLogRepository.save(entry);
+    auditLogRepository.log(
+        order.getId(), order.getTenantId(), from, to, action, currentPrincipal(), context);
   }
 
   /** Store an event in the Outbox table (same DB transaction as the Order save). */

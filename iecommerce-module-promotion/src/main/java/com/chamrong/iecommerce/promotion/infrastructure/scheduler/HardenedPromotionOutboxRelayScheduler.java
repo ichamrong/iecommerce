@@ -1,7 +1,7 @@
 package com.chamrong.iecommerce.promotion.infrastructure.scheduler;
 
 import com.chamrong.iecommerce.promotion.domain.model.PromotionOutboxEvent;
-import com.chamrong.iecommerce.promotion.domain.port.PromotionOutboxPort;
+import com.chamrong.iecommerce.promotion.domain.ports.PromotionOutboxPort;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;

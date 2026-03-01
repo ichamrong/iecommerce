@@ -3,8 +3,8 @@ package com.chamrong.iecommerce.report.application;
 import com.chamrong.iecommerce.invoice.domain.Invoice;
 import com.chamrong.iecommerce.invoice.domain.InvoiceRepository;
 import com.chamrong.iecommerce.order.domain.Order;
-import com.chamrong.iecommerce.order.domain.OrderRepository;
 import com.chamrong.iecommerce.order.domain.OrderState;
+import com.chamrong.iecommerce.order.domain.ports.OrderRepositoryPort;
 import com.chamrong.iecommerce.payment.domain.PaymentIntent;
 import com.chamrong.iecommerce.payment.domain.ports.PaymentIntentRepositoryPort;
 import com.chamrong.iecommerce.report.application.dto.PosReconciliationDto;
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ReconciliationReportService {
 
-  private final OrderRepository orderRepository;
+  private final OrderRepositoryPort orderRepository;
   private final InvoiceRepository invoiceRepository;
   private final PaymentIntentRepositoryPort paymentRepository;
 

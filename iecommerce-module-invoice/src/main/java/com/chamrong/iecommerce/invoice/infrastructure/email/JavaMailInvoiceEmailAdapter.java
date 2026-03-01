@@ -1,6 +1,6 @@
 package com.chamrong.iecommerce.invoice.infrastructure.email;
 
-import com.chamrong.iecommerce.invoice.domain.port.EmailSenderPort;
+import com.chamrong.iecommerce.invoice.domain.ports.EmailSenderPort;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;

@@ -3,7 +3,7 @@ package com.chamrong.iecommerce.promotion.infrastructure.persistence.jpa;
 import com.chamrong.iecommerce.common.dto.CursorPage;
 import com.chamrong.iecommerce.promotion.domain.model.Promotion;
 import com.chamrong.iecommerce.promotion.domain.model.PromotionStatus;
-import com.chamrong.iecommerce.promotion.domain.port.PromotionRepository;
+import com.chamrong.iecommerce.promotion.domain.ports.PromotionRepository;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

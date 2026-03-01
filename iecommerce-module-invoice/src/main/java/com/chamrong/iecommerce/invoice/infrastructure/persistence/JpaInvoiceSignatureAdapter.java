@@ -1,7 +1,7 @@
 package com.chamrong.iecommerce.invoice.infrastructure.persistence;
 
 import com.chamrong.iecommerce.invoice.domain.InvoiceSignature;
-import com.chamrong.iecommerce.invoice.domain.port.InvoiceSignatureRepositoryPort;
+import com.chamrong.iecommerce.invoice.domain.ports.InvoiceSignatureRepositoryPort;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -3,11 +3,10 @@ package com.chamrong.iecommerce.order.infrastructure;
 import com.chamrong.iecommerce.booking.BookingConfirmedEvent;
 import com.chamrong.iecommerce.order.domain.Order;
 import com.chamrong.iecommerce.order.domain.OrderAuditActions;
-import com.chamrong.iecommerce.order.domain.OrderAuditLog;
-import com.chamrong.iecommerce.order.domain.OrderAuditLogRepository;
 import com.chamrong.iecommerce.order.domain.OrderItem;
-import com.chamrong.iecommerce.order.domain.OrderRepository;
 import com.chamrong.iecommerce.order.domain.OrderState;
+import com.chamrong.iecommerce.order.domain.ports.OrderAuditPort;
+import com.chamrong.iecommerce.order.domain.ports.OrderRepositoryPort;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,8 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class BookingEventListener {
 
-  private final OrderRepository orderRepository;
-  private final OrderAuditLogRepository auditLogRepository;
+  private final OrderRepositoryPort orderRepository;
+  private final OrderAuditPort auditLogRepository;
 
   @EventListener
   @Transactional
@@ -51,15 +50,14 @@ public class BookingEventListener {
     Order saved = orderRepository.save(order);
 
     // Banking-grade audit log for traceability
-    auditLogRepository.save(
-        new OrderAuditLog(
-            saved.getId(),
-            saved.getTenantId(),
-            OrderState.AddingItems,
-            OrderState.Confirmed,
-            OrderAuditActions.ORDER_CREATED,
-            "system",
-            "bookingId=" + event.bookingId()));
+    auditLogRepository.log(
+        saved.getId(),
+        saved.getTenantId(),
+        OrderState.AddingItems,
+        OrderState.Confirmed,
+        OrderAuditActions.ORDER_CREATED,
+        "system",
+        "bookingId=" + event.bookingId());
 
     log.info("Order created successfully id={} for bookingId={}", saved.getId(), event.bookingId());
   }

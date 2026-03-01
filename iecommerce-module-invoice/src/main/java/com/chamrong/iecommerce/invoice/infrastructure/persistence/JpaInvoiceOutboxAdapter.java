@@ -1,6 +1,6 @@
 package com.chamrong.iecommerce.invoice.infrastructure.persistence;
 
-import com.chamrong.iecommerce.invoice.domain.port.InvoiceOutboxPort;
+import com.chamrong.iecommerce.invoice.domain.ports.InvoiceOutboxPort;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

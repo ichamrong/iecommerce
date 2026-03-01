@@ -1,16 +1,15 @@
 package com.chamrong.iecommerce.sale.infrastructure.persistence.jpa;
 
-import com.chamrong.iecommerce.common.dto.CursorPage;
 import com.chamrong.iecommerce.sale.domain.model.Shift;
-import com.chamrong.iecommerce.sale.domain.repository.ShiftRepositoryPort;
+import com.chamrong.iecommerce.sale.domain.ports.ShiftRepositoryPort;
 import com.chamrong.iecommerce.sale.infrastructure.persistence.jpa.entity.ShiftEntity;
 import com.chamrong.iecommerce.sale.infrastructure.persistence.jpa.mapper.SalePersistenceMapper;
 import java.time.Instant;
-import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,33 +39,10 @@ public class JpaShiftRepositoryAdapter implements ShiftRepositoryPort {
   }
 
   @Override
-  public CursorPage<Shift> findAll(String tenantId, String cursor, int limit) {
-    Long cursorId = null;
-    Instant cursorTime = null;
-
-    if (cursor != null && !cursor.isBlank()) {
-      try {
-        String decoded = new String(Base64.getDecoder().decode(cursor));
-        String[] parts = decoded.split(":");
-        if (parts.length == 2) {
-          cursorTime = Instant.parse(parts[0]);
-          cursorId = Long.parseLong(parts[1]);
-        }
-      } catch (Exception e) {
-      }
-    }
-
-    Slice<ShiftEntity> slice =
-        repository.findPaged(tenantId, cursorId, cursorTime, PageRequest.of(0, limit));
-
-    String nextCursor = null;
-    if (slice.hasNext()) {
-      ShiftEntity last = slice.getContent().get(slice.getContent().size() - 1);
-      String rawCursor = last.getCreatedAt() + ":" + last.getId();
-      nextCursor = Base64.getEncoder().encodeToString(rawCursor.getBytes());
-    }
-
-    return new CursorPage<>(
-        slice.getContent().stream().map(mapper::toDomain).toList(), nextCursor, slice.hasNext());
+  public List<Shift> findPage(
+      String tenantId, Instant cursorCreatedAt, Long cursorId, int limitPlusOne) {
+    List<ShiftEntity> entities =
+        repository.findPaged(tenantId, cursorId, cursorCreatedAt, PageRequest.of(0, limitPlusOne));
+    return entities.stream().map(mapper::toDomain).collect(Collectors.toList());
   }
 }

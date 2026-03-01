@@ -4,7 +4,7 @@ import com.chamrong.iecommerce.sale.application.command.OpenShiftCommand;
 import com.chamrong.iecommerce.sale.application.dto.ShiftResponse;
 import com.chamrong.iecommerce.sale.domain.exception.SaleDomainException;
 import com.chamrong.iecommerce.sale.domain.model.Shift;
-import com.chamrong.iecommerce.sale.domain.repository.ShiftRepositoryPort;
+import com.chamrong.iecommerce.sale.domain.ports.ShiftRepositoryPort;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

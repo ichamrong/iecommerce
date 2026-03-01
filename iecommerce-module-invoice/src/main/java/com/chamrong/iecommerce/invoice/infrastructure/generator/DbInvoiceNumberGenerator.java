@@ -1,6 +1,6 @@
 package com.chamrong.iecommerce.invoice.infrastructure.generator;
 
-import com.chamrong.iecommerce.invoice.domain.port.InvoiceNumberGeneratorPort;
+import com.chamrong.iecommerce.invoice.domain.ports.InvoiceNumberGeneratorPort;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.NoResultException;

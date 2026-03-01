@@ -1,6 +1,6 @@
 package com.chamrong.iecommerce.invoice.infrastructure.clock;
 
-import com.chamrong.iecommerce.invoice.domain.port.ClockPort;
+import com.chamrong.iecommerce.invoice.domain.ports.ClockPort;
 import java.time.Instant;
 import org.springframework.stereotype.Component;
 

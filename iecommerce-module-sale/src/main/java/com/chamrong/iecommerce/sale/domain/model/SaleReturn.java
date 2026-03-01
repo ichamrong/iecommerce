@@ -29,6 +29,9 @@ public class SaleReturn {
   private Instant requestedAt;
   private Instant completedAt;
 
+  /** Set by persistence layer for keyset pagination (created_at DESC, id DESC). */
+  private Instant createdAt;
+
   public enum ReturnStatus {
     REQUESTED,
     APPROVED,
@@ -59,7 +62,8 @@ public class SaleReturn {
       Money totalRefundAmount,
       List<ReturnItem> items,
       Instant requestedAt,
-      Instant completedAt) {
+      Instant completedAt,
+      Instant createdAt) {
     this.id = id;
     this.tenantId = tenantId;
     this.version = version;
@@ -71,6 +75,7 @@ public class SaleReturn {
     this.items = new ArrayList<>(items);
     this.requestedAt = requestedAt;
     this.completedAt = completedAt;
+    this.createdAt = createdAt;
   }
 
   public void addItem(Long originalLineId, java.math.BigDecimal quantity, Money refundPrice) {

@@ -7,7 +7,7 @@ import com.chamrong.iecommerce.sale.domain.exception.SaleDomainException;
 import com.chamrong.iecommerce.sale.domain.model.SaleReturn;
 import com.chamrong.iecommerce.sale.domain.ports.OrderItemInfo;
 import com.chamrong.iecommerce.sale.domain.ports.OrderPort;
-import com.chamrong.iecommerce.sale.domain.repository.SaleReturnRepositoryPort;
+import com.chamrong.iecommerce.sale.domain.ports.SaleReturnRepositoryPort;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

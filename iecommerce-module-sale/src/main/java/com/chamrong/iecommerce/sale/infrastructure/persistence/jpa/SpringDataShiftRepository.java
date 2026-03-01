@@ -1,9 +1,9 @@
 package com.chamrong.iecommerce.sale.infrastructure.persistence.jpa;
 
 import com.chamrong.iecommerce.sale.infrastructure.persistence.jpa.entity.ShiftEntity;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,7 +24,7 @@ public interface SpringDataShiftRepository extends JpaRepository<ShiftEntity, Lo
       "SELECT s FROM ShiftEntity s WHERE s.tenantId = :tenantId AND (:cursorId IS NULL OR"
           + " (s.createdAt < :cursorTime OR (s.createdAt = :cursorTime AND s.id < :cursorId)))"
           + " ORDER BY s.createdAt DESC, s.id DESC")
-  Slice<ShiftEntity> findPaged(
+  List<ShiftEntity> findPaged(
       @Param("tenantId") String tenantId,
       @Param("cursorId") Long cursorId,
       @Param("cursorTime") java.time.Instant cursorTime,

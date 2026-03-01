@@ -56,7 +56,7 @@ public class Tenant extends BaseEntity {
   }
 
   public void suspend() {
-    this.status = TenantStatus.DISABLED;
+    this.status = TenantStatus.SUSPENDED;
     this.enabled = false;
   }
 
@@ -72,7 +72,10 @@ public class Tenant extends BaseEntity {
   /** Updates lifecycle status, keeping enabled flag in sync. */
   public void updateStatus(TenantStatus newStatus) {
     this.status = newStatus;
-    this.enabled = newStatus == TenantStatus.ACTIVE || newStatus == TenantStatus.TRIAL;
+    this.enabled =
+        newStatus == TenantStatus.ACTIVE
+            || newStatus == TenantStatus.TRIAL
+            || newStatus == TenantStatus.GRACE;
   }
 
   /** Factory for platform-admin provisioning (produces tenants with any plan/status). */
@@ -86,7 +89,10 @@ public class Tenant extends BaseEntity {
     t.plan = plan;
     t.status = status;
     t.provisioningStatus = provisioningStatus;
-    t.enabled = status == TenantStatus.ACTIVE || status == TenantStatus.TRIAL;
+    t.enabled =
+        status == TenantStatus.ACTIVE
+            || status == TenantStatus.TRIAL
+            || status == TenantStatus.GRACE;
     return t;
   }
 

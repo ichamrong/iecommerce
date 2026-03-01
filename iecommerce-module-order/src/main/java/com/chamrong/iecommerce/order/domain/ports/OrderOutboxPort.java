@@ -1,21 +1,33 @@
 package com.chamrong.iecommerce.order.domain.ports;
 
-/**
- * Port for writing domain events to the outbox table.
- *
- * <p>Must be called in the same transaction as the Order save. The infrastructure adapter
- * serializes the payload to JSON and persists it with status=PENDING. The hardened relay scheduler
- * picks it up using {@code SELECT … FOR UPDATE SKIP LOCKED}.
- */
+import com.chamrong.iecommerce.order.domain.OrderOutboxEvent;
+import java.util.List;
+
+/** Port for order outbox persistence (transactional outbox pattern). */
 public interface OrderOutboxPort {
 
   /**
-   * Writes an event to the outbox.
+   * Persists a new outbox event to be relayed (same transaction as aggregate change).
    *
-   * @param tenantId tenant scope
-   * @param aggregateId the order ID (stored as {@code aggregate_id} column)
-   * @param eventType canonical event class name (e.g., {@code "OrderConfirmedEvent"})
-   * @param payload serialized JSON payload
+   * @param tenantId tenant id
+   * @param aggregateId order id
+   * @param eventType event type
+   * @param payload JSON payload
    */
   void publish(String tenantId, Long aggregateId, String eventType, String payload);
+
+  /**
+   * Loads pending events for relay, ordered by createdAt ASC.
+   *
+   * @param limit max events to return
+   * @return pending events
+   */
+  List<OrderOutboxEvent> findPending(int limit);
+
+  /**
+   * Saves an existing event (e.g. after status update on relay).
+   *
+   * @param event event to save
+   */
+  void save(OrderOutboxEvent event);
 }

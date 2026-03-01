@@ -5,14 +5,20 @@ import com.chamrong.iecommerce.order.domain.OrderState;
 import java.time.Instant;
 import java.util.List;
 
-/**
- * Port for writing and reading the immutable order audit log.
- *
- * <p>Audit entries are append-only (never updated or deleted). See {@link OrderAuditLog}.
- */
+/** Port for order audit log persistence. */
 public interface OrderAuditPort {
 
-  /** Appends an audit entry. Must be called in the same transaction as the Order save. */
+  /**
+   * Appends an audit entry for an order state transition.
+   *
+   * @param orderId order id
+   * @param tenantId tenant id
+   * @param from previous state (null for creation)
+   * @param to new state
+   * @param action action name
+   * @param performedBy actor
+   * @param context optional context (null allowed)
+   */
   void log(
       Long orderId,
       String tenantId,
@@ -22,16 +28,23 @@ public interface OrderAuditPort {
       String performedBy,
       String context);
 
-  // ── Cursor-paginated read ─────────────────────────────────────────────────
+  /**
+   * First page of audit entries for an order (keyset pagination).
+   *
+   * @param orderId order id
+   * @param limit page size
+   * @return entries ordered by occurredAt DESC, id DESC
+   */
+  List<OrderAuditLog> findByOrderFirstPage(Long orderId, int limit);
 
   /**
-   * First page of audit history for an order. Sorted {@code (occurred_at DESC, id DESC)}.
+   * Next page of audit entries after the given cursor.
    *
-   * @param fetchSize = pageSize + 1 so the caller can detect hasNext
+   * @param orderId order id
+   * @param occurredAt cursor timestamp
+   * @param id cursor id
+   * @param limit page size
+   * @return entries ordered by occurredAt DESC, id DESC
    */
-  List<OrderAuditLog> findByOrderFirstPage(Long orderId, int fetchSize);
-
-  /** Next page from cursor position. */
-  List<OrderAuditLog> findByOrderNextPage(
-      Long orderId, Instant cursorTs, Long cursorId, int fetchSize);
+  List<OrderAuditLog> findByOrderNextPage(Long orderId, Instant occurredAt, Long id, int limit);
 }

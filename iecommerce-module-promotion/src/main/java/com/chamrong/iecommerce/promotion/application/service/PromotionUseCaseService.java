@@ -9,7 +9,7 @@ import com.chamrong.iecommerce.promotion.application.port.ValidatePromotionUseCa
 import com.chamrong.iecommerce.promotion.domain.event.PromotionEventPublisher;
 import com.chamrong.iecommerce.promotion.domain.model.Promotion;
 import com.chamrong.iecommerce.promotion.domain.model.PromotionStatus;
-import com.chamrong.iecommerce.promotion.domain.port.PromotionRepository;
+import com.chamrong.iecommerce.promotion.domain.ports.PromotionRepository;
 import com.chamrong.iecommerce.promotion.domain.rule.PromotionContext;
 import com.chamrong.iecommerce.promotion.domain.rule.engine.PromotionEngine;
 import java.util.List;

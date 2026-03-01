@@ -3,7 +3,7 @@ package com.chamrong.iecommerce.promotion.domain.rule.engine;
 import com.chamrong.iecommerce.promotion.application.dto.AppliedPromotionBreakdown;
 import com.chamrong.iecommerce.promotion.application.service.AllocationService;
 import com.chamrong.iecommerce.promotion.domain.model.Promotion;
-import com.chamrong.iecommerce.promotion.domain.port.PromotionRepository;
+import com.chamrong.iecommerce.promotion.domain.ports.PromotionRepository;
 import com.chamrong.iecommerce.promotion.domain.rule.PromotionContext;
 import com.chamrong.iecommerce.promotion.domain.rule.dsl.RuleDefinition;
 import com.chamrong.iecommerce.promotion.domain.rule.dsl.RuleParser;

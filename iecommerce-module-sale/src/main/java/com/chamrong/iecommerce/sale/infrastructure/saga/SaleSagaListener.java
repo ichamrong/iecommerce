@@ -2,7 +2,7 @@ package com.chamrong.iecommerce.sale.infrastructure.saga;
 
 import com.chamrong.iecommerce.invoice.application.InvoiceApplicationService;
 import com.chamrong.iecommerce.sale.domain.event.SaleSessionClosedEvent;
-import com.chamrong.iecommerce.sale.domain.repository.SaleSessionRepositoryPort;
+import com.chamrong.iecommerce.sale.domain.ports.SaleSessionRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;

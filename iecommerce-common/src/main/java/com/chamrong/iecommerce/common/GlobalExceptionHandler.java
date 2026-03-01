@@ -1,5 +1,7 @@
 package com.chamrong.iecommerce.common;
 
+import com.chamrong.iecommerce.common.pagination.InvalidCursorException;
+import com.chamrong.iecommerce.common.security.CapabilityDeniedException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.HashMap;
@@ -18,6 +20,32 @@ import org.springframework.web.servlet.view.RedirectView;
 public class GlobalExceptionHandler {
 
   private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+  @ExceptionHandler(InvalidCursorException.class)
+  public ResponseEntity<Map<String, Object>> handleInvalidCursor(
+      InvalidCursorException ex, HttpServletRequest request) {
+    log.warn("Invalid cursor: {} [{}]", ex.getMessage(), ex.getErrorCode());
+    Map<String, Object> body = new HashMap<>();
+    body.put("timestamp", Instant.now());
+    body.put("status", HttpStatus.BAD_REQUEST.value());
+    body.put("error", "Bad Request");
+    body.put("message", ex.getMessage());
+    body.put("errorCode", ex.getErrorCode());
+    return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(CapabilityDeniedException.class)
+  public ResponseEntity<Map<String, Object>> handleCapabilityDenied(
+      CapabilityDeniedException ex, HttpServletRequest request) {
+    log.warn("Capability denied: {} [{}]", ex.getMessage(), ex.getErrorCode());
+    Map<String, Object> body = new HashMap<>();
+    body.put("timestamp", Instant.now());
+    body.put("status", HttpStatus.FORBIDDEN.value());
+    body.put("error", "Forbidden");
+    body.put("message", ex.getMessage());
+    body.put("errorCode", ex.getErrorCode());
+    return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
+  }
 
   @ExceptionHandler(Exception.class)
   public Object handleAllExceptions(Exception ex, HttpServletRequest request) {

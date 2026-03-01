@@ -26,6 +26,9 @@ public class SaleSession {
   private Money expectedAmount;
   private Money actualAmount;
 
+  /** Set by persistence layer for keyset pagination (created_at DESC, id DESC). */
+  private Instant createdAt;
+
   public enum SessionStatus {
     OPEN,
     CLOSING,
@@ -57,7 +60,8 @@ public class SaleSession {
       Instant endTime,
       SessionStatus status,
       Money expectedAmount,
-      Money actualAmount) {
+      Money actualAmount,
+      Instant createdAt) {
     this.id = id;
     this.tenantId = tenantId;
     this.version = version;
@@ -69,6 +73,7 @@ public class SaleSession {
     this.status = status;
     this.expectedAmount = expectedAmount;
     this.actualAmount = actualAmount;
+    this.createdAt = createdAt;
   }
 
   public void recordSale(Money amount) {

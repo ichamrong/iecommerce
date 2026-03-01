@@ -1,6 +1,6 @@
 package com.chamrong.iecommerce.sale.api;
 
-import com.chamrong.iecommerce.common.dto.CursorPage;
+import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
 import com.chamrong.iecommerce.sale.application.command.CreateQuotationCommand;
 import com.chamrong.iecommerce.sale.application.dto.QuotationResponse;
 import com.chamrong.iecommerce.sale.application.query.SaleQueryService;
@@ -34,24 +34,25 @@ public class QuotationController {
   }
 
   @GetMapping
-  public ResponseEntity<CursorPage<QuotationResponse>> listQuotations(
-      @RequestHeader("X-Tenant-Id") String tenantId,
-      @RequestParam(required = false) String cursor,
-      @RequestParam(defaultValue = "20") int limit) {
-    return ResponseEntity.ok(queryService.listQuotations(tenantId, cursor, limit));
+  public ResponseEntity<CursorPageResponse<QuotationResponse>> listQuotations(
+      @RequestParam(required = false) String cursor, @RequestParam(defaultValue = "20") int limit) {
+    String tenantId = com.chamrong.iecommerce.common.TenantContext.requireTenantId();
+    int clampedLimit = Math.min(100, Math.max(1, limit));
+    return ResponseEntity.ok(
+        queryService.listQuotations(tenantId, cursor, clampedLimit, java.util.Map.of()));
   }
 
   @PatchMapping("/{id}/confirm")
   public ResponseEntity<QuotationResponse> confirmQuotation(
       @PathVariable Long id,
-      @RequestHeader("X-Tenant-Id") String tenantId,
       @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
+    String tenantId = com.chamrong.iecommerce.common.TenantContext.requireTenantId();
     return ResponseEntity.ok(quotationUseCase.confirmQuotation(id, tenantId, idempotencyKey));
   }
 
   @PatchMapping("/{id}/cancel")
-  public ResponseEntity<QuotationResponse> cancelQuotation(
-      @PathVariable Long id, @RequestHeader("X-Tenant-Id") String tenantId) {
+  public ResponseEntity<QuotationResponse> cancelQuotation(@PathVariable Long id) {
+    String tenantId = com.chamrong.iecommerce.common.TenantContext.requireTenantId();
     return ResponseEntity.ok(quotationUseCase.cancelQuotation(id, tenantId));
   }
 }

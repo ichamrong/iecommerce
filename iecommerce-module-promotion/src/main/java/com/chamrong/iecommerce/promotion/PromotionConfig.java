@@ -5,8 +5,8 @@ import com.chamrong.iecommerce.promotion.application.port.ValidatePromotionUseCa
 import com.chamrong.iecommerce.promotion.application.service.PromotionRedemptionService;
 import com.chamrong.iecommerce.promotion.application.service.PromotionUseCaseService;
 import com.chamrong.iecommerce.promotion.domain.event.PromotionEventPublisher;
-import com.chamrong.iecommerce.promotion.domain.port.PromotionRedemptionRepository;
-import com.chamrong.iecommerce.promotion.domain.port.PromotionRepository;
+import com.chamrong.iecommerce.promotion.domain.ports.PromotionRedemptionRepository;
+import com.chamrong.iecommerce.promotion.domain.ports.PromotionRepository;
 import com.chamrong.iecommerce.promotion.domain.rule.engine.PromotionEngine;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;

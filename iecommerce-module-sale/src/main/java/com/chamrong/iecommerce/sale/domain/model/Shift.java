@@ -22,6 +22,9 @@ public class Shift {
   private Instant endTime;
   private ShiftStatus status;
 
+  /** Set by persistence layer for keyset pagination (created_at DESC, id DESC). */
+  private Instant createdAt;
+
   public enum ShiftStatus {
     OPEN,
     CLOSED,
@@ -45,7 +48,8 @@ public class Shift {
       String terminalId,
       Instant startTime,
       Instant endTime,
-      ShiftStatus status) {
+      ShiftStatus status,
+      Instant createdAt) {
     this.id = id;
     this.tenantId = tenantId;
     this.version = version;
@@ -54,6 +58,7 @@ public class Shift {
     this.startTime = startTime;
     this.endTime = endTime;
     this.status = status;
+    this.createdAt = createdAt;
   }
 
   public void close() {

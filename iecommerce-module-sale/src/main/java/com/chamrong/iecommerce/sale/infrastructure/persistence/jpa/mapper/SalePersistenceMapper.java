@@ -96,7 +96,8 @@ public class SalePersistenceMapper {
         entity.getEndTime(),
         entity.getStatus(),
         entity.getExpectedAmount(),
-        entity.getActualAmount());
+        entity.getActualAmount(),
+        entity.getCreatedAt());
   }
 
   public SaleSessionEntity toEntity(SaleSession domain) {
@@ -128,7 +129,8 @@ public class SalePersistenceMapper {
         entity.getTerminalId(),
         entity.getStartTime(),
         entity.getEndTime(),
-        entity.getStatus());
+        entity.getStatus(),
+        entity.getCreatedAt());
   }
 
   public ShiftEntity toEntity(Shift domain) {
@@ -160,7 +162,8 @@ public class SalePersistenceMapper {
         entity.getTotalRefundAmount(),
         entity.getItems().stream().map(this::toDomain).collect(Collectors.toList()),
         entity.getRequestedAt(),
-        entity.getCompletedAt());
+        entity.getCompletedAt(),
+        entity.getCreatedAt());
   }
 
   public ReturnItem toDomain(ReturnItemEntity entity) {

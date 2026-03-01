@@ -10,6 +10,18 @@ public enum TenantStatus {
   /** Fully operational tenant with a paid or active subscription. */
   ACTIVE,
 
+  /** Billing grace period — read-only access only (GET/HEAD/OPTIONS). */
+  GRACE,
+
   /** Temporarily suspended or manually disabled due to unpaid bills or expiration. */
+  SUSPENDED,
+
+  /** Permanently terminated; no API access. */
+  TERMINATED,
+
+  /**
+   * @deprecated Use SUSPENDED.
+   */
+  @Deprecated
   DISABLED
 }

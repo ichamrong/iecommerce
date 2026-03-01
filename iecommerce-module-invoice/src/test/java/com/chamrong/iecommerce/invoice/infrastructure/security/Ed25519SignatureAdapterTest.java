@@ -2,7 +2,7 @@ package com.chamrong.iecommerce.invoice.infrastructure.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.chamrong.iecommerce.invoice.domain.port.DigitalSignaturePort.SignResult;
+import com.chamrong.iecommerce.invoice.domain.ports.DigitalSignaturePort.SignResult;
 import java.security.Security;
 import java.util.Base64;
 import java.util.List;

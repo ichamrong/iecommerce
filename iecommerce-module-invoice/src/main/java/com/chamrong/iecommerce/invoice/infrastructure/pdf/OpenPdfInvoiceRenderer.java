@@ -3,7 +3,7 @@ package com.chamrong.iecommerce.invoice.infrastructure.pdf;
 import com.chamrong.iecommerce.invoice.domain.Invoice;
 import com.chamrong.iecommerce.invoice.domain.InvoiceLine;
 import com.chamrong.iecommerce.invoice.domain.InvoiceSignature;
-import com.chamrong.iecommerce.invoice.domain.port.InvoicePdfRendererPort;
+import com.chamrong.iecommerce.invoice.domain.ports.InvoicePdfRendererPort;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.client.j2se.MatrixToImageWriter;

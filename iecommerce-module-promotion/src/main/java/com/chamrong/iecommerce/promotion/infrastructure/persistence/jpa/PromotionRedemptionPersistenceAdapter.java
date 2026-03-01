@@ -1,7 +1,7 @@
 package com.chamrong.iecommerce.promotion.infrastructure.persistence.jpa;
 
 import com.chamrong.iecommerce.promotion.domain.model.PromotionRedemption;
-import com.chamrong.iecommerce.promotion.domain.port.PromotionRedemptionRepository;
+import com.chamrong.iecommerce.promotion.domain.ports.PromotionRedemptionRepository;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

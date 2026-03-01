@@ -1,7 +1,7 @@
 package com.chamrong.iecommerce.invoice.infrastructure.security;
 
 import com.chamrong.iecommerce.invoice.domain.exception.InvoiceSignatureException;
-import com.chamrong.iecommerce.invoice.domain.port.DigitalSignaturePort;
+import com.chamrong.iecommerce.invoice.domain.ports.DigitalSignaturePort;
 import java.security.Security;
 import java.util.Base64;
 import java.util.List;
