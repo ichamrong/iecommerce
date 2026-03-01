@@ -40,4 +40,14 @@ public final class LoggingHelper {
     MDC.remove(MDC_TENANT_ID);
     MDC.remove(MDC_REQUEST_ID);
   }
+
+  /** Returns correlation ID from MDC (e.g. for audit). Null if not set. */
+  public static String getCorrelationId() {
+    return MDC.get(MDC_CORRELATION_ID);
+  }
+
+  /** Returns tenant ID from MDC. Null if not set. Prefer TenantContext.getCurrentTenant() when available. */
+  public static String getTenantIdFromMdc() {
+    return MDC.get(MDC_TENANT_ID);
+  }
 }

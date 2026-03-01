@@ -1,4 +1,6 @@
-/** Application DTOs for audit: query params, response shape. */
+/**
+ * Data transfer objects for audit API and application services.
+ */
 @org.springframework.lang.NonNullApi
 @org.springframework.lang.NonNullFields
 package com.chamrong.iecommerce.audit.application.dto;

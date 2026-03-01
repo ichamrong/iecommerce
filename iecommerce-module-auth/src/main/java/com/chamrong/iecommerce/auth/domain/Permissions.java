@@ -14,8 +14,9 @@ public final class Permissions {
   // Staff management
   public static final String STAFF_MANAGE = "staff:manage";
 
-  // Audit management
+  // Audit management (AUDIT_READ = AUDIT_VIEW for read; AUDIT_WRITE for privileged write)
   public static final String AUDIT_READ = "audit:read";
+  public static final String AUDIT_WRITE = "audit:write";
 
   // Sale & Invoice management
   public static final String SALE_READ = "sales:read";
@@ -34,6 +35,7 @@ public final class Permissions {
   public static final String HAS_STAFF_MANAGE = "hasAuthority('" + STAFF_MANAGE + "')";
   public static final String HAS_PROFILE_READ = "hasAuthority('" + PROFILE_READ + "')";
   public static final String HAS_AUDIT_READ = "hasAuthority('" + AUDIT_READ + "')";
+  public static final String HAS_AUDIT_WRITE = "hasAuthority('" + AUDIT_WRITE + "')";
   public static final String HAS_SALE_READ = "hasAuthority('" + SALE_READ + "')";
   public static final String HAS_SALE_MANAGE = "hasAuthority('" + SALE_MANAGE + "')";
   public static final String HAS_INVOICE_READ = "hasAuthority('" + INVOICE_READ + "')";

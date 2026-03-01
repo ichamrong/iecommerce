@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="audit-event-table" author="iecommerce">
+        <comment>Bank-grade audit_event table: append-only, tenant-scoped, hash chain for tamper-evidence.</comment>
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="audit_event"/>
+            </not>
+        </preConditions>
+        <createTable tableName="audit_event">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="correlation_id" type="VARCHAR(255)"/>
+            <column name="actor_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="actor_type" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="actor_role" type="VARCHAR(128)"/>
+            <column name="event_type" type="VARCHAR(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="outcome" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="severity" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_type" type="VARCHAR(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_id" type="VARCHAR(255)"/>
+            <column name="source_module" type="VARCHAR(128)"/>
+            <column name="source_endpoint" type="VARCHAR(255)"/>
+            <column name="ip_address" type="VARCHAR(45)"/>
+            <column name="user_agent" type="VARCHAR(500)"/>
+            <column name="metadata_json" type="TEXT"/>
+            <column name="prev_hash" type="VARCHAR(64)"/>
+            <column name="hash" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="audit-event-keyset-index" author="iecommerce">
+        <comment>Keyset pagination: (tenant_id, created_at DESC, id DESC)</comment>
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="audit_event"/>
+            <not>
+                <indexExists tableName="audit_event" indexName="idx_audit_event_keyset"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="audit_event" indexName="idx_audit_event_keyset">
+            <column name="tenant_id"/>
+            <column name="created_at" descending="true"/>
+            <column name="id" descending="true"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="audit-event-actor-index" author="iecommerce">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="audit_event"/>
+            <not>
+                <indexExists tableName="audit_event" indexName="idx_audit_event_actor"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="audit_event" indexName="idx_audit_event_actor">
+            <column name="tenant_id"/>
+            <column name="actor_id"/>
+            <column name="created_at" descending="true"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="audit-event-event-type-index" author="iecommerce">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="audit_event"/>
+            <not>
+                <indexExists tableName="audit_event" indexName="idx_audit_event_event_type"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="audit_event" indexName="idx_audit_event_event_type">
+            <column name="tenant_id"/>
+            <column name="event_type"/>
+            <column name="created_at" descending="true"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="audit-event-target-index" author="iecommerce">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="audit_event"/>
+            <not>
+                <indexExists tableName="audit_event" indexName="idx_audit_event_target"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="audit_event" indexName="idx_audit_event_target">
+            <column name="tenant_id"/>
+            <column name="target_type"/>
+            <column name="target_id"/>
+            <column name="created_at" descending="true"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>
