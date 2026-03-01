@@ -1,18 +1,7 @@
 package com.chamrong.iecommerce.order.domain;
 
-import com.chamrong.iecommerce.common.BaseTenantEntity;
 import com.chamrong.iecommerce.common.Money;
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.AttributeOverrides;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import jakarta.persistence.Version;
+import com.chamrong.iecommerce.common.domain.BaseDomainTenantEntity;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
@@ -23,127 +12,100 @@ import java.util.Objects;
 import lombok.Getter;
 
 /**
- * Order Aggregate Root.
+ * Order Aggregate Root (pure domain — no JPA). Persistence uses {@link
+ * com.chamrong.iecommerce.order.infrastructure.persistence.jpa.entity.OrderEntity}.
  *
- * <p><b>Banking/Insurance coding standards applied:</b>
- *
- * <ul>
- *   <li>{@code @Setter} is intentionally ABSENT. All state changes must go through named domain
- *       methods ({@link #confirm()}, {@link #ship(String)}, etc.). Direct field mutation via
- *       setters would bypass business rule guards.
- *   <li>Every public domain method uses {@link OrderStateMachine#assertCanTransition} as the single
- *       enforcement point — no scattered {@code if (state != X)} checks.
- *   <li>All numeric constants ({@link #MAX_ITEMS}, {@link #MIN_QUANTITY}) are {@code static final}
- *       to prevent magic-number drift across the codebase.
- *   <li>The {@code items} collection is only exposed as an unmodifiable view via {@link
- *       #getItems()} — callers cannot mutate it directly.
- *   <li>{@link #code} and {@code tenantId} are write-once via constructor-only setters and marked
- *       {@code updatable = false} in the column definition.
- *   <li>{@link #version} field provides optimistic locking (concurrent-write protection).
- * </ul>
+ * <p>Banking/Insurance: state changes via named methods; OrderStateMachine enforces transitions;
+ * constants for limits; unmodifiable getItems(); version for optimistic locking.
  */
 @Getter
-@Entity
-@Table(name = "ecommerce_order")
-public class Order extends BaseTenantEntity {
+public class Order extends BaseDomainTenantEntity {
 
-  // ── Business constants ─────────────────────────────────────────────────────
-
-  /** Maximum number of line items per order (PCI/fraud-prevention limit). */
   public static final int MAX_ITEMS = 100;
-
-  /** Minimum allowed quantity per line item. */
   public static final int MIN_QUANTITY = 1;
-
-  /** Maximum allowed quantity per line item. */
   public static final int MAX_QUANTITY = 9_999;
-
-  /** Currency used when no price exists on an item (should never happen in production). */
   private static final String FALLBACK_CURRENCY = "USD";
 
-  // ── Persistence ────────────────────────────────────────────────────────────
-
-  /**
-   * Optimistic locking — prevents last-write-wins concurrency bug. JPA throws {@link
-   * jakarta.persistence.OptimisticLockException} on conflict.
-   */
-  @Version
-  @Column(nullable = false)
   private Long version = 0L;
-
-  @Column(length = 100, nullable = false, updatable = false)
   private String code;
-
-  @Column private Long customerId;
-
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false, length = 50)
+  private Long customerId;
   private OrderState state = OrderState.AddingItems;
-
-  @Column(columnDefinition = "TEXT")
   private String shippingAddress;
-
-  // ── Lifecycle timestamps (immutable after set) ─────────────────────────────
-
-  @Column(name = "confirmed_at")
   private Instant confirmedAt;
-
-  @Column(name = "cancelled_at")
   private Instant cancelledAt;
-
-  @Column(name = "shipped_at")
   private Instant shippedAt;
-
-  @Column(length = 100)
   private String trackingNumber;
-
-  @Column(length = 50)
   private String voucherCode;
-
-  @Embedded
-  @AttributeOverrides({
-    @AttributeOverride(name = "amount", column = @Column(name = "discount_amount")),
-    @AttributeOverride(name = "currency", column = @Column(name = "discount_currency", length = 3))
-  })
   private Money discount;
-
-  /** Internal mutable list — never exposed directly. */
-  @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<OrderItem> items = new ArrayList<>();
-
-  @Embedded
-  @AttributeOverrides({
-    @AttributeOverride(name = "amount", column = @Column(name = "subtotal_amount")),
-    @AttributeOverride(name = "currency", column = @Column(name = "subtotal_currency"))
-  })
+  private final List<OrderItem> items = new ArrayList<>();
   private Money subTotal;
-
-  @Embedded
-  @AttributeOverrides({
-    @AttributeOverride(name = "amount", column = @Column(name = "total_amount")),
-    @AttributeOverride(name = "currency", column = @Column(name = "total_currency"))
-  })
   private Money total;
-
-  @Embedded
-  @AttributeOverrides({
-    @AttributeOverride(name = "amount", column = @Column(name = "deposit_amount")),
-    @AttributeOverride(name = "currency", column = @Column(name = "deposit_currency"))
-  })
   private Money depositAmount;
+  private final List<Object> domainEvents = new ArrayList<>();
 
-  /**
-   * Transient domain events — written atomically via the Outbox pattern. Never persisted. Cleared
-   * after each {@code orderRepository.save()}.
-   */
-  @jakarta.persistence.Transient private final List<Object> domainEvents = new ArrayList<>();
+  // ── Reconstitution from persistence (used only by OrderPersistenceMapper) ───
 
-  // ── Protected bootstrap setters (used only by JPA and OrderService.create*) ─
+  public void setVersion(Long version) {
+    this.version = version != null ? version : 0L;
+  }
 
-  /**
-   * Write-once code setter. Only called once during construction. Intentionally not prefixed with
-   * {@code set} to discourage misuse.
-   */
+  public void setState(OrderState state) {
+    this.state = state != null ? state : OrderState.AddingItems;
+  }
+
+  public void setShippingAddress(String shippingAddress) {
+    this.shippingAddress = shippingAddress;
+  }
+
+  public void setConfirmedAt(Instant confirmedAt) {
+    this.confirmedAt = confirmedAt;
+  }
+
+  public void setCancelledAt(Instant cancelledAt) {
+    this.cancelledAt = cancelledAt;
+  }
+
+  public void setShippedAt(Instant shippedAt) {
+    this.shippedAt = shippedAt;
+  }
+
+  public void setTrackingNumber(String trackingNumber) {
+    this.trackingNumber = trackingNumber;
+  }
+
+  public void setVoucherCode(String voucherCode) {
+    this.voucherCode = voucherCode;
+  }
+
+  public void setDiscount(Money discount) {
+    this.discount = discount;
+  }
+
+  public void setSubTotal(Money subTotal) {
+    this.subTotal = subTotal;
+  }
+
+  public void setTotal(Money total) {
+    this.total = total;
+  }
+
+  public void setDepositAmount(Money depositAmount) {
+    this.depositAmount = depositAmount;
+  }
+
+  /** Reconstitution only: restores items from persistence (sets back-reference on each item). */
+  public void restoreItems(List<OrderItem> fromPersistence) {
+    items.clear();
+    if (fromPersistence != null) {
+      for (OrderItem item : fromPersistence) {
+        item.assignOrder(this);
+        items.add(item);
+      }
+    }
+  }
+
+  // ── Bootstrap (construction / create flow) ──────────────────────────────────
+
   public void assignCode(final String code) {
     if (this.code != null) {
       throw new IllegalStateException("Order code is already set and cannot be changed");
@@ -159,7 +121,6 @@ public class Order extends BaseTenantEntity {
     this.setTenantId(tenantId);
   }
 
-  /** Set at any time before confirmation (e.g., customer selects delivery address). */
   public void updateShippingAddress(final String address) {
     if (this.state == OrderState.Shipped
         || this.state == OrderState.Delivered
@@ -172,16 +133,11 @@ public class Order extends BaseTenantEntity {
   }
 
   public void setCustomerId(final Long customerId) {
-    this.customerId = Objects.requireNonNull(customerId, "customerId must not be null");
+    this.customerId = customerId;
   }
 
   // ── Domain behaviour ───────────────────────────────────────────────────────
 
-  /**
-   * Adds a line item.
-   *
-   * @throws IllegalArgumentException if quantity bounds are violated or item limit is reached
-   */
   public void addItem(final OrderItem item) {
     Objects.requireNonNull(item, "OrderItem must not be null");
     if (this.items.size() >= MAX_ITEMS) {
@@ -203,7 +159,6 @@ public class Order extends BaseTenantEntity {
     items.add(item);
   }
 
-  /** Returns an unmodifiable view — external code cannot bypass domain logic. */
   public List<OrderItem> getItems() {
     return Collections.unmodifiableList(items);
   }
@@ -214,9 +169,6 @@ public class Order extends BaseTenantEntity {
     return copy;
   }
 
-  // ── State transitions — all validated through OrderStateMachine ────────────
-
-  /** Starts online payment flow: AddingItems → ArrangingPayment. */
   public void arrangePayment() {
     OrderStateMachine.assertCanTransition(this.state, OrderState.ArrangingPayment);
     if (this.items.isEmpty()) {
@@ -225,7 +177,6 @@ public class Order extends BaseTenantEntity {
     this.state = OrderState.ArrangingPayment;
   }
 
-  /** Payment gateway authorised the hold: ArrangingPayment → PaymentAuthorized. */
   public void authorizePayment() {
     OrderStateMachine.assertCanTransition(this.state, OrderState.PaymentAuthorized);
     this.state = OrderState.PaymentAuthorized;
@@ -279,7 +230,6 @@ public class Order extends BaseTenantEntity {
     this.state = OrderState.Completed;
   }
 
-  /** Special direct transition for POS or trusted handovers. */
   public void completeImmediate() {
     OrderStateMachine.assertCanTransition(this.state, OrderState.Completed);
     this.state = OrderState.Completed;
@@ -297,44 +247,28 @@ public class Order extends BaseTenantEntity {
     }
   }
 
-  // ── Financial calculations ─────────────────────────────────────────────────
-
-  /**
-   * Recalculates {@link #subTotal} and {@link #total} from line items.
-   *
-   * <p>For time-based items (bookings/accommodation), price is multiplied by the number of
-   * days/nights between {@code startAt} and {@code endAt}.
-   *
-   * <p>All arithmetic uses {@link BigDecimal} with {@link java.math.RoundingMode#HALF_EVEN}
-   * (banker's rounding) to minimize cumulative rounding errors on financial sums.
-   */
   public void recalculateTotals() {
     if (this.items.isEmpty()) {
       this.subTotal = null;
       this.total = null;
       return;
     }
-
     final String currency =
         this.items.stream()
             .filter(i -> i.getUnitPrice() != null)
             .map(i -> i.getUnitPrice().getCurrency())
             .findFirst()
             .orElse(FALLBACK_CURRENCY);
-
     final BigDecimal sub =
         this.items.stream()
             .filter(i -> i.getUnitPrice() != null)
             .map(i -> computeLineTotal(i))
             .reduce(BigDecimal.ZERO, BigDecimal::add);
-
     this.subTotal = new Money(sub, currency);
-
     BigDecimal grandTotal = sub;
     if (this.discount != null && this.discount.getAmount() != null) {
       grandTotal = grandTotal.subtract(this.discount.getAmount());
     }
-    // Floor at zero — orders can never have a negative total (financial invariant)
     this.total = new Money(grandTotal.max(BigDecimal.ZERO), currency);
   }
 
@@ -354,8 +288,6 @@ public class Order extends BaseTenantEntity {
     this.discount = discount;
     recalculateTotals();
   }
-
-  // ── Private helpers ────────────────────────────────────────────────────────
 
   private static BigDecimal computeLineTotal(final OrderItem item) {
     BigDecimal unitPrice = item.getUnitPrice().getAmount();

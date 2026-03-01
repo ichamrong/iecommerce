@@ -9,8 +9,10 @@ import com.chamrong.iecommerce.staff.domain.StaffRepositoryPort;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Read-model query handler for staff profiles.
@@ -25,11 +27,24 @@ public class StaffQueryHandler {
   private final StaffRepositoryPort staffRepository;
   private final StaffMapper mapper;
 
+  /**
+   * Returns a staff profile by id. When {@code tenantId} is present, the staff must have that
+   * tenant in their assigned tenants; otherwise 404 (no cross-tenant leak).
+   */
   @Transactional(readOnly = true)
-  public StaffResponse findById(Long id) {
+  public StaffResponse findById(String tenantId, Long id) {
     return staffRepository
         .findById(id)
-        .map(mapper::toResponse)
+        .map(
+            profile -> {
+              if (tenantId != null
+                  && !tenantId.isBlank()
+                  && (profile.getAssignedTenants() == null
+                      || !profile.getAssignedTenants().contains(tenantId))) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Staff not found");
+              }
+              return mapper.toResponse(profile);
+            })
         .orElseThrow(() -> new EntityNotFoundException("Staff not found: " + id));
   }
 

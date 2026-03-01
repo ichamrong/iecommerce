@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -48,8 +47,7 @@ public class AssetUploadService {
    * @return the created asset response
    */
   @Transactional
-  public @NonNull AssetResponse upload(
-      @NonNull MultipartFile file, @NonNull UploadAssetMetadata metadata) {
+  public AssetResponse upload(MultipartFile file, UploadAssetMetadata metadata) {
     String tenantId = TenantContext.requireTenantId();
     checkQuota(tenantId, file.getSize());
 
@@ -93,7 +91,7 @@ public class AssetUploadService {
     }
   }
 
-  private void checkQuota(@NonNull String tenantId, long uploadSize) {
+  private void checkQuota(String tenantId, long uploadSize) {
     long currentUsage = assetRepository.sumFileSizeByTenantIdAndDeletedAtIsNull(tenantId);
     if (currentUsage + uploadSize > DEFAULT_QUOTA) {
       throw new AssetException(
@@ -104,27 +102,27 @@ public class AssetUploadService {
     }
   }
 
-  private void performSecurityChecks(@NonNull String name, @NonNull InputStream stream) {
+  private void performSecurityChecks(String name, InputStream stream) {
     fileSecurityValidator.validate(name, stream);
     fileScanner.scan(stream, name);
   }
 
-  private @NonNull InputStream processImageIfNecessary(
-      @NonNull MultipartFile originalFile,
-      @NonNull InputStream inputStream,
-      @NonNull String mimeType,
-      @NonNull UploadAssetMetadata metadata) {
+  private InputStream processImageIfNecessary(
+      MultipartFile originalFile,
+      InputStream inputStream,
+      String mimeType,
+      UploadAssetMetadata metadata) {
     if (!mimeType.startsWith(StorageConstants.MIME_IMAGE_PREFIX)) {
       return inputStream;
     }
     return processImage(originalFile, inputStream, mimeType, metadata);
   }
 
-  private @NonNull InputStream processImage(
-      @NonNull MultipartFile originalFile,
-      @NonNull InputStream inputStream,
-      @NonNull String mimeType,
-      @NonNull UploadAssetMetadata metadata) {
+  private InputStream processImage(
+      MultipartFile originalFile,
+      InputStream inputStream,
+      String mimeType,
+      UploadAssetMetadata metadata) {
     try {
       InputStream currentStream = inputStream;
       String format = mimeType.replace(StorageConstants.MIME_IMAGE_PREFIX, "");
@@ -159,7 +157,7 @@ public class AssetUploadService {
     }
   }
 
-  private long getEffectiveSize(@NonNull InputStream stream, long originalSize) throws IOException {
+  private long getEffectiveSize(InputStream stream, long originalSize) throws IOException {
     // If it's a ByteArrayInputStream (from processing), we can get exact size
     if (stream instanceof java.io.ByteArrayInputStream) {
       return stream.available();
@@ -167,8 +165,7 @@ public class AssetUploadService {
     return originalSize;
   }
 
-  private @NonNull Map<String, Object> extractMetadata(
-      @NonNull MultipartFile file, @NonNull String mimeType) {
+  private Map<String, Object> extractMetadata(MultipartFile file, String mimeType) {
     try (InputStream metadataStream = file.getInputStream()) {
       return metadataExtractor.extract(metadataStream, mimeType);
     } catch (IOException e) {
@@ -177,13 +174,13 @@ public class AssetUploadService {
     }
   }
 
-  private @NonNull Asset createAsset(
-      @NonNull String tenantId,
-      @NonNull String name,
-      @NonNull String mimeType,
+  private Asset createAsset(
+      String tenantId,
+      String name,
+      String mimeType,
       long size,
-      @NonNull String source,
-      @NonNull UploadAssetMetadata metadata) {
+      String source,
+      UploadAssetMetadata metadata) {
     return Asset.create(
         tenantId,
         name,

@@ -3,7 +3,7 @@ package com.chamrong.iecommerce.payment.infrastructure;
 import com.chamrong.iecommerce.common.EventDispatcher;
 import com.chamrong.iecommerce.common.outbox.AbstractOutboxRelay;
 import com.chamrong.iecommerce.payment.domain.PaymentOutboxEvent;
-import com.chamrong.iecommerce.payment.domain.PaymentOutboxRepository;
+import com.chamrong.iecommerce.payment.infrastructure.persistence.jpa.repository.SpringDataPaymentOutboxRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -16,12 +16,12 @@ import org.springframework.stereotype.Component;
 public class PaymentOutboxRelayScheduler extends AbstractOutboxRelay<PaymentOutboxEvent> {
   private static final Logger log = LoggerFactory.getLogger(PaymentOutboxRelayScheduler.class);
 
-  private final PaymentOutboxRepository outboxRepository;
+  private final SpringDataPaymentOutboxRepository outboxRepository;
   private final Counter successCounter;
   private final Counter failureCounter;
 
   public PaymentOutboxRelayScheduler(
-      PaymentOutboxRepository outboxRepository,
+      SpringDataPaymentOutboxRepository outboxRepository,
       EventDispatcher eventDispatcher,
       ObjectMapper objectMapper,
       MeterRegistry meterRegistry) {

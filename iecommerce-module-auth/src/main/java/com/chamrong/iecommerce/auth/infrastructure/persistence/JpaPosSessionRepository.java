@@ -1,7 +1,7 @@
 package com.chamrong.iecommerce.auth.infrastructure.persistence;
 
 import com.chamrong.iecommerce.auth.domain.PosSession;
-import com.chamrong.iecommerce.auth.domain.PosSessionRepository;
+import com.chamrong.iecommerce.auth.domain.ports.PosSessionRepositoryPort;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface JpaPosSessionRepository
-    extends JpaRepository<PosSession, Long>, PosSessionRepository {
+    extends JpaRepository<PosSession, Long>, PosSessionRepositoryPort {
 
   @Override
   @Query(

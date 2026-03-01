@@ -1,6 +1,7 @@
 package com.chamrong.iecommerce.sale.application.usecase;
 
 import com.chamrong.iecommerce.common.Money;
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.sale.domain.exception.SaleDomainException;
 import com.chamrong.iecommerce.sale.domain.model.SaleSession;
 import com.chamrong.iecommerce.sale.domain.model.Shift;
@@ -46,6 +47,7 @@ public class SaleSessionUseCase {
         shiftRepository
             .findByIdAndTenantId(shiftId, tenantId)
             .orElseThrow(() -> new EntityNotFoundException("Shift not found: " + shiftId));
+    TenantGuard.requireSameTenant(shift.getTenantId(), tenantId);
 
     SaleSession session = new SaleSession(shift, tenantId, terminalId, currency);
     SaleSession saved = sessionRepository.save(session);
@@ -69,6 +71,7 @@ public class SaleSessionUseCase {
         sessionRepository
             .findByIdAndTenantId(sessionId, tenantId)
             .orElseThrow(() -> new EntityNotFoundException("Session not found: " + sessionId));
+    TenantGuard.requireSameTenant(session.getTenantId(), tenantId);
 
     String before = session.toString();
     session.initiateClosing();
@@ -94,6 +97,7 @@ public class SaleSessionUseCase {
         sessionRepository
             .findByIdAndTenantId(sessionId, tenantId)
             .orElseThrow(() -> new EntityNotFoundException("Session not found: " + sessionId));
+    TenantGuard.requireSameTenant(session.getTenantId(), tenantId);
 
     String before = session.toString();
     session.close(actualCash);

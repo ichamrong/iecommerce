@@ -1,5 +1,6 @@
 package com.chamrong.iecommerce.common.security;
 
+import com.chamrong.iecommerce.common.TenantContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -15,6 +16,20 @@ import org.springframework.web.server.ResponseStatusException;
 public final class TenantGuard {
 
   private TenantGuard() {}
+
+  /**
+   * Ensures tenant context is present. Call before any tenant-scoped operation.
+   *
+   * @return current tenant id (non-null, non-blank)
+   * @throws ResponseStatusException 401 if no tenant in context
+   */
+  public static String requireTenantIdPresent() {
+    String tenantId = TenantContext.getCurrentTenant();
+    if (tenantId == null || tenantId.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No tenant context");
+    }
+    return tenantId;
+  }
 
   /**
    * Asserts that the entity's tenant matches the current tenant. Throws 404 so that existence of

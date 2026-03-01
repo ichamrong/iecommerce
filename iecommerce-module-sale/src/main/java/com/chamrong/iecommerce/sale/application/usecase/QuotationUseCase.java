@@ -2,6 +2,7 @@ package com.chamrong.iecommerce.sale.application.usecase;
 
 import com.chamrong.iecommerce.common.Money;
 import com.chamrong.iecommerce.common.exception.RateLimitException;
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.sale.application.command.CreateQuotationCommand;
 import com.chamrong.iecommerce.sale.application.dto.QuotationResponse;
 import com.chamrong.iecommerce.sale.domain.model.Quotation;
@@ -82,6 +83,7 @@ public class QuotationUseCase {
                   repository
                       .findByIdAndTenantId(id, tenantId)
                       .orElseThrow(() -> new EntityNotFoundException("Quotation not found: " + id));
+              TenantGuard.requireSameTenant(quotation.getTenantId(), tenantId);
 
               String beforeState = quotation.toString();
               quotation.confirm();
@@ -117,6 +119,7 @@ public class QuotationUseCase {
         repository
             .findByIdAndTenantId(id, tenantId)
             .orElseThrow(() -> new EntityNotFoundException("Quotation not found: " + id));
+    TenantGuard.requireSameTenant(quotation.getTenantId(), tenantId);
 
     quotation.cancel();
     return toResponse(repository.save(quotation));

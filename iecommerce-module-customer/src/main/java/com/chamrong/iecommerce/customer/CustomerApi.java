@@ -5,24 +5,23 @@ import com.chamrong.iecommerce.customer.application.dto.CustomerResponse;
 import com.chamrong.iecommerce.customer.application.dto.UpdateCustomerRequest;
 import java.util.Optional;
 
-/** Public API of the Customer module. */
+/** Public API of the Customer module. All operations are tenant-scoped. */
 public interface CustomerApi {
 
-  /** Returns a customer by ID. */
-  Optional<CustomerInfo> getCustomer(Long id);
+  Optional<CustomerInfo> getCustomer(String tenantId, Long id);
 
   com.chamrong.iecommerce.customer.api.dto.CursorResponse<CustomerResponse> listCustomers(
-      String cursor, int limit);
+      String tenantId, String cursor, int limit);
 
-  CustomerResponse getCustomerFull(Long id);
+  CustomerResponse getCustomerFull(String tenantId, Long id);
 
-  CustomerResponse updateCustomer(Long id, UpdateCustomerRequest req);
+  CustomerResponse updateCustomer(String tenantId, Long id, UpdateCustomerRequest req);
 
-  void blockCustomer(Long id);
+  void blockCustomer(String tenantId, Long id);
 
-  void unblockCustomer(Long id);
+  void unblockCustomer(String tenantId, Long id);
 
-  void addAddress(Long customerId, AddAddressRequest req);
+  void addAddress(String tenantId, Long customerId, AddAddressRequest req);
 
-  void removeAddress(Long customerId, Long addressId);
+  void removeAddress(String tenantId, Long customerId, Long addressId);
 }

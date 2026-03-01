@@ -53,14 +53,16 @@ public class CustomerController {
 
   @Operation(summary = "List all customers")
   @GetMapping
-  public ResponseEntity<List<CustomerResponse>> getAllCustomers() {
-    return ResponseEntity.ok(customerQueryHandler.findAll());
+  public ResponseEntity<List<CustomerResponse>> getAllCustomers(
+      @RequestHeader("X-Tenant-ID") String tenantId) {
+    return ResponseEntity.ok(customerQueryHandler.findAll(tenantId));
   }
 
   @Operation(summary = "Get customer by ID")
   @GetMapping("/{id}")
-  public ResponseEntity<CustomerResponse> getCustomerById(@PathVariable Long id) {
-    return ResponseEntity.ok(customerQueryHandler.findById(id));
+  public ResponseEntity<CustomerResponse> getCustomerById(
+      @RequestHeader("X-Tenant-ID") String tenantId, @PathVariable Long id) {
+    return ResponseEntity.ok(customerQueryHandler.findById(tenantId, id));
   }
 
   // ── Writes ───────────────────────────────────────────────────────────────
@@ -68,8 +70,8 @@ public class CustomerController {
   @Operation(summary = "Create customer")
   @PostMapping
   public ResponseEntity<CustomerResponse> createCustomer(
-      @RequestBody CreateCustomerCommand command) {
-    CustomerResponse response = createCustomerHandler.handle(command);
+      @RequestHeader("X-Tenant-ID") String tenantId, @RequestBody CreateCustomerCommand command) {
+    CustomerResponse response = createCustomerHandler.handle(tenantId, command);
     URI location =
         ServletUriComponentsBuilder.fromCurrentRequest()
             .path("/{id}")
@@ -81,8 +83,10 @@ public class CustomerController {
   @Operation(summary = "Update customer")
   @PutMapping("/{id}")
   public ResponseEntity<CustomerResponse> updateCustomer(
-      @PathVariable Long id, @RequestBody UpdateCustomerRequest request) {
-    return ResponseEntity.ok(updateCustomerHandler.handle(id, request));
+      @RequestHeader("X-Tenant-ID") String tenantId,
+      @PathVariable Long id,
+      @RequestBody UpdateCustomerRequest request) {
+    return ResponseEntity.ok(updateCustomerHandler.handle(tenantId, id, request));
   }
 
   // ── Addresses ────────────────────────────────────────────────────────────
@@ -90,30 +94,36 @@ public class CustomerController {
   @Operation(summary = "Add Address")
   @PostMapping("/{id}/addresses")
   public ResponseEntity<CustomerResponse> addAddress(
-      @PathVariable Long id, @RequestBody AddAddressRequest request) {
-    return ResponseEntity.ok(addAddressHandler.handle(id, request));
+      @RequestHeader("X-Tenant-ID") String tenantId,
+      @PathVariable Long id,
+      @RequestBody AddAddressRequest request) {
+    return ResponseEntity.ok(addAddressHandler.handle(tenantId, id, request));
   }
 
   @Operation(summary = "Remove Address")
   @DeleteMapping("/{id}/addresses/{addressId}")
   public ResponseEntity<CustomerResponse> removeAddress(
-      @PathVariable Long id, @PathVariable Long addressId) {
-    return ResponseEntity.ok(removeAddressHandler.handle(id, addressId));
+      @RequestHeader("X-Tenant-ID") String tenantId,
+      @PathVariable Long id,
+      @PathVariable Long addressId) {
+    return ResponseEntity.ok(removeAddressHandler.handle(tenantId, id, addressId));
   }
 
   // ── Lifecycle ────────────────────────────────────────────────────────────
 
   @Operation(summary = "Block a customer")
   @PatchMapping("/{id}/block")
-  public ResponseEntity<Void> blockCustomer(@PathVariable Long id) {
-    blockCustomerHandler.handle(id);
+  public ResponseEntity<Void> blockCustomer(
+      @RequestHeader("X-Tenant-ID") String tenantId, @PathVariable Long id) {
+    blockCustomerHandler.handle(tenantId, id);
     return ResponseEntity.noContent().build();
   }
 
   @Operation(summary = "Unblock a customer")
   @PatchMapping("/{id}/unblock")
-  public ResponseEntity<Void> unblockCustomer(@PathVariable Long id) {
-    unblockCustomerHandler.handle(id);
+  public ResponseEntity<Void> unblockCustomer(
+      @RequestHeader("X-Tenant-ID") String tenantId, @PathVariable Long id) {
+    unblockCustomerHandler.handle(tenantId, id);
     return ResponseEntity.noContent().build();
   }
 }

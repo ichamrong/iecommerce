@@ -254,6 +254,167 @@ Every module MUST follow:
 
 ---
 
+# SECTION 2.5 — FOLDER STRUCTURE + ARCHITECTURE ENFORCEMENT
+
+You must implement and enforce the folder structure across **ALL** modules listed.
+
+## 2.5.1 FOLDER STRUCTURE STANDARD (MANDATORY, NO EXCEPTIONS)
+
+Every module MUST follow this exact structure (same package names, same meaning):
+
+```
+<module-root>/src/main/java/com/chamrong/iecommerce/<module>/
+├── api
+│   ├── package-info.java
+│   ├── *Controller.java
+│   └── *Api.java (optional facade interface)
+├── application
+│   ├── package-info.java
+│   ├── command
+│   │   ├── package-info.java
+│   │   ├── *Command.java               (request command objects)
+│   │   ├── *Handler.java               (writes)
+│   │   └── *Validator.java             (optional)
+│   ├── query
+│   │   ├── package-info.java
+│   │   ├── *Query.java                 (query objects)
+│   │   ├── *QueryService.java          (reads)
+│   │   └── *Projection.java            (JPA projections)
+│   ├── usecase
+│   │   ├── package-info.java
+│   │   └── *UseCase.java               (application orchestration entrypoints)
+│   └── dto
+│       ├── package-info.java
+│       ├── *Request.java
+│       └── *Response.java
+├── domain
+│   ├── package-info.java
+│   ├── model
+│   │   ├── package-info.java
+│   │   ├── Aggregates/Entities/VOs     (NO Spring, NO JPA annotations)
+│   │   └── *Id.java / *Money.java / *Status.java
+│   ├── event
+│   │   ├── package-info.java
+│   │   └── *Event.java
+│   ├── ports
+│   │   ├── package-info.java
+│   │   ├── *RepositoryPort.java        (persistence ports)
+│   │   ├── *ClientPort.java            (external dependency ports)
+│   │   ├── *PublisherPort.java         (outbox/event ports)
+│   │   └── *IdempotencyPort.java       (idempotency store port)
+│   ├── policy
+│   │   ├── package-info.java
+│   │   └── *Policy.java                (business rules / policy objects)
+│   ├── service
+│   │   ├── package-info.java
+│   │   └── *DomainService.java         (domain services only)
+│   └── exception
+│       ├── package-info.java
+│       └── *DomainException.java
+└── infrastructure
+    ├── package-info.java
+    ├── config
+    │   ├── package-info.java
+    │   └── *Configuration.java
+    ├── persistence
+    │   ├── package-info.java
+    │   └── jpa
+    │       ├── package-info.java
+    │       ├── *Entity.java                 (JPA entities live HERE only)
+    │       ├── SpringData*Repository.java   (Spring Data interfaces)
+    │       ├── Jpa*Adapter.java             (implements RepositoryPort)
+    │       ├── *Mapper.java                 (entity<->domain mapping)
+    │       └── *Specification.java          (Specification pattern)
+    ├── outbox
+    │   ├── package-info.java
+    │   ├── *OutboxEventEntity.java
+    │   ├── Jpa*OutboxRepository.java
+    │   ├── *OutboxPublisher.java
+    │   └── *OutboxRelayScheduler.java
+    ├── saga
+    │   ├── package-info.java
+    │   ├── *SagaStateEntity.java
+    │   ├── *SagaOrchestrator.java
+    │   ├── *SagaListener.java
+    │   └── *CompensationHandler.java
+    └── client
+        ├── package-info.java
+        ├── *ClientAdapter.java             (implements ClientPort)
+        └── providers/stripe|paypal|bakong... (optional)
+```
+
+## 2.5.2 DEPENDENCY RULES (MUST ENFORCE)
+
+**A) Domain Layer**
+
+- `domain/**` has **NO** Spring imports, **NO** `jakarta.persistence` imports.
+- `domain/model` contains pure business objects.
+- `domain/event` contains immutable domain events.
+- `domain/ports` are interfaces ONLY.
+
+**B) Application Layer**
+
+- Orchestrates use-cases.
+- May use Spring annotations (e.g. `@Service`) if needed.
+- Calls domain model + domain ports.
+- Must define transaction boundaries clearly (e.g. `@Transactional` on handlers).
+
+**C) Infrastructure Layer**
+
+- Implements ports.
+- Contains JPA entities, adapters, outbox relay, saga persistence, client integrations.
+- Must not leak JPA entities outside infrastructure (map to domain models and DTOs).
+
+**D) API Layer**
+
+- Controllers only.
+- Map Request → Command/DTO.
+- Never contain business logic.
+- Must enforce request validation + pagination + security annotations.
+
+## 2.5.3 MODULE CONSISTENCY RULES
+
+1. **No module is allowed to have:**  
+   - `domain/repository`  
+   - `domain/port` (singular)  
+   - Repository interfaces in domain root  
+   - Persistence entities inside `domain/model`
+
+2. **Every package MUST contain `package-info.java`:**  
+   - api/application/infrastructure packages: include `@NonNullApi` + `@NonNullFields`  
+   - domain packages: documentation only (NO Spring annotations)
+
+3. **Naming conventions:**  
+   - Ports end with `*Port` (e.g. `OrderRepositoryPort`, `PaymentProviderPort`)  
+   - Adapters end with `*Adapter` (e.g. `JpaOrderRepositoryAdapter`, `StripeAdapter`)  
+   - Commands end with `*Command`  
+   - Handlers end with `*Handler`  
+   - Query services end with `*QueryService`  
+   - Domain exceptions end with `*DomainException`
+
+4. **Pagination:**  
+   - All listing endpoints must accept (cursor, limit, filters).  
+   - Return `CursorPageResponse<T>`.  
+   - Use shared `CursorCodec` + `FilterHasher`.
+
+## 2.5.4 REFACTOR REQUIREMENT (MUST DO)
+
+You must scan all modules and apply folder structure standardization:
+
+- Move wrong packages to correct paths  
+- Rename packages accordingly  
+- Update imports  
+- Add missing `package-info.java`  
+- Ensure compilation succeeds  
+- Add tests if refactor affects behavior  
+
+Also create:
+
+- **`docs/FOLDER_STRUCTURE_STANDARD.md`**  
+  Include: the exact tree, dependency rules, do/don’t examples (real examples from repo), and checklist for reviewers.
+
+---
+
 # SECTION 3 — Cursor Pagination (Strict)
 
 ## 3.1 Requirements
@@ -662,7 +823,7 @@ public final class CursorCodec {
 
 ## 3) Unified Structure Standard
 
-- api / application (command, query, usecase, dto) / domain (model, event, ports, policy, service, exception) / infrastructure (persistence/jpa, outbox, saga, client, config); repository interfaces only in domain/ports.
+- api / application (command, query, usecase, dto) / domain (model, event, ports, policy, service, exception) / infrastructure (persistence/jpa, outbox, saga, client, config); repository interfaces only in domain/ports. **Full mandatory tree, dependency rules, do/don’t examples, and reviewer checklist:** see Section 2.5 (FOLDER STRUCTURE + ARCHITECTURE ENFORCEMENT) and **docs/FOLDER_STRUCTURE_STANDARD.md**.
 
 ## 4) Module-by-Module Gap Analysis
 

@@ -20,7 +20,7 @@ public class BookingEventListener {
     log.info("Handling booking confirmation for bookingId={}", event.bookingId());
 
     customerApi
-        .getCustomer(event.customerId())
+        .getCustomer(event.tenantId(), event.customerId())
         .ifPresent(
             customer -> {
               String subject = "Booking Confirmed: #" + event.bookingId();
@@ -46,7 +46,7 @@ public class BookingEventListener {
         event.customerId());
 
     customerApi
-        .getCustomer(event.customerId())
+        .getCustomer(event.tenantId(), event.customerId())
         .ifPresent(
             customer -> {
               String subject = "Reminder: Your booking #" + event.bookingId() + " is tomorrow!";
@@ -69,7 +69,7 @@ public class BookingEventListener {
     log.info("Handling booking completion for bookingId={}", event.bookingId());
 
     customerApi
-        .getCustomer(event.customerId())
+        .getCustomer(event.tenantId(), event.customerId())
         .ifPresent(
             customer -> {
               String subject = "How was your experience? Booking #" + event.bookingId();

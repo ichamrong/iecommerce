@@ -1,17 +1,17 @@
 package com.chamrong.iecommerce.auth.infrastructure.persistence;
 
 import com.chamrong.iecommerce.auth.domain.Permission;
-import com.chamrong.iecommerce.auth.domain.PermissionRepository;
+import com.chamrong.iecommerce.auth.domain.ports.PermissionRepositoryPort;
 import java.util.Optional;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-/** Spring Data JPA adapter for the domain {@link PermissionRepository} port. */
+/** Spring Data JPA repository implementing {@link PermissionRepositoryPort}. */
 @Repository
 public interface JpaPermissionRepository
-    extends JpaRepository<Permission, Long>, PermissionRepository {
+    extends JpaRepository<Permission, Long>, PermissionRepositoryPort {
 
   @Override
   @Cacheable(value = "permissions", key = "#name")

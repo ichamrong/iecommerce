@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="keyset-index-customer" author="iecommerce">
+        <comment>Keyset pagination for customer list: (tenant_id, created_at DESC, id DESC)</comment>
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="customer" indexName="idx_customer_keyset"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="customer" indexName="idx_customer_keyset">
+            <column name="tenant_id"/>
+            <column name="created_at" descending="true"/>
+            <column name="id" descending="true"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="keyset-index-audit-log" author="iecommerce">
+        <comment>Keyset pagination for audit list: (tenant_id, created_at DESC, id DESC)</comment>
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="audit_log" indexName="idx_audit_log_keyset"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="audit_log" indexName="idx_audit_log_keyset">
+            <column name="tenant_id"/>
+            <column name="created_at" descending="true"/>
+            <column name="id" descending="true"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

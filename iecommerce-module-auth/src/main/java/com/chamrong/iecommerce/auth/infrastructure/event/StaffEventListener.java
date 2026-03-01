@@ -3,13 +3,13 @@ package com.chamrong.iecommerce.auth.infrastructure.event;
 import com.chamrong.iecommerce.auth.application.command.RegisterCommand;
 import com.chamrong.iecommerce.auth.application.command.user.RegisterUserHandler;
 import com.chamrong.iecommerce.auth.domain.Permission;
-import com.chamrong.iecommerce.auth.domain.PermissionRepository;
 import com.chamrong.iecommerce.auth.domain.Permissions;
 import com.chamrong.iecommerce.auth.domain.Role;
-import com.chamrong.iecommerce.auth.domain.RoleRepository;
-import com.chamrong.iecommerce.auth.domain.UserRepository;
 import com.chamrong.iecommerce.auth.domain.event.StaffAccountCreatedEvent;
 import com.chamrong.iecommerce.auth.domain.event.StaffTenantsUpdatedEvent;
+import com.chamrong.iecommerce.auth.domain.ports.PermissionRepositoryPort;
+import com.chamrong.iecommerce.auth.domain.ports.RoleRepositoryPort;
+import com.chamrong.iecommerce.auth.domain.ports.UserRepositoryPort;
 import com.chamrong.iecommerce.auth.infrastructure.identity.KeycloakProperties;
 import java.util.List;
 import java.util.Map;
@@ -29,16 +29,16 @@ public class StaffEventListener {
 
   private static final String SYSTEM_TENANT = "SYSTEM";
 
-  private final UserRepository userRepository;
-  private final RoleRepository roleRepository;
-  private final PermissionRepository permissionRepository;
+  private final UserRepositoryPort userRepository;
+  private final RoleRepositoryPort roleRepository;
+  private final PermissionRepositoryPort permissionRepository;
   private final RegisterUserHandler registerUserHandler;
   private final KeycloakProperties keycloakProperties;
 
   public StaffEventListener(
-      UserRepository userRepository,
-      RoleRepository roleRepository,
-      PermissionRepository permissionRepository,
+      UserRepositoryPort userRepository,
+      RoleRepositoryPort roleRepository,
+      PermissionRepositoryPort permissionRepository,
       RegisterUserHandler registerUserHandler,
       KeycloakProperties keycloakProperties) {
     this.userRepository = userRepository;

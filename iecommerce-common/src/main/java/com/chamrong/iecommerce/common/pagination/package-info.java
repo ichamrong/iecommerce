@@ -9,6 +9,7 @@
  * com.chamrong.iecommerce.common.pagination.CursorPayload} or {@link
  * com.chamrong.iecommerce.common.pagination.CursorPageRequest}.
  */
+@org.springframework.modulith.NamedInterface("pagination")
 @org.springframework.lang.NonNullApi
 @org.springframework.lang.NonNullFields
 package com.chamrong.iecommerce.common.pagination;

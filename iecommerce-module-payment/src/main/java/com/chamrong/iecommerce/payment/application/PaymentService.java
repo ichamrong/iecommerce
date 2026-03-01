@@ -7,11 +7,10 @@ import com.chamrong.iecommerce.payment.application.dto.PaymentRequest;
 import com.chamrong.iecommerce.payment.application.dto.PaymentResult;
 import com.chamrong.iecommerce.payment.application.spi.PaymentProvider;
 import com.chamrong.iecommerce.payment.domain.Payment;
-import com.chamrong.iecommerce.payment.domain.PaymentOutboxEvent;
-import com.chamrong.iecommerce.payment.domain.PaymentOutboxRepository;
 import com.chamrong.iecommerce.payment.domain.PaymentRepository;
 import com.chamrong.iecommerce.payment.domain.PaymentStatus;
 import com.chamrong.iecommerce.payment.domain.exception.PaymentDomainException;
+import com.chamrong.iecommerce.payment.domain.ports.PaymentOutboxPort;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -28,24 +27,24 @@ public class PaymentService {
 
   private final PaymentRepository paymentRepository;
   private final List<PaymentProvider> paymentProviders;
-  private final PaymentOutboxRepository outboxRepository;
+  private final PaymentOutboxPort outboxPort;
   private final ObjectMapper objectMapper;
 
   public PaymentService(
       PaymentRepository paymentRepository,
       List<PaymentProvider> paymentProviders,
-      PaymentOutboxRepository outboxRepository,
+      PaymentOutboxPort outboxPort,
       ObjectMapper objectMapper) {
     this.paymentRepository = paymentRepository;
     this.paymentProviders = paymentProviders;
-    this.outboxRepository = outboxRepository;
+    this.outboxPort = outboxPort;
     this.objectMapper = objectMapper;
   }
 
   public void saveOutbox(String tenantId, String eventType, Object event) {
     try {
       String payload = objectMapper.writeValueAsString(event);
-      outboxRepository.save(PaymentOutboxEvent.pending(tenantId, eventType, payload));
+      outboxPort.save(tenantId, eventType, payload);
     } catch (JsonProcessingException e) {
       log.error("Failed to serialize payment outbox event type={}", eventType, e);
       throw new IllegalStateException("Cannot serialize event for outbox", e);

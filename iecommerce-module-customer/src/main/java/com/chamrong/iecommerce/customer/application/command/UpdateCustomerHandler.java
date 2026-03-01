@@ -1,5 +1,6 @@
 package com.chamrong.iecommerce.customer.application.command;
 
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.customer.CustomerUpdatedEvent;
 import com.chamrong.iecommerce.customer.application.CustomerMapper;
 import com.chamrong.iecommerce.customer.application.dto.CustomerResponse;
@@ -20,11 +21,12 @@ public class UpdateCustomerHandler {
   private final CustomerMapper mapper;
   private final ApplicationEventPublisher eventPublisher;
 
-  public CustomerResponse handle(Long id, UpdateCustomerRequest request) {
+  public CustomerResponse handle(String tenantId, Long id, UpdateCustomerRequest request) {
     var customer =
         customerRepository
             .findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Customer not found: " + id));
+    TenantGuard.requireSameTenant(customer.getTenantId(), tenantId);
 
     if (request.firstName() != null) customer.setFirstName(request.firstName());
     if (request.lastName() != null) customer.setLastName(request.lastName());

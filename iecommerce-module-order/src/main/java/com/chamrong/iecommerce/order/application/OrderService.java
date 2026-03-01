@@ -5,7 +5,9 @@ import com.chamrong.iecommerce.common.event.OrderCancelledEvent;
 import com.chamrong.iecommerce.common.event.OrderCompletedEvent;
 import com.chamrong.iecommerce.common.event.OrderConfirmedEvent;
 import com.chamrong.iecommerce.common.event.OrderShippedEvent;
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.order.OrderApi;
+import com.chamrong.iecommerce.order.OrderReconciliationItem;
 import com.chamrong.iecommerce.order.application.dto.AddItemRequest;
 import com.chamrong.iecommerce.order.application.dto.CreatePosOrderRequest;
 import com.chamrong.iecommerce.order.application.dto.OrderResponse;
@@ -22,6 +24,7 @@ import com.chamrong.iecommerce.promotion.PromotionApi;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -371,7 +374,34 @@ public class OrderService implements OrderApi {
   @Override
   @Transactional(readOnly = true)
   public java.util.Optional<Order> getOrder(Long id) {
-    return orderRepository.findById(id);
+    java.util.Optional<Order> order = orderRepository.findById(id);
+    if (order.isEmpty()) {
+      return order;
+    }
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    TenantGuard.requireSameTenant(order.get().getTenantId(), tenantId);
+    return order;
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<OrderReconciliationItem> findOrdersForReconciliation(
+      String tenantId, Instant start, Instant end) {
+    List<Order> orders = orderRepository.findByTenantIdAndCreatedAtBetween(tenantId, start, end);
+    return orders.stream()
+        .filter(o -> o.getState() != OrderState.AddingItems && o.getState() != OrderState.Cancelled)
+        .map(
+            o ->
+                OrderReconciliationItem.builder()
+                    .id(o.getId())
+                    .code(o.getCode())
+                    .totalAmount(
+                        o.getTotal() != null && o.getTotal().getAmount() != null
+                            ? o.getTotal().getAmount()
+                            : java.math.BigDecimal.ZERO)
+                    .state(o.getState().name())
+                    .build())
+        .toList();
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────

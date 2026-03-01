@@ -11,6 +11,7 @@ import com.chamrong.iecommerce.catalog.domain.Product;
 import com.chamrong.iecommerce.catalog.domain.ProductRepositoryPort;
 import com.chamrong.iecommerce.catalog.domain.ProductStatus;
 import com.chamrong.iecommerce.common.TenantContext;
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -107,8 +108,8 @@ public class ProductQueryHandler {
               Product product =
                   productRepository
                       .findById(id)
-                      .filter(p -> p.getTenantId().equals(tenantId))
                       .orElseThrow(() -> new EntityNotFoundException("Product not found: " + id));
+              TenantGuard.requireSameTenant(product.getTenantId(), tenantId);
               ProductResponse res = mapper.toProductResponse(product, locale);
               cache.putProduct(id, res);
               return res;
@@ -140,8 +141,8 @@ public class ProductQueryHandler {
     Product product =
         productRepository
             .findById(id)
-            .filter(p -> p.getTenantId().equals(tenantId))
             .orElseThrow(() -> new EntityNotFoundException("Product not found: " + id));
+    TenantGuard.requireSameTenant(product.getTenantId(), tenantId);
     return mapper.toTranslationsResponse(product);
   }
 

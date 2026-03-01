@@ -2,6 +2,7 @@ package com.chamrong.iecommerce.order.application.command;
 
 import com.chamrong.iecommerce.common.TenantContext;
 import com.chamrong.iecommerce.common.event.OrderConfirmedEvent;
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.order.application.dto.OrderResponse;
 import com.chamrong.iecommerce.order.application.dto.OrderResponse.OrderItemResponse;
 import com.chamrong.iecommerce.order.domain.Order;
@@ -57,7 +58,11 @@ public class ConfirmOrderHandler {
           idempotencyKey);
       return orderRepository
           .findById(orderId)
-          .map(this::toResponse)
+          .map(
+              order -> {
+                TenantGuard.requireSameTenant(order.getTenantId(), tenantId);
+                return toResponse(order);
+              })
           .orElseThrow(() -> new EntityNotFoundException("Order not found: " + orderId));
     }
 
@@ -67,10 +72,7 @@ public class ConfirmOrderHandler {
             .findByIdForUpdate(orderId)
             .orElseThrow(() -> new EntityNotFoundException("Order not found: " + orderId));
 
-    // Security check
-    if (!order.getTenantId().equals(tenantId)) {
-      throw new org.springframework.security.access.AccessDeniedException("Access denied");
-    }
+    TenantGuard.requireSameTenant(order.getTenantId(), tenantId);
 
     OrderState prev = order.getState();
 

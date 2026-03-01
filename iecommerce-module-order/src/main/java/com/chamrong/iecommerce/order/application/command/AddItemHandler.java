@@ -3,6 +3,7 @@ package com.chamrong.iecommerce.order.application.command;
 import com.chamrong.iecommerce.catalog.CatalogApi;
 import com.chamrong.iecommerce.common.Money;
 import com.chamrong.iecommerce.common.TenantContext;
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.order.application.dto.AddItemRequest;
 import com.chamrong.iecommerce.order.application.dto.OrderResponse;
 import com.chamrong.iecommerce.order.application.dto.OrderResponse.OrderItemResponse;
@@ -48,10 +49,7 @@ public class AddItemHandler {
             .findByIdForUpdate(orderId)
             .orElseThrow(() -> new EntityNotFoundException("Order not found: " + orderId));
 
-    // Security check: tenant must match
-    if (!order.getTenantId().equals(tenantId)) {
-      throw new org.springframework.security.access.AccessDeniedException("Access denied");
-    }
+    TenantGuard.requireSameTenant(order.getTenantId(), tenantId);
 
     if (order.getState() != OrderState.AddingItems) {
       throw new IllegalStateException("Cannot add items to an order in state: " + order.getState());

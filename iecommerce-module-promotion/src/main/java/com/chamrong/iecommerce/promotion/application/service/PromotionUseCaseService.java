@@ -2,6 +2,7 @@ package com.chamrong.iecommerce.promotion.application.service;
 
 import com.chamrong.iecommerce.common.Money;
 import com.chamrong.iecommerce.common.dto.CursorPage;
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.promotion.PromotionApi;
 import com.chamrong.iecommerce.promotion.application.dto.PromotionRequest;
 import com.chamrong.iecommerce.promotion.application.dto.PromotionResponse;
@@ -123,8 +124,11 @@ public class PromotionUseCaseService implements ValidatePromotionUseCase, Promot
   public Optional<PromotionResponse> getPromotion(String tenantId, Long id) {
     return promotionRepository
         .findById(id)
-        .filter(p -> p.getTenantId().equals(tenantId))
-        .map(this::mapToResponse);
+        .map(
+            p -> {
+              TenantGuard.requireSameTenant(p.getTenantId(), tenantId);
+              return mapToResponse(p);
+            });
   }
 
   private PromotionResponse mapToResponse(Promotion p) {

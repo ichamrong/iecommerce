@@ -2,9 +2,8 @@ package com.chamrong.iecommerce.report.application;
 
 import com.chamrong.iecommerce.invoice.domain.Invoice;
 import com.chamrong.iecommerce.invoice.domain.InvoiceRepository;
-import com.chamrong.iecommerce.order.domain.Order;
-import com.chamrong.iecommerce.order.domain.OrderState;
-import com.chamrong.iecommerce.order.domain.ports.OrderRepositoryPort;
+import com.chamrong.iecommerce.order.OrderApi;
+import com.chamrong.iecommerce.order.OrderReconciliationItem;
 import com.chamrong.iecommerce.payment.domain.PaymentIntent;
 import com.chamrong.iecommerce.payment.domain.ports.PaymentIntentRepositoryPort;
 import com.chamrong.iecommerce.report.application.dto.PosReconciliationDto;
@@ -24,7 +23,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ReconciliationReportService {
 
-  private final OrderRepositoryPort orderRepository;
+  private final OrderApi orderApi;
   private final InvoiceRepository invoiceRepository;
   private final PaymentIntentRepositoryPort paymentRepository;
 
@@ -86,7 +85,8 @@ public class ReconciliationReportService {
     log.info(
         "Starting financial reconciliation for tenant={}, from={}, to={}", tenantId, start, end);
 
-    List<Order> orders = orderRepository.findByTenantIdAndCreatedAtBetween(tenantId, start, end);
+    List<OrderReconciliationItem> orders =
+        orderApi.findOrdersForReconciliation(tenantId, start, end);
     List<Invoice> invoices =
         invoiceRepository.findByTenantIdAndCreatedAtBetween(tenantId, start, end);
     List<PaymentIntent> payments =
@@ -119,15 +119,9 @@ public class ReconciliationReportService {
 
     List<TenantReconciliationResultDto.MismatchDetail> mismatches = new ArrayList<>();
 
-    for (Order order : orders) {
-      if (order.getState() == OrderState.AddingItems || order.getState() == OrderState.Cancelled) {
-        continue; // Only reconcile confirmed, shipped, or completed orders
-      }
-
+    for (OrderReconciliationItem order : orders) {
       BigDecimal orderTotal =
-          order.getTotal() != null && order.getTotal().getAmount() != null
-              ? order.getTotal().getAmount()
-              : BigDecimal.ZERO;
+          order.getTotalAmount() != null ? order.getTotalAmount() : BigDecimal.ZERO;
       BigDecimal invoiceTotal = invoicedSums.getOrDefault(order.getId(), BigDecimal.ZERO);
       BigDecimal paymentTotal = paidSums.getOrDefault(order.getId(), BigDecimal.ZERO);
 

@@ -19,17 +19,14 @@ public class CreateCustomerHandler {
   private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
-  public CustomerResponse handle(CreateCustomerCommand command) {
+  public CustomerResponse handle(String tenantId, CreateCustomerCommand command) {
     var customer = new Customer();
+    customer.setTenantId(tenantId != null && !tenantId.isEmpty() ? tenantId : command.tenantId());
     customer.setFirstName(command.firstName());
     customer.setLastName(command.lastName());
     customer.setEmail(command.email());
     customer.setPhoneNumber(command.phoneNumber());
     customer.setAuthUserId(command.authUserId());
-
-    if (command.tenantId() != null && !command.tenantId().isEmpty()) {
-      customer.setTenantId(command.tenantId());
-    }
 
     var savedCustomer = customerRepository.save(customer);
     eventPublisher.publishEvent(

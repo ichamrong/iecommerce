@@ -1,9 +1,9 @@
 package com.chamrong.iecommerce.auth.application;
 
 import com.chamrong.iecommerce.auth.domain.PosSession;
-import com.chamrong.iecommerce.auth.domain.PosSessionRepository;
 import com.chamrong.iecommerce.auth.domain.PosTerminal;
-import com.chamrong.iecommerce.auth.domain.PosTerminalRepository;
+import com.chamrong.iecommerce.auth.domain.ports.PosSessionRepositoryPort;
+import com.chamrong.iecommerce.auth.domain.ports.PosTerminalRepositoryPort;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,8 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PosService {
 
-  private final PosTerminalRepository terminalRepository;
-  private final PosSessionRepository sessionRepository;
+  private final PosTerminalRepositoryPort terminalRepository;
+  private final PosSessionRepositoryPort sessionRepository;
 
   @Transactional
   public PosTerminal registerTerminal(

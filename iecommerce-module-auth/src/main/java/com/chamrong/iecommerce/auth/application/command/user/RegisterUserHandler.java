@@ -8,10 +8,10 @@ import com.chamrong.iecommerce.auth.application.exception.DuplicateUserException
 import com.chamrong.iecommerce.auth.application.exception.InvalidPasswordException;
 import com.chamrong.iecommerce.auth.domain.IdentityService;
 import com.chamrong.iecommerce.auth.domain.Role;
-import com.chamrong.iecommerce.auth.domain.RoleRepository;
 import com.chamrong.iecommerce.auth.domain.User;
-import com.chamrong.iecommerce.auth.domain.UserRepository;
 import com.chamrong.iecommerce.auth.domain.event.UserRegisteredEvent;
+import com.chamrong.iecommerce.auth.domain.ports.RoleRepositoryPort;
+import com.chamrong.iecommerce.auth.domain.ports.UserRepositoryPort;
 import com.chamrong.iecommerce.common.annotation.WithTenantContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class RegisterUserHandler {
 
-  private final UserRepository userRepository;
-  private final RoleRepository roleRepository;
+  private final UserRepositoryPort userRepository;
+  private final RoleRepositoryPort roleRepository;
   private final ApplicationEventPublisher eventPublisher;
   private final LoginUserHandler loginUserHandler;
   private final IdentityService identityService;

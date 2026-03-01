@@ -1,8 +1,8 @@
 package com.chamrong.iecommerce.auth.application.command.tenant;
 
 import com.chamrong.iecommerce.auth.application.command.UpdateTenantStatusCommand;
-import com.chamrong.iecommerce.auth.domain.TenantRepository;
 import com.chamrong.iecommerce.auth.domain.event.TenantStatusUpdatedEvent;
+import com.chamrong.iecommerce.auth.domain.ports.TenantRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UpdateTenantStatusHandler {
 
-  private final TenantRepository tenantRepository;
+  private final TenantRepositoryPort tenantRepository;
   private final ApplicationEventPublisher eventPublisher;
 
   @Transactional

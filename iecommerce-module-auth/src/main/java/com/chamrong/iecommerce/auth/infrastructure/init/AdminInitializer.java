@@ -1,10 +1,10 @@
 package com.chamrong.iecommerce.auth.infrastructure.init;
 
 import com.chamrong.iecommerce.auth.domain.Permission;
-import com.chamrong.iecommerce.auth.domain.PermissionRepository;
 import com.chamrong.iecommerce.auth.domain.Permissions;
 import com.chamrong.iecommerce.auth.domain.Role;
-import com.chamrong.iecommerce.auth.domain.RoleRepository;
+import com.chamrong.iecommerce.auth.domain.ports.PermissionRepositoryPort;
+import com.chamrong.iecommerce.auth.domain.ports.RoleRepositoryPort;
 import com.chamrong.iecommerce.common.TenantContext;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -22,11 +22,11 @@ public class AdminInitializer implements CommandLineRunner {
   private static final Logger log = LoggerFactory.getLogger(AdminInitializer.class);
   private static final String SYSTEM_TENANT = "SYSTEM";
 
-  private final PermissionRepository permissionRepository;
-  private final RoleRepository roleRepository;
+  private final PermissionRepositoryPort permissionRepository;
+  private final RoleRepositoryPort roleRepository;
 
   public AdminInitializer(
-      PermissionRepository permissionRepository, RoleRepository roleRepository) {
+      PermissionRepositoryPort permissionRepository, RoleRepositoryPort roleRepository) {
     this.permissionRepository = permissionRepository;
     this.roleRepository = roleRepository;
   }

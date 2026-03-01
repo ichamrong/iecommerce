@@ -1,11 +1,14 @@
 package com.chamrong.iecommerce.order.application.query;
 
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.order.application.dto.AuditLogResponse;
 import com.chamrong.iecommerce.order.application.dto.OrderCursorResponse;
 import com.chamrong.iecommerce.order.application.dto.OrderSummaryResponse;
 import com.chamrong.iecommerce.order.application.util.OrderCursorEncoder;
+import com.chamrong.iecommerce.order.domain.Order;
 import com.chamrong.iecommerce.order.domain.ports.OrderAuditPort;
 import com.chamrong.iecommerce.order.domain.ports.OrderRepositoryPort;
+import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,10 +43,17 @@ public class OrderQueryHandler {
     return buildCursorResponse(orders, limit);
   }
 
-  /** Paginated audit log history for an order. */
+  /** Paginated audit log history for an order. Caller must be in same tenant as order. */
   @Transactional(readOnly = true)
   public OrderCursorResponse<AuditLogResponse> listAuditLog(
       Long orderId, String cursor, int limit) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    Order order =
+        orderRepository
+            .findById(orderId)
+            .orElseThrow(() -> new EntityNotFoundException("Order not found: " + orderId));
+    TenantGuard.requireSameTenant(order.getTenantId(), tenantId);
+
     int fetchSize = limit + 1;
     var decoded = OrderCursorEncoder.decode(cursor);
 

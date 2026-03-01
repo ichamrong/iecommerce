@@ -19,8 +19,8 @@ import com.tngtech.archunit.lang.ArchRule;
  *   <li>{@code Payment} — has @Entity; target: extract PaymentEntity to infrastructure
  *   <li>{@code FinancialLedger} — has @Entity; already extracted to FinancialLedgerEntity
  *   <li>{@code PaymentOutboxEvent} — has @Entity; target: move to infrastructure/outbox
- *   <li>{@code PaymentOutboxRepository} — extends JpaRepository; replaced by
- *       SpringDataPaymentOutboxRepository
+ *   <li>Outbox: domain uses {@code PaymentOutboxPort}; infrastructure implements via
+ *       JpaPaymentOutboxAdapter + SpringDataPaymentOutboxRepository
  *   <li>{@code FinancialLedgerRepository} — extends JpaRepository; replaced by
  *       SpringDataFinancialLedgerRepository
  * </ul>
@@ -55,7 +55,6 @@ public class HexagonalArchitectureTest {
           // LEGACY exclusions — track for Phase 2 migration:
           .and()
           .doNotBelongToAnyOf(
-              com.chamrong.iecommerce.payment.domain.PaymentOutboxRepository.class,
               com.chamrong.iecommerce.payment.domain.FinancialLedgerRepository.class)
           .should()
           .dependOnClassesThat()
@@ -78,7 +77,6 @@ public class HexagonalArchitectureTest {
               com.chamrong.iecommerce.payment.domain.Payment.class,
               com.chamrong.iecommerce.payment.domain.FinancialLedger.class,
               com.chamrong.iecommerce.payment.domain.PaymentOutboxEvent.class,
-              com.chamrong.iecommerce.payment.domain.PaymentOutboxRepository.class,
               com.chamrong.iecommerce.payment.domain.FinancialLedgerRepository.class)
           .should()
           .dependOnClassesThat()

@@ -5,14 +5,14 @@ import com.chamrong.iecommerce.auth.application.dto.TenantResponse;
 import com.chamrong.iecommerce.auth.application.exception.DuplicateUserException;
 import com.chamrong.iecommerce.auth.application.saga.TenantProvisionSaga;
 import com.chamrong.iecommerce.auth.domain.Permission;
-import com.chamrong.iecommerce.auth.domain.PermissionRepository;
 import com.chamrong.iecommerce.auth.domain.Permissions;
 import com.chamrong.iecommerce.auth.domain.Role;
-import com.chamrong.iecommerce.auth.domain.RoleRepository;
 import com.chamrong.iecommerce.auth.domain.Tenant;
 import com.chamrong.iecommerce.auth.domain.TenantProvisioningStatus;
-import com.chamrong.iecommerce.auth.domain.TenantRepository;
 import com.chamrong.iecommerce.auth.domain.TenantStatus;
+import com.chamrong.iecommerce.auth.domain.ports.PermissionRepositoryPort;
+import com.chamrong.iecommerce.auth.domain.ports.RoleRepositoryPort;
+import com.chamrong.iecommerce.auth.domain.ports.TenantRepositoryPort;
 import com.chamrong.iecommerce.common.annotation.WithTenantContext;
 import java.util.Set;
 import java.util.UUID;
@@ -30,9 +30,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class TenantProvisionHandler {
 
-  private final TenantRepository tenantRepository;
-  private final RoleRepository roleRepository;
-  private final PermissionRepository permissionRepository;
+  private final TenantRepositoryPort tenantRepository;
+  private final RoleRepositoryPort roleRepository;
+  private final PermissionRepositoryPort permissionRepository;
   private final TenantProvisionSaga provisionSaga;
 
   @Transactional

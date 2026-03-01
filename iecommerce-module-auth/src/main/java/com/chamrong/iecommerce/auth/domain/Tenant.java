@@ -1,54 +1,30 @@
 package com.chamrong.iecommerce.auth.domain;
 
-import com.chamrong.iecommerce.common.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
+import com.chamrong.iecommerce.common.domain.BaseDomainEntity;
 import java.time.Instant;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+/** Tenant aggregate (pure domain — no JPA). Persistence uses TenantEntity in infrastructure. */
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Entity
-@Table(name = "auth_tenant")
-public class Tenant extends BaseEntity {
+@Setter
+@NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
+public class Tenant extends BaseDomainEntity {
 
-  /** Unique short identifier used as the tenantId in all scoped entities (e.g. "shop_a"). */
-  @Column(unique = true, nullable = false)
   private String code;
-
-  @Column(nullable = false)
   private String name;
-
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
   private TenantPlan plan = TenantPlan.FREE;
-
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
   private TenantStatus status = TenantStatus.PENDING_VERIFICATION;
-
   private Instant trialEndsAt;
-
-  @Embedded private TenantPreferences preferences = new TenantPreferences();
-
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
+  private TenantPreferences preferences = new TenantPreferences();
   private TenantProvisioningStatus provisioningStatus = TenantProvisioningStatus.COMPLETED;
-
   private boolean enabled = true;
 
   public Tenant(String code, String name) {
     this.code = code;
     this.name = name;
   }
-
-  // ── Domain behaviour ─────────────────────────────────────────────────────
 
   public void activate() {
     this.status = TenantStatus.ACTIVE;
@@ -69,7 +45,6 @@ public class Tenant extends BaseEntity {
     this.provisioningStatus = newStatus;
   }
 
-  /** Updates lifecycle status, keeping enabled flag in sync. */
   public void updateStatus(TenantStatus newStatus) {
     this.status = newStatus;
     this.enabled =
@@ -78,7 +53,6 @@ public class Tenant extends BaseEntity {
             || newStatus == TenantStatus.GRACE;
   }
 
-  /** Factory for platform-admin provisioning (produces tenants with any plan/status). */
   public static Tenant provision(
       String code,
       String name,
@@ -96,7 +70,6 @@ public class Tenant extends BaseEntity {
     return t;
   }
 
-  /** Factory for self-service signup (FREE plan, TRIAL status with 30-day expiry). */
   public static Tenant signup(String code, String name, Instant trialEndsAt) {
     var t = new Tenant(code, name);
     t.plan = TenantPlan.FREE;

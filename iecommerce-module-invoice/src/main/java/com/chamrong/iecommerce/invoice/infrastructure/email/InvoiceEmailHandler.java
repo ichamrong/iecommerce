@@ -15,7 +15,7 @@ import com.chamrong.iecommerce.invoice.domain.ports.InvoiceRepositoryPort;
 import com.chamrong.iecommerce.invoice.domain.ports.InvoiceSignatureRepositoryPort;
 import com.chamrong.iecommerce.invoice.infrastructure.email.InvoiceEmailDelivery.MessageType;
 import com.chamrong.iecommerce.invoice.infrastructure.email.InvoiceEmailDelivery.Status;
-import com.chamrong.iecommerce.invoice.infrastructure.persistence.InvoiceOutboxRelay.InvoiceIssuedPayload;
+import com.chamrong.iecommerce.invoice.infrastructure.persistence.jpa.InvoiceOutboxRelay.InvoiceIssuedPayload;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

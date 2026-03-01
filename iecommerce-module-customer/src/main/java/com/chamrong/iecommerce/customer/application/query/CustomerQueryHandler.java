@@ -1,5 +1,6 @@
 package com.chamrong.iecommerce.customer.application.query;
 
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.customer.application.dto.CustomerResponse;
 import com.chamrong.iecommerce.customer.domain.CustomerRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,10 +23,14 @@ public class CustomerQueryHandler {
     this.mapper = mapper;
   }
 
-  public CustomerResponse findById(Long id) {
+  public CustomerResponse findById(String tenantId, Long id) {
     return customerRepository
         .findById(id)
-        .map(mapper::toResponse)
+        .map(
+            c -> {
+              TenantGuard.requireSameTenant(c.getTenantId(), tenantId);
+              return mapper.toResponse(c);
+            })
         .orElseThrow(() -> new EntityNotFoundException("Customer not found: " + id));
   }
 
@@ -38,8 +43,8 @@ public class CustomerQueryHandler {
                 new EntityNotFoundException("Customer not found for auth user id: " + authUserId));
   }
 
-  public List<CustomerResponse> findAll() {
-    return customerRepository.findAll().stream()
+  public List<CustomerResponse> findAll(String tenantId) {
+    return customerRepository.findAllByTenantId(tenantId).stream()
         .map(mapper::toResponse)
         .collect(Collectors.toList());
   }

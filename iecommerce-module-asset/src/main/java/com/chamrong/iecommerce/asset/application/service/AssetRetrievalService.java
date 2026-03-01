@@ -26,7 +26,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.NonNull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,7 +48,7 @@ public class AssetRetrievalService {
    * @param isAuthorized whether the user has 'assets:read' authority
    * @return the asset metadata and its data stream
    */
-  public @NonNull AssetStreamResponse getProxyResource(@NonNull Long id, boolean isAuthorized) {
+  public AssetStreamResponse getProxyResource(long id, boolean isAuthorized) {
     Asset asset = findAssetById(id);
 
     // Security Check: If private, require authorized access
@@ -71,7 +70,7 @@ public class AssetRetrievalService {
    * @return list of asset responses
    */
   @Transactional(readOnly = true)
-  public @NonNull List<AssetResponse> searchByName(@NonNull String query) {
+  public List<AssetResponse> searchByName(String query) {
     String tenantId = TenantContext.requireTenantId();
     return assetRepository
         .findByTenantIdAndNameContainingIgnoreCaseAndDeletedAtIsNull(tenantId, query)
@@ -88,7 +87,7 @@ public class AssetRetrievalService {
    * @return list of asset responses
    */
   @Transactional(readOnly = true)
-  public @NonNull List<AssetResponse> searchBySize(long minSize, long maxSize) {
+  public List<AssetResponse> searchBySize(long minSize, long maxSize) {
     String tenantId = TenantContext.requireTenantId();
     return assetRepository
         .findByTenantIdAndFileSizeBetweenAndDeletedAtIsNull(tenantId, minSize, maxSize)
@@ -105,7 +104,7 @@ public class AssetRetrievalService {
    */
   @Transactional(readOnly = true)
   @org.springframework.cache.annotation.Cacheable(value = "assets", key = "#id")
-  public @NonNull Optional<AssetResponse> findById(@NonNull Long id) {
+  public Optional<AssetResponse> findById(long id) {
     return assetRepository
         .findByIdAndDeletedAtIsNull(id)
         .map(
@@ -122,7 +121,7 @@ public class AssetRetrievalService {
    * @return list of asset responses
    */
   @Transactional(readOnly = true)
-  public @NonNull List<AssetResponse> findByType(@NonNull AssetType type) {
+  public List<AssetResponse> findByType(AssetType type) {
     String tenantId = TenantContext.requireTenantId();
     return assetRepository.findByTenantIdAndTypeAndDeletedAtIsNull(tenantId, type).stream()
         .map(AssetMapper::toResponse)
@@ -130,8 +129,7 @@ public class AssetRetrievalService {
   }
 
   @Transactional(readOnly = true)
-  public @NonNull String getDownloadUrl(
-      @NonNull Long id, @NonNull String requestedBy, @NonNull String ipAddress) {
+  public String getDownloadUrl(long id, String requestedBy, String ipAddress) {
     Asset asset =
         assetRepository
             .findByIdAndDeletedAtIsNull(id)
@@ -155,7 +153,7 @@ public class AssetRetrievalService {
         .orElseGet(() -> storageService.getPublicUrl(asset.getSource()));
   }
 
-  public @NonNull InputStream download(@NonNull Long id) {
+  public InputStream download(long id) {
     Asset asset = findAssetById(id);
     validateTenant(asset);
     return storageService.download(asset.getSource());
@@ -167,7 +165,7 @@ public class AssetRetrievalService {
    * @param ids list of asset IDs to include in the ZIP
    * @return input stream for the streamed ZIP content
    */
-  public @NonNull InputStream bulkDownload(@NonNull List<Long> ids) {
+  public InputStream bulkDownload(List<Long> ids) {
     if (ids == null || ids.isEmpty()) {
       return new java.io.ByteArrayInputStream(new byte[0]);
     }
@@ -187,8 +185,7 @@ public class AssetRetrievalService {
     }
   }
 
-  private void streamAssetsToZip(
-      @NonNull List<Long> ids, String tenantId, @NonNull PipedOutputStream pout) {
+  private void streamAssetsToZip(List<Long> ids, String tenantId, PipedOutputStream pout) {
     if (tenantId != null) {
       TenantContext.setCurrentTenant(tenantId);
     }
@@ -206,7 +203,7 @@ public class AssetRetrievalService {
     }
   }
 
-  private void addAssetToZip(@NonNull Asset asset, @NonNull ZipOutputStream zos) {
+  private void addAssetToZip(Asset asset, ZipOutputStream zos) {
     validateTenant(asset);
     if (asset.isFolder()) {
       return;
@@ -221,13 +218,13 @@ public class AssetRetrievalService {
     }
   }
 
-  private @NonNull Asset findAssetById(@NonNull Long id) {
+  private Asset findAssetById(long id) {
     return assetRepository
         .findByIdAndDeletedAtIsNull(id)
         .orElseThrow(() -> new AssetException(AssetErrorCode.ASSET_NOT_FOUND));
   }
 
-  private void validateTenant(@NonNull Asset asset) {
+  private void validateTenant(Asset asset) {
     String currentTenant = TenantContext.requireTenantId();
     if (!currentTenant.equals(asset.getTenantId())) {
       throw new AccessDeniedException("Unauthorized access to asset of another tenant");

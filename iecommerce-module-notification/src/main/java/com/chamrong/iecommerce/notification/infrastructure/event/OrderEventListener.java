@@ -24,7 +24,7 @@ public class OrderEventListener {
     log.info("Handling order confirmation for orderId={}", event.orderId());
 
     customerApi
-        .getCustomer(event.customerId())
+        .getCustomer(event.tenantId(), event.customerId())
         .ifPresent(
             customer -> {
               String subject = "Order Confirmed: #" + event.orderId();
@@ -47,7 +47,7 @@ public class OrderEventListener {
     log.info("Handling order shipped for orderId={}", event.orderId());
 
     customerApi
-        .getCustomer(event.customerId())
+        .getCustomer(event.tenantId(), event.customerId())
         .ifPresent(
             customer -> {
               String subject = "Order Shipped: #" + event.orderId();
@@ -73,7 +73,7 @@ public class OrderEventListener {
     log.info("Handling order cancellation for orderId={}", event.orderId());
 
     customerApi
-        .getCustomer(event.customerId())
+        .getCustomer(event.tenantId(), event.customerId())
         .ifPresent(
             customer -> {
               String subject = "Order Cancelled: #" + event.orderId();
@@ -96,7 +96,7 @@ public class OrderEventListener {
     log.info("Handling order completion for orderId={}", event.orderId());
 
     customerApi
-        .getCustomer(event.customerId())
+        .getCustomer(event.tenantId(), event.customerId())
         .ifPresent(
             customer -> {
               String subject = "How was your order? #" + event.orderId();

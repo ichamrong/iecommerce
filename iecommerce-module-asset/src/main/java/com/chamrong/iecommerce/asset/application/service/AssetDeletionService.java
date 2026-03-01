@@ -10,7 +10,6 @@ import com.chamrong.iecommerce.common.TenantContext;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.NonNull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +28,7 @@ public class AssetDeletionService {
    * @param id the asset ID to delete
    */
   @Transactional
-  public void delete(@NonNull Long id) {
+  public void delete(long id) {
     internalDelete(id);
   }
 
@@ -39,7 +38,7 @@ public class AssetDeletionService {
    * @param ids list of asset IDs to delete
    */
   @Transactional
-  public void bulkDelete(@NonNull List<Long> ids) {
+  public void bulkDelete(List<Long> ids) {
     if (ids == null || ids.isEmpty()) {
       return;
     }
@@ -70,7 +69,7 @@ public class AssetDeletionService {
     log.info("Bulk deleted {} assets", ids.size());
   }
 
-  private void internalDelete(@NonNull Long id) {
+  private void internalDelete(long id) {
     Asset asset =
         assetRepository
             .findByIdAndDeletedAtIsNull(id)
@@ -93,11 +92,11 @@ public class AssetDeletionService {
   }
 
   // Helper method to clear caches when an asset is mutated
-  private void evictAssetCaches(@NonNull Asset asset) {
+  private void evictAssetCaches(Asset asset) {
     log.debug("Evicting cache for Asset ID: {} and its types", asset.getId());
   }
 
-  private void validateTenant(@NonNull Asset asset) {
+  private void validateTenant(Asset asset) {
     String currentTenant = TenantContext.requireTenantId();
     if (!currentTenant.equals(asset.getTenantId())) {
       throw new AccessDeniedException("Unauthorized access to asset of another tenant");

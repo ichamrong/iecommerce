@@ -1,6 +1,7 @@
 package com.chamrong.iecommerce.staff.api;
 
 import com.chamrong.iecommerce.auth.domain.Permissions;
+import com.chamrong.iecommerce.common.TenantContext;
 import com.chamrong.iecommerce.staff.application.command.CreateStaffCommand;
 import com.chamrong.iecommerce.staff.application.command.CreateStaffHandler;
 import com.chamrong.iecommerce.staff.application.command.ReactivateStaffHandler;
@@ -63,7 +64,8 @@ public class StaffController {
   @Operation(summary = "Get staff by ID")
   @GetMapping("/{id}")
   public ResponseEntity<StaffResponse> getStaff(@PathVariable Long id) {
-    return ResponseEntity.ok(staffQueryHandler.findById(id));
+    String tenantId = TenantContext.requireTenantId();
+    return ResponseEntity.ok(staffQueryHandler.findById(tenantId, id));
   }
 
   // ── Commands ─────────────────────────────────────────────────────────────

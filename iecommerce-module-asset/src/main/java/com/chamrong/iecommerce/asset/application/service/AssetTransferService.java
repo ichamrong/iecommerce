@@ -15,7 +15,6 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -41,8 +40,7 @@ public class AssetTransferService {
    * @return the created folder response
    */
   @Transactional
-  public @NonNull AssetResponse createFolder(
-      @Nullable Long parentId, @NonNull String name, @NonNull AssetType type) {
+  public AssetResponse createFolder(@Nullable Long parentId, String name, AssetType type) {
     String tenantId = TenantContext.requireTenantId();
     String folderPath = name + StorageConstants.PATH_DELIMITER;
     String materializedPath = StorageConstants.PATH_DELIMITER + name; // Virtual path computation
@@ -78,7 +76,7 @@ public class AssetTransferService {
    * @return the new asset response
    */
   @Transactional
-  public @NonNull AssetResponse copyAsset(@NonNull Long assetId, @Nullable Long targetFolderId) {
+  public AssetResponse copyAsset(long assetId, @Nullable Long targetFolderId) {
     Asset sourceAsset = findAssetById(assetId);
     validateTenant(sourceAsset);
 
@@ -105,7 +103,7 @@ public class AssetTransferService {
    * @return the updated asset response
    */
   @Transactional
-  public @NonNull AssetResponse moveAsset(@NonNull Long assetId, @Nullable Long targetFolderId) {
+  public AssetResponse moveAsset(long assetId, @Nullable Long targetFolderId) {
     return AssetMapper.toResponse(internalMove(assetId, targetFolderId));
   }
 
@@ -117,8 +115,7 @@ public class AssetTransferService {
    * @return list of updated asset responses
    */
   @Transactional
-  public @NonNull List<AssetResponse> bulkMove(
-      @NonNull List<Long> ids, @Nullable Long targetFolderId) {
+  public List<AssetResponse> bulkMove(List<Long> ids, @Nullable Long targetFolderId) {
     if (ids == null || ids.isEmpty()) {
       return List.of();
     }
@@ -155,7 +152,7 @@ public class AssetTransferService {
   @CacheEvict(
       value = {"assets", "asset-downloads"},
       key = "#assetId")
-  public @NonNull AssetResponse renameAsset(@NonNull Long assetId, @NonNull String newName) {
+  public AssetResponse renameAsset(long assetId, String newName) {
     return AssetMapper.toResponse(internalRename(assetId, newName));
   }
 
@@ -166,7 +163,7 @@ public class AssetTransferService {
    * @return list of updated asset responses
    */
   @Transactional
-  public @NonNull List<AssetResponse> bulkRename(@NonNull Map<Long, String> idToNewNameMap) {
+  public List<AssetResponse> bulkRename(Map<Long, String> idToNewNameMap) {
     if (idToNewNameMap == null || idToNewNameMap.isEmpty()) {
       return List.of();
     }
@@ -195,7 +192,7 @@ public class AssetTransferService {
     return assetRepository.saveAll(renamedAssets).stream().map(AssetMapper::toResponse).toList();
   }
 
-  private @NonNull Asset internalMove(@NonNull Long assetId, @Nullable Long targetFolderId) {
+  private Asset internalMove(long assetId, @Nullable Long targetFolderId) {
     Asset asset = findAssetById(assetId);
     validateTenant(asset);
 
@@ -219,7 +216,7 @@ public class AssetTransferService {
     return asset;
   }
 
-  private @NonNull Asset internalRename(@NonNull Long assetId, @NonNull String newName) {
+  private Asset internalRename(long assetId, String newName) {
     Asset asset = findAssetById(assetId);
     validateTenant(asset);
     String oldFileName = asset.getFileName();
@@ -237,7 +234,7 @@ public class AssetTransferService {
     return asset;
   }
 
-  private @NonNull Asset findAssetById(@NonNull Long id) {
+  private Asset findAssetById(long id) {
     return assetRepository
         .findByIdAndDeletedAtIsNull(id)
         .orElseThrow(() -> new AssetException(AssetErrorCode.ASSET_NOT_FOUND));
@@ -259,42 +256,40 @@ public class AssetTransferService {
     return targetFolder;
   }
 
-  private @NonNull String computeDestinationPath(
-      @NonNull Asset asset, @Nullable Asset targetFolder) {
+  private String computeDestinationPath(Asset asset, @Nullable Asset targetFolder) {
     if (targetFolder == null) {
       return asset.getFileName();
     }
     return targetFolder.getSource() + asset.getFileName();
   }
 
-  private @NonNull String computeMaterializedPath(
-      @NonNull Asset asset, @Nullable Asset targetFolder) {
+  private String computeMaterializedPath(Asset asset, @Nullable Asset targetFolder) {
     if (targetFolder == null) {
       return StorageConstants.PATH_DELIMITER + asset.getFileName();
     }
     return targetFolder.getPath() + StorageConstants.PATH_DELIMITER + asset.getFileName();
   }
 
-  private void validateTenant(@NonNull Asset asset) {
+  private void validateTenant(Asset asset) {
     String currentTenant = TenantContext.requireTenantId();
     if (!currentTenant.equals(asset.getTenantId())) {
       throw new AccessDeniedException("Unauthorized access to asset of another tenant");
     }
   }
 
-  private @NonNull Asset createFolderAsset(
-      @NonNull String tenantId,
-      @NonNull String name,
-      @NonNull String source,
-      @NonNull AssetType type,
+  private Asset createFolderAsset(
+      String tenantId,
+      String name,
+      String source,
+      AssetType type,
       @Nullable Long parentId,
-      @NonNull String materializedPath) {
+      String materializedPath) {
     return Asset.folder(
         tenantId, name, source, type, parentId, materializedPath, StorageConstants.MIME_DIRECTORY);
   }
 
-  private @NonNull Asset createCopiedAsset(
-      @NonNull Asset sourceAsset, @NonNull String newSource, @Nullable Long targetFolderId) {
+  private Asset createCopiedAsset(
+      Asset sourceAsset, String newSource, @Nullable Long targetFolderId) {
     return Asset.copyOf(
         sourceAsset,
         newSource,

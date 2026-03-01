@@ -13,7 +13,6 @@ import com.chamrong.iecommerce.common.TenantContext;
 import java.io.InputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +25,7 @@ public class AssetChunkedUploadService {
   private final StorageService storageService;
 
   public InitiateMultipartUploadResponse initiateMultipartUpload(
-      @NonNull InitiateMultipartUploadRequest request) {
+      InitiateMultipartUploadRequest request) {
     // Optionally check quota here, assuming total size is not known yet or passed in metadata.
     String result =
         storageService.initiateMultipartUpload(request.getFileName(), request.getContentType());
@@ -45,16 +44,12 @@ public class AssetChunkedUploadService {
   }
 
   public String uploadPart(
-      @NonNull String uploadId,
-      @NonNull String key,
-      int partNumber,
-      @NonNull InputStream inputStream,
-      long size) {
+      String uploadId, String key, int partNumber, InputStream inputStream, long size) {
     return storageService.uploadPart(uploadId, key, partNumber, inputStream, size);
   }
 
   @Transactional
-  public AssetResponse completeMultipartUpload(@NonNull CompleteMultipartUploadRequest request) {
+  public AssetResponse completeMultipartUpload(CompleteMultipartUploadRequest request) {
     String tenantId = TenantContext.requireTenantId();
 
     // 1. Complete at storage provider
@@ -90,7 +85,7 @@ public class AssetChunkedUploadService {
     return AssetMapper.toResponse(assetRepository.save(asset));
   }
 
-  public void abortMultipartUpload(@NonNull String uploadId, @NonNull String key) {
+  public void abortMultipartUpload(String uploadId, String key) {
     storageService.abortMultipartUpload(uploadId, key);
   }
 }

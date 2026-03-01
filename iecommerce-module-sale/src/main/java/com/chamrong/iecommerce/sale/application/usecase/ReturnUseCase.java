@@ -1,6 +1,7 @@
 package com.chamrong.iecommerce.sale.application.usecase;
 
 import com.chamrong.iecommerce.common.Money;
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.sale.application.command.CreateReturnCommand;
 import com.chamrong.iecommerce.sale.application.dto.SaleReturnResponse;
 import com.chamrong.iecommerce.sale.domain.exception.SaleDomainException;
@@ -82,6 +83,7 @@ public class ReturnUseCase {
         repository
             .findByIdAndTenantId(id, tenantId)
             .orElseThrow(() -> new EntityNotFoundException("Return not found"));
+    TenantGuard.requireSameTenant(saleReturn.getTenantId(), tenantId);
 
     saleReturn.approve(approverId);
     return toResponse(repository.save(saleReturn));
@@ -93,6 +95,7 @@ public class ReturnUseCase {
         repository
             .findByIdAndTenantId(id, tenantId)
             .orElseThrow(() -> new EntityNotFoundException("Return not found"));
+    TenantGuard.requireSameTenant(saleReturn.getTenantId(), tenantId);
 
     saleReturn.complete();
     return toResponse(repository.save(saleReturn));

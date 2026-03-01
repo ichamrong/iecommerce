@@ -1,85 +1,66 @@
-# JPA Entity Guide
+# JPA Entity Guide — iecommerce-api
 
-**Version:** 1.0  
-**Purpose:** Safe Lombok usage, @Version, null-safety, and Sonar-friendly entity patterns.  
-**Reference:** SAAS_ENTERPRISE_ARCHITECTURE_SPEC.md; Phase 5 package-info + null safety.
+**Source:** Enterprise architecture spec; clean code and Sonar-friendly rules.
 
 ---
 
-## 1. Lombok policy
+## 1) Where JPA Entities Live
 
-- **DO:** Use `@Getter` / `@Setter` selectively (e.g. @Getter on entity; @Setter only for mutable fields).
-- **DO NOT:** Use `@Data` on entities (generates equals/hashCode on all fields; mutable collections and version cause issues).
-- **Optional:** @Builder for DTOs/value objects; for JPA entities use with care (ensure default constructor and field init work with JPA).
-- **Equals/hashCode:** Prefer business key (e.g. id) or exclude mutable collections; document if using Lombok-generated.
-
----
-
-## 2. @Version (optimistic locking)
-
-- **DO:** Add `@Version` on a numeric field (Long or Integer) for entities that need optimistic locking (order, shift, session, etc.).
-- **DO NOT:** Make the version field `final` or initialize it to a non-null value that might conflict with DB; let JPA set it.
-- **Pattern:** `private Long version;` with getter/setter; no `final`.
+- **Only** in `infrastructure/persistence/jpa/` (or module-equivalent).
+- **Never** in `domain/model`. Domain models are pure Java (no `@Entity`, no `jakarta.persistence.*`).
+- Map between entity and domain in adapters (e.g. `*Mapper.toDomain(entity)`, `toEntity(domain)`).
 
 ---
 
-## 3. Null-safety and initialization
+## 2) Lombok on Entities
 
-- **@NonNullApi / @NonNullFields:** When used in package-info, all fields are considered non-null unless explicitly @Nullable. JPA entities often have id assigned by DB (null until persisted) — use `@Nullable` on id if needed, or ensure constructor/init does not require id.
-- **Required fields:** Prefer constructor initialization for required non-null fields (tenantId, code, etc.); or initialize to default and set in factory method.
-- **Collections:** Initialize collections to empty (e.g. `new ArrayList<>()`) to avoid NPE when JPA loads; avoid final collection fields that are not set in constructor.
+| Annotation | Use | Avoid |
+|------------|-----|--------|
+| `@Getter` | Yes, for all readable fields | — |
+| `@Setter` | Only when the field must be mutable (e.g. JPA hydration, version) | On every field by default |
+| `@Data` | **No** — generates equals/hashCode on all fields (risky with collections and lazy loading) | Everywhere |
+| `@NoArgsConstructor` / `@AllArgsConstructor` | Only if required by JPA or mapping | — |
+| `@Builder` | Optional for tests/factories; ensure consistent with JPA requirements | — |
 
----
-
-## 4. Domain vs persistence
-
-- **Domain has ZERO Spring/JPA:** Domain model classes used in core logic should not have JPA annotations; persistence entities can live in infrastructure and be mapped to domain models.
-- **If entity is in domain:** Some modules keep JPA entities in domain for simplicity; then use @Getter/@Setter and minimal annotations; no Spring in domain except if strictly necessary for JPA (jakarta.persistence is acceptable in domain entity if that’s the chosen design).
-
----
-
-## 5. Entity template (safe pattern)
-
-```java
-@Entity
-@Table(name = "example")
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ExampleEntity {
-
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
-
-  @Column(nullable = false)
-  private String tenantId;
-
-  @Version
-  private Long version;
-
-  @Column(nullable = false)
-  private String businessKey;
-
-  public ExampleEntity(String tenantId, String businessKey) {
-    this.tenantId = tenantId;
-    this.businessKey = businessKey;
-  }
-}
-```
-
-- No @Data; no final on version; required fields set in constructor or via setter before persist.
+Prefer explicit getters/setters for `@Version` and collection fields to avoid accidental mutation.
 
 ---
 
-## 6. Common issues and fixes
+## 3) @Version (Optimistic Locking)
 
-| Issue | Fix |
-|-------|-----|
-| "Field 'version' may be 'final'" | Remove final; use Long version with setter |
-| "@NonNullFields fields must be initialized" | Constructor init or @Nullable on id where appropriate |
-| equals/hashCode on entity with collections | Exclude collections; use id or business key only |
-| N+1 on list endpoint | Use projections or fetch join; avoid lazy load in loop |
+- Use **one** `@Version` field per aggregate root entity (e.g. `Long version` or `long version`).
+- **Do not** make it `final` — JPA and mappers need to set it after load/update.
+- On conflict, catch `OptimisticLockException` and return **409 Conflict** or retry with clear message.
+- Ensure all update paths load the entity (with version), modify, then save; do not set version manually except in tests.
 
 ---
 
-*End of JPA_ENTITY_GUIDE.md*
+## 4) NonNullFields / Initialization
+
+- Avoid `@NonNullFields` on entity classes if it forces initialization of collections to empty and JPA then replaces them (can cause Sonar/Nullability issues).
+- Prefer: `private List<OrderItem> items = new ArrayList<>();` for one-to-many so that add/remove in domain logic does not NPE.
+- For optional (nullable) columns use `@Column(nullable = true)` and document; do not use `@NonNull` on the field if the DB allows null.
+
+---
+
+## 5) Naming and Structure
+
+- Table name: `@Table(name = "snake_case_table")`.
+- Column name: `@Column(name = "snake_case")` when differing from field name.
+- Tenant scope: every tenant-scoped entity has `tenant_id` (from `BaseTenantEntity` or explicit column).
+- Indexes: keyset pagination index `(tenant_id, created_at DESC, id DESC)` via Liquibase; no index definitions on entity unless necessary.
+
+---
+
+## 6) Checklist for New/Modified Entities
+
+- [ ] Entity class is in `infrastructure/persistence/jpa/`.
+- [ ] No `@Data`; use `@Getter` and selective `@Setter`.
+- [ ] `@Version` present on aggregate roots; not final.
+- [ ] Collections initialized (e.g. `new ArrayList<>()`); no NPE on add.
+- [ ] Domain model is separate (no JPA in domain); adapter maps entity ↔ domain.
+- [ ] package-info.java present in the package.
+
+---
+
+*End of JPA_ENTITY_GUIDE.md.*

@@ -1,5 +1,6 @@
 package com.chamrong.iecommerce.sale.application.usecase;
 
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.sale.application.command.OpenShiftCommand;
 import com.chamrong.iecommerce.sale.application.dto.ShiftResponse;
 import com.chamrong.iecommerce.sale.domain.exception.SaleDomainException;
@@ -38,6 +39,7 @@ public class ShiftUseCase {
         repository
             .findByIdAndTenantId(id, tenantId)
             .orElseThrow(() -> new EntityNotFoundException("Shift not found: " + id));
+    TenantGuard.requireSameTenant(shift.getTenantId(), tenantId);
 
     shift.close();
     return toResponse(repository.save(shift));

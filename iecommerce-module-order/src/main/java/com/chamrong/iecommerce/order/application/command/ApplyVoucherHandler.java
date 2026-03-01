@@ -2,6 +2,7 @@ package com.chamrong.iecommerce.order.application.command;
 
 import com.chamrong.iecommerce.common.Money;
 import com.chamrong.iecommerce.common.TenantContext;
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.order.application.dto.OrderResponse;
 import com.chamrong.iecommerce.order.application.dto.OrderResponse.OrderItemResponse;
 import com.chamrong.iecommerce.order.domain.Order;
@@ -41,9 +42,7 @@ public class ApplyVoucherHandler {
             .findByIdForUpdate(orderId)
             .orElseThrow(() -> new EntityNotFoundException("Order not found: " + orderId));
 
-    if (!order.getTenantId().equals(tenantId)) {
-      throw new org.springframework.security.access.AccessDeniedException("Access denied");
-    }
+    TenantGuard.requireSameTenant(order.getTenantId(), tenantId);
 
     final Money discount =
         promotionApi

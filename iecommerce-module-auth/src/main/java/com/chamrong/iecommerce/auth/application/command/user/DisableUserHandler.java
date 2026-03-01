@@ -1,8 +1,8 @@
 package com.chamrong.iecommerce.auth.application.command.user;
 
 import com.chamrong.iecommerce.auth.domain.IdentityService;
-import com.chamrong.iecommerce.auth.domain.UserRepository;
 import com.chamrong.iecommerce.auth.domain.event.UserDisabledEvent;
+import com.chamrong.iecommerce.auth.domain.ports.UserRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class DisableUserHandler {
 
-  private final UserRepository userRepository;
+  private final UserRepositoryPort userRepository;
   private final ApplicationEventPublisher eventPublisher;
   private final IdentityService identityService;
 

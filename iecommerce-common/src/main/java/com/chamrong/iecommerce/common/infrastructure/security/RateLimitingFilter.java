@@ -47,8 +47,16 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     filterChain.doFilter(request, response);
   }
 
+  /**
+   * Endpoints protected by rate limiting (ASVS L2): auth and payment to mitigate brute-force and
+   * webhook abuse.
+   */
   private boolean isSensitiveEndpoint(String path) {
-    return path.contains("/login") || path.contains("/signup") || path.contains("/password");
+    return path.contains("/login")
+        || path.contains("/signup")
+        || path.contains("/password")
+        || path.contains("/webhooks")
+        || path.contains("/payments");
   }
 
   private static class TokenBucket {

@@ -1,7 +1,7 @@
 package com.chamrong.iecommerce.auth.application.query;
 
 import com.chamrong.iecommerce.auth.application.dto.TenantPreferencesResponse;
-import com.chamrong.iecommerce.auth.domain.TenantRepository;
+import com.chamrong.iecommerce.auth.domain.ports.TenantRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class GetTenantPreferencesHandler {
 
-  private final TenantRepository tenantRepository;
+  private final TenantRepositoryPort tenantRepository;
 
   @Transactional(readOnly = true)
   public TenantPreferencesResponse handle(String tenantId) {

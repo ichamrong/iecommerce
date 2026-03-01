@@ -1,6 +1,7 @@
 package com.chamrong.iecommerce.invoice.application;
 
 import com.chamrong.iecommerce.common.Money;
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.invoice.application.command.CreateInvoiceDraftCommand;
 import com.chamrong.iecommerce.invoice.application.command.IssueInvoiceCommand;
 import com.chamrong.iecommerce.invoice.application.command.MarkInvoicePaidCommand;
@@ -602,9 +603,12 @@ public class InvoiceApplicationService {
   // ── Private helpers ───────────────────────────────────────────────────────
 
   private Invoice requireByIdAndTenant(Long id, String tenantId) {
-    return invoiceRepository
-        .findByIdAndTenant(id, tenantId)
-        .orElseThrow(() -> new InvoiceNotFoundException(id, tenantId));
+    Invoice invoice =
+        invoiceRepository
+            .findByIdAndTenant(id, tenantId)
+            .orElseThrow(() -> new InvoiceNotFoundException(id, tenantId));
+    TenantGuard.requireSameTenant(invoice.getTenantId(), tenantId);
+    return invoice;
   }
 
   private static String extractEmailFromSnapshot(String snapshot) {

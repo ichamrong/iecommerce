@@ -29,7 +29,7 @@ public class AuthEventListener {
         new CreateCustomerCommand(
             null, null, event.email(), null, event.userId(), event.tenantId());
 
-    createCustomerHandler.handle(command);
+    createCustomerHandler.handle(event.tenantId(), command);
 
     log.info("Customer profile created successfully for auth user id {}", event.userId());
   }

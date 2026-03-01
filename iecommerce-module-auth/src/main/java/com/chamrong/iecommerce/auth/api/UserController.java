@@ -13,12 +13,12 @@ import com.chamrong.iecommerce.auth.application.command.user.DisableUserHandler;
 import com.chamrong.iecommerce.auth.application.query.UserQueryHandler;
 import com.chamrong.iecommerce.auth.domain.Permissions;
 import com.chamrong.iecommerce.auth.domain.User;
+import com.chamrong.iecommerce.common.TenantContext;
+import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -75,18 +76,22 @@ public class UserController {
   }
 
   /**
-   * List all users in the current tenant.
+   * List all users in the current tenant (cursor-paginated).
    *
-   * <p>GET /api/v1/users — requires {@code user:read}
+   * <p>GET /api/v1/users — requires {@code user:read}. No offset; use cursor and limit.
    */
   @Operation(
       summary = "List all users",
       description =
-          "Returns a paginated list of users in the current tenant. Requires `user:read`.")
+          "Returns a cursor-paginated list of users in the current tenant. Requires `user:read`.")
   @GetMapping
   @PreAuthorize(Permissions.HAS_USER_READ)
-  public ResponseEntity<Page<User>> listUsers(@PageableDefault(size = 20) Pageable pageable) {
-    return ResponseEntity.ok(userQueryHandler.findAllUsers(pageable));
+  public ResponseEntity<CursorPageResponse<User>> listUsers(
+      @RequestParam(required = false) String cursor, @RequestParam(defaultValue = "20") int limit) {
+    String tenantId = TenantContext.getCurrentTenant();
+    int clampedLimit = Math.min(100, Math.max(1, limit));
+    return ResponseEntity.ok(
+        userQueryHandler.listUsers(tenantId, cursor, clampedLimit, java.util.Map.of()));
   }
 
   /**
@@ -100,9 +105,14 @@ public class UserController {
   @GetMapping("/{id}")
   @PreAuthorize(Permissions.HAS_USER_READ)
   public ResponseEntity<User> getUser(@PathVariable Long id) {
+    String tenantId = TenantContext.getCurrentTenant();
     return userQueryHandler
         .findUserById(id)
-        .map(ResponseEntity::ok)
+        .map(
+            user -> {
+              TenantGuard.requireSameTenant(user.getTenantId(), tenantId);
+              return ResponseEntity.ok(user);
+            })
         .orElse(ResponseEntity.notFound().build());
   }
 

@@ -15,6 +15,7 @@ import com.chamrong.iecommerce.booking.domain.Booking;
 import com.chamrong.iecommerce.booking.domain.BookingRepository;
 import com.chamrong.iecommerce.booking.domain.BookingStatus;
 import com.chamrong.iecommerce.common.Money;
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.DayOfWeek;
 import java.time.Instant;
@@ -167,7 +168,14 @@ public class BookingService implements BookingApi {
 
   @Transactional(readOnly = true)
   public Optional<BookingResponse> findById(Long id) {
-    return bookingRepository.findById(id).map(this::toResponse);
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    return bookingRepository
+        .findById(id)
+        .map(
+            booking -> {
+              TenantGuard.requireSameTenant(booking.getTenantId(), tenantId);
+              return toResponse(booking);
+            });
   }
 
   @Transactional(readOnly = true)
@@ -274,9 +282,13 @@ public class BookingService implements BookingApi {
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   private Booking require(Long id) {
-    return bookingRepository
-        .findById(id)
-        .orElseThrow(() -> new EntityNotFoundException("Booking not found: " + id));
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    Booking booking =
+        bookingRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Booking not found: " + id));
+    TenantGuard.requireSameTenant(booking.getTenantId(), tenantId);
+    return booking;
   }
 
   private BookingResponse toResponse(Booking b) {

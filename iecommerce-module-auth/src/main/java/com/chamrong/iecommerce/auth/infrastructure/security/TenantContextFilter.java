@@ -1,8 +1,8 @@
 package com.chamrong.iecommerce.auth.infrastructure.security;
 
 import com.chamrong.iecommerce.auth.domain.Tenant;
-import com.chamrong.iecommerce.auth.domain.TenantRepository;
 import com.chamrong.iecommerce.auth.domain.TenantStatus;
+import com.chamrong.iecommerce.auth.domain.ports.TenantRepositoryPort;
 import com.chamrong.iecommerce.common.TenantContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -31,9 +31,9 @@ final class TenantAccessErrorCodes {
 @Component
 public class TenantContextFilter extends OncePerRequestFilter {
 
-  private final TenantRepository tenantRepository;
+  private final TenantRepositoryPort tenantRepository;
 
-  public TenantContextFilter(TenantRepository tenantRepository) {
+  public TenantContextFilter(TenantRepositoryPort tenantRepository) {
     this.tenantRepository = tenantRepository;
   }
 

@@ -1,5 +1,6 @@
 package com.chamrong.iecommerce.customer.application.command;
 
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.customer.AddressAddedEvent;
 import com.chamrong.iecommerce.customer.application.CustomerMapper;
 import com.chamrong.iecommerce.customer.application.dto.AddAddressRequest;
@@ -21,11 +22,12 @@ public class AddAddressHandler {
   private final CustomerMapper mapper;
   private final ApplicationEventPublisher eventPublisher;
 
-  public CustomerResponse handle(Long customerId, AddAddressRequest request) {
+  public CustomerResponse handle(String tenantId, Long customerId, AddAddressRequest request) {
     var customer =
         customerRepository
             .findById(customerId)
             .orElseThrow(() -> new EntityNotFoundException("Customer not found: " + customerId));
+    TenantGuard.requireSameTenant(customer.getTenantId(), tenantId);
 
     var address = new Address();
     address.setStreet(request.street());

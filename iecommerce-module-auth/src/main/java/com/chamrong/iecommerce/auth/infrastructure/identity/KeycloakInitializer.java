@@ -1,7 +1,7 @@
 package com.chamrong.iecommerce.auth.infrastructure.identity;
 
-import com.chamrong.iecommerce.auth.domain.RoleRepository;
-import com.chamrong.iecommerce.auth.domain.UserRepository;
+import com.chamrong.iecommerce.auth.domain.ports.RoleRepositoryPort;
+import com.chamrong.iecommerce.auth.domain.ports.UserRepositoryPort;
 import com.chamrong.iecommerce.common.TenantContext;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +25,8 @@ public class KeycloakInitializer implements CommandLineRunner {
   private static final String DEFAULT_ADMIN_USERNAME = "admin";
 
   private final KeycloakProperties properties;
-  private final UserRepository userRepository;
-  private final RoleRepository roleRepository;
+  private final UserRepositoryPort userRepository;
+  private final RoleRepositoryPort roleRepository;
   private final Keycloak keycloak;
 
   @Override

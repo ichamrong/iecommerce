@@ -26,6 +26,11 @@ public abstract class BaseEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  /** For merge/reconstitution only; used when mapping domain back to entity for update. */
+  public void setId(Long id) {
+    this.id = id;
+  }
+
   @CreatedDate
   @Column(nullable = false, updatable = false)
   private Instant createdAt;

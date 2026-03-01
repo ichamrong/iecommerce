@@ -1,10 +1,9 @@
 package com.chamrong.iecommerce.auth.domain;
 
-import jakarta.persistence.Embeddable;
 import lombok.Getter;
 import lombok.Setter;
 
-@Embeddable
+/** Tenant storefront preferences (pure domain value object — no JPA). */
 @Getter
 @Setter
 public class TenantPreferences {

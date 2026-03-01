@@ -29,7 +29,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -68,9 +67,9 @@ public class AssetController {
           "Accepts a multipart file and stores it. Returns the asset record with a source URL.")
   @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @PreAuthorize("hasAuthority('" + AssetSecurityConstants.ASSET_MANAGE + "')")
-  public @NonNull ResponseEntity<AssetResponse> upload(
-      @NonNull @RequestPart("file") MultipartFile file,
-      @NonNull @Valid @RequestPart("metadata") UploadAssetMetadata metadata) {
+  public ResponseEntity<AssetResponse> upload(
+      @RequestPart("file") MultipartFile file,
+      @Valid @RequestPart("metadata") UploadAssetMetadata metadata) {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(assetUploadService.upload(file, metadata));
   }
@@ -78,8 +77,8 @@ public class AssetController {
   @Operation(summary = "Initiate a multipart upload")
   @PostMapping("/multipart")
   @PreAuthorize("hasAuthority('" + AssetSecurityConstants.ASSET_MANAGE + "')")
-  public @NonNull ResponseEntity<InitiateMultipartUploadResponse> initiateMultipartUpload(
-      @NonNull @Valid @RequestBody InitiateMultipartUploadRequest request) {
+  public ResponseEntity<InitiateMultipartUploadResponse> initiateMultipartUpload(
+      @Valid @RequestBody InitiateMultipartUploadRequest request) {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(assetChunkedUploadService.initiateMultipartUpload(request));
   }
@@ -89,11 +88,11 @@ public class AssetController {
       value = "/multipart/{uploadId}/parts/{partNumber}",
       consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @PreAuthorize("hasAuthority('" + AssetSecurityConstants.ASSET_MANAGE + "')")
-  public @NonNull ResponseEntity<String> uploadPart(
-      @NonNull @PathVariable String uploadId,
-      @NonNull @PathVariable int partNumber,
-      @NonNull @RequestParam("key") String key,
-      @NonNull @RequestPart("file") MultipartFile file)
+  public ResponseEntity<String> uploadPart(
+      @PathVariable String uploadId,
+      @PathVariable int partNumber,
+      @RequestParam("key") String key,
+      @RequestPart("file") MultipartFile file)
       throws java.io.IOException {
     String eTag =
         assetChunkedUploadService.uploadPart(
@@ -104,9 +103,8 @@ public class AssetController {
   @Operation(summary = "Complete a multipart upload")
   @PostMapping("/multipart/{uploadId}/complete")
   @PreAuthorize("hasAuthority('" + AssetSecurityConstants.ASSET_MANAGE + "')")
-  public @NonNull ResponseEntity<AssetResponse> completeMultipartUpload(
-      @NonNull @PathVariable String uploadId,
-      @NonNull @Valid @RequestBody CompleteMultipartUploadRequest request) {
+  public ResponseEntity<AssetResponse> completeMultipartUpload(
+      @PathVariable String uploadId, @Valid @RequestBody CompleteMultipartUploadRequest request) {
     if (!uploadId.equals(request.getUploadId())) {
       return ResponseEntity.badRequest().build();
     }
@@ -116,8 +114,8 @@ public class AssetController {
   @Operation(summary = "Abort a multipart upload")
   @DeleteMapping("/multipart/{uploadId}")
   @PreAuthorize("hasAuthority('" + AssetSecurityConstants.ASSET_MANAGE + "')")
-  public @NonNull ResponseEntity<Void> abortMultipartUpload(
-      @NonNull @PathVariable String uploadId, @NonNull @RequestParam("key") String key) {
+  public ResponseEntity<Void> abortMultipartUpload(
+      @PathVariable String uploadId, @RequestParam("key") String key) {
     assetChunkedUploadService.abortMultipartUpload(uploadId, key);
     return ResponseEntity.noContent().build();
   }
@@ -125,15 +123,14 @@ public class AssetController {
   @Operation(summary = "Search assets by name")
   @GetMapping("/search/name")
   @PreAuthorize("hasAuthority('" + AssetSecurityConstants.ASSET_READ + "')")
-  public @NonNull ResponseEntity<List<AssetResponse>> searchByName(
-      @NonNull @RequestParam String query) {
+  public ResponseEntity<List<AssetResponse>> searchByName(@RequestParam String query) {
     return ResponseEntity.ok(assetRetrievalService.searchByName(query));
   }
 
   @Operation(summary = "Search assets by size range")
   @GetMapping("/search/size")
   @PreAuthorize("hasAuthority('" + AssetSecurityConstants.ASSET_READ + "')")
-  public @NonNull ResponseEntity<List<AssetResponse>> searchBySize(
+  public ResponseEntity<List<AssetResponse>> searchBySize(
       @RequestParam long minSize, @RequestParam long maxSize) {
     return ResponseEntity.ok(assetRetrievalService.searchBySize(minSize, maxSize));
   }
@@ -141,7 +138,7 @@ public class AssetController {
   @Operation(summary = "Get asset by ID")
   @GetMapping("/{id}")
   @PreAuthorize("hasAuthority('" + AssetSecurityConstants.ASSET_READ + "')")
-  public @NonNull ResponseEntity<AssetResponse> getById(@NonNull @PathVariable Long id) {
+  public ResponseEntity<AssetResponse> getById(@PathVariable long id) {
     return assetRetrievalService
         .findById(id)
         .map(ResponseEntity::ok)
@@ -151,10 +148,8 @@ public class AssetController {
   @Operation(summary = "Securely download an asset (redirects to pre-signed URL)")
   @GetMapping("/{id}" + StorageConstants.DOWNLOAD_SUFFIX)
   @PreAuthorize("hasAuthority('" + AssetSecurityConstants.ASSET_READ + "')")
-  public @NonNull ResponseEntity<Void> download(
-      @NonNull @PathVariable Long id,
-      @NonNull HttpServletRequest request,
-      @NonNull Authentication authentication) {
+  public ResponseEntity<Void> download(
+      @PathVariable long id, HttpServletRequest request, Authentication authentication) {
     String requestedBy = authentication.getName();
     String ipAddress = request.getRemoteAddr();
 
@@ -167,8 +162,8 @@ public class AssetController {
 
   @Operation(summary = "Proxy download of an asset (streams directly through backend)")
   @GetMapping("/proxy/{id}")
-  public @NonNull ResponseEntity<org.springframework.core.io.Resource> proxyDownload(
-      @NonNull @PathVariable Long id, @Nullable Authentication authentication) {
+  public ResponseEntity<org.springframework.core.io.Resource> proxyDownload(
+      @PathVariable long id, @Nullable Authentication authentication) {
     boolean isAuthorized =
         authentication != null
             && authentication.isAuthenticated()
@@ -200,8 +195,8 @@ public class AssetController {
   @Operation(summary = "Create a virtual folder")
   @PostMapping("/folder")
   @PreAuthorize("hasAuthority('" + AssetSecurityConstants.ASSET_MANAGE + "')")
-  public @NonNull ResponseEntity<AssetResponse> createFolder(
-      @NonNull @Valid @RequestBody CreateFolderRequest request) {
+  public ResponseEntity<AssetResponse> createFolder(
+      @Valid @RequestBody CreateFolderRequest request) {
     AssetResponse response =
         assetTransferService.createFolder(request.parentId(), request.name(), request.type());
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -210,9 +205,8 @@ public class AssetController {
   @Operation(summary = "Copy an asset to a new folder")
   @PostMapping("/{id}/copy")
   @PreAuthorize("hasAuthority('" + AssetSecurityConstants.ASSET_MANAGE + "')")
-  public @NonNull ResponseEntity<AssetResponse> copyAsset(
-      @NonNull @PathVariable Long id,
-      @Nullable @RequestParam(required = false) Long targetFolderId) {
+  public ResponseEntity<AssetResponse> copyAsset(
+      @PathVariable long id, @Nullable @RequestParam(required = false) Long targetFolderId) {
     AssetResponse response = assetTransferService.copyAsset(id, targetFolderId);
     return ResponseEntity.ok(response);
   }
@@ -220,9 +214,8 @@ public class AssetController {
   @Operation(summary = "Move an asset to a new folder")
   @PutMapping("/{id}/move")
   @PreAuthorize("hasAuthority('" + AssetSecurityConstants.ASSET_MANAGE + "')")
-  public @NonNull ResponseEntity<AssetResponse> moveAsset(
-      @NonNull @PathVariable Long id,
-      @Nullable @RequestParam(required = false) Long targetFolderId) {
+  public ResponseEntity<AssetResponse> moveAsset(
+      @PathVariable long id, @Nullable @RequestParam(required = false) Long targetFolderId) {
     AssetResponse response = assetTransferService.moveAsset(id, targetFolderId);
     return ResponseEntity.ok(response);
   }
@@ -230,8 +223,8 @@ public class AssetController {
   @Operation(summary = "Rename an asset")
   @PutMapping("/{id}/rename")
   @PreAuthorize("hasAuthority('" + AssetSecurityConstants.ASSET_MANAGE + "')")
-  public @NonNull ResponseEntity<AssetResponse> renameAsset(
-      @NonNull @PathVariable Long id, @NonNull @Valid @RequestBody RenameAssetRequest request) {
+  public ResponseEntity<AssetResponse> renameAsset(
+      @PathVariable long id, @Valid @RequestBody RenameAssetRequest request) {
     AssetResponse response = assetTransferService.renameAsset(id, request.newName());
     return ResponseEntity.ok(response);
   }
@@ -239,8 +232,7 @@ public class AssetController {
   @Operation(summary = "Bulk delete assets")
   @PostMapping("/bulk-delete")
   @PreAuthorize("hasAuthority('" + AssetSecurityConstants.ASSET_MANAGE + "')")
-  public @NonNull ResponseEntity<Void> bulkDelete(
-      @NonNull @Valid @RequestBody BulkAssetRequest request) {
+  public ResponseEntity<Void> bulkDelete(@Valid @RequestBody BulkAssetRequest request) {
     assetDeletionService.bulkDelete(request.assetIds());
     return ResponseEntity.noContent().build();
   }
@@ -248,8 +240,8 @@ public class AssetController {
   @Operation(summary = "Bulk rename assets")
   @PutMapping("/bulk-rename")
   @PreAuthorize("hasAuthority('" + AssetSecurityConstants.ASSET_MANAGE + "')")
-  public @NonNull ResponseEntity<List<AssetResponse>> bulkRename(
-      @NonNull @Valid @RequestBody BulkRenameAssetRequest request) {
+  public ResponseEntity<List<AssetResponse>> bulkRename(
+      @Valid @RequestBody BulkRenameAssetRequest request) {
     List<AssetResponse> responses = assetTransferService.bulkRename(request.assetRenames());
     return ResponseEntity.ok(responses);
   }
@@ -257,8 +249,8 @@ public class AssetController {
   @Operation(summary = "Bulk move assets to a folder")
   @PutMapping("/bulk-move")
   @PreAuthorize("hasAuthority('" + AssetSecurityConstants.ASSET_MANAGE + "')")
-  public @NonNull ResponseEntity<List<AssetResponse>> bulkMove(
-      @NonNull @Valid @RequestBody BulkMoveAssetRequest request) {
+  public ResponseEntity<List<AssetResponse>> bulkMove(
+      @Valid @RequestBody BulkMoveAssetRequest request) {
     List<AssetResponse> responses =
         assetTransferService.bulkMove(request.assetIds(), request.targetFolderId());
     return ResponseEntity.ok(responses);
@@ -267,8 +259,8 @@ public class AssetController {
   @Operation(summary = "Bulk download assets as ZIP")
   @PostMapping("/bulk-download")
   @PreAuthorize("hasAuthority('" + AssetSecurityConstants.ASSET_READ + "')")
-  public @NonNull ResponseEntity<org.springframework.core.io.Resource> bulkDownload(
-      @NonNull @Valid @RequestBody BulkAssetRequest request) {
+  public ResponseEntity<org.springframework.core.io.Resource> bulkDownload(
+      @Valid @RequestBody BulkAssetRequest request) {
     java.io.InputStream inputStream = assetRetrievalService.bulkDownload(request.assetIds());
     org.springframework.core.io.InputStreamResource resource =
         new org.springframework.core.io.InputStreamResource(inputStream);
@@ -282,15 +274,14 @@ public class AssetController {
   @Operation(summary = "List assets by type")
   @GetMapping
   @PreAuthorize("hasAuthority('" + AssetSecurityConstants.ASSET_READ + "')")
-  public @NonNull List<AssetResponse> listByType(
-      @NonNull @RequestParam(defaultValue = "IMAGE") AssetType type) {
+  public List<AssetResponse> listByType(@RequestParam(defaultValue = "IMAGE") AssetType type) {
     return assetRetrievalService.findByType(type);
   }
 
   @Operation(summary = "Delete an asset")
   @DeleteMapping("/{id}")
   @PreAuthorize("hasAuthority('" + AssetSecurityConstants.ASSET_MANAGE + "')")
-  public @NonNull ResponseEntity<Void> delete(@NonNull @PathVariable Long id) {
+  public ResponseEntity<Void> delete(@PathVariable long id) {
     assetDeletionService.delete(id);
     return ResponseEntity.noContent().build();
   }

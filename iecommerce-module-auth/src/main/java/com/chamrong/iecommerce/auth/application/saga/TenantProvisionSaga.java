@@ -5,8 +5,8 @@ import com.chamrong.iecommerce.auth.application.command.user.RegisterUserHandler
 import com.chamrong.iecommerce.auth.domain.Role;
 import com.chamrong.iecommerce.auth.domain.Tenant;
 import com.chamrong.iecommerce.auth.domain.TenantProvisioningStatus;
-import com.chamrong.iecommerce.auth.domain.TenantRepository;
 import com.chamrong.iecommerce.auth.domain.event.TenantRegisteredEvent;
+import com.chamrong.iecommerce.auth.domain.ports.TenantRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class TenantProvisionSaga {
 
-  private final TenantRepository tenantRepository;
+  private final TenantRepositoryPort tenantRepository;
   private final RegisterUserHandler registerUserHandler;
   private final ApplicationEventPublisher eventPublisher;
 

@@ -1,5 +1,6 @@
 package com.chamrong.iecommerce.customer.application.command;
 
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.customer.AddressRemovedEvent;
 import com.chamrong.iecommerce.customer.application.CustomerMapper;
 import com.chamrong.iecommerce.customer.application.dto.CustomerResponse;
@@ -19,11 +20,12 @@ public class RemoveAddressHandler {
   private final CustomerMapper mapper;
   private final ApplicationEventPublisher eventPublisher;
 
-  public CustomerResponse handle(Long customerId, Long addressId) {
+  public CustomerResponse handle(String tenantId, Long customerId, Long addressId) {
     var customer =
         customerRepository
             .findById(customerId)
             .orElseThrow(() -> new EntityNotFoundException("Customer not found: " + customerId));
+    TenantGuard.requireSameTenant(customer.getTenantId(), tenantId);
 
     customer.getAddresses().removeIf(a -> a.getId().equals(addressId));
 

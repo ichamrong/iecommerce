@@ -1,6 +1,6 @@
 package com.chamrong.iecommerce.auth.application.service;
 
-import com.chamrong.iecommerce.auth.domain.UserRepository;
+import com.chamrong.iecommerce.auth.domain.ports.UserRepositoryPort;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -11,9 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AuthUserDetailsService implements UserDetailsService {
 
-  private final UserRepository userRepository;
+  private final UserRepositoryPort userRepository;
 
-  public AuthUserDetailsService(UserRepository userRepository) {
+  public AuthUserDetailsService(UserRepositoryPort userRepository) {
     this.userRepository = userRepository;
   }
 

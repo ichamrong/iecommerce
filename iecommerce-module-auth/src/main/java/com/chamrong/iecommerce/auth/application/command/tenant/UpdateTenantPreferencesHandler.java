@@ -2,8 +2,8 @@ package com.chamrong.iecommerce.auth.application.command.tenant;
 
 import com.chamrong.iecommerce.auth.application.command.UpdateTenantPreferencesCommand;
 import com.chamrong.iecommerce.auth.application.dto.TenantPreferencesResponse;
-import com.chamrong.iecommerce.auth.domain.TenantRepository;
 import com.chamrong.iecommerce.auth.domain.event.TenantPreferencesUpdatedEvent;
+import com.chamrong.iecommerce.auth.domain.ports.TenantRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class UpdateTenantPreferencesHandler {
 
-  private final TenantRepository tenantRepository;
+  private final TenantRepositoryPort tenantRepository;
   private final ApplicationEventPublisher eventPublisher;
 
   public TenantPreferencesResponse handle(UpdateTenantPreferencesCommand cmd) {

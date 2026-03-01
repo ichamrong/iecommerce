@@ -2,8 +2,8 @@ package com.chamrong.iecommerce.auth.application.command.password;
 
 import com.chamrong.iecommerce.auth.application.audit.AuthEventLogger;
 import com.chamrong.iecommerce.auth.domain.IdentityService;
-import com.chamrong.iecommerce.auth.domain.UserRepository;
 import com.chamrong.iecommerce.auth.domain.lock.LoginLockStore;
+import com.chamrong.iecommerce.auth.domain.ports.UserRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -38,7 +38,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ForgotPasswordHandler {
 
-  private final UserRepository userRepository;
+  private final UserRepositoryPort userRepository;
   private final IdentityService identityService;
   private final LoginLockStore lockStore;
   private final AuthEventLogger auditLog;
