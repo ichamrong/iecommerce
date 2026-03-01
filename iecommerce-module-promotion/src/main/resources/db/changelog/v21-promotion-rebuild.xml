@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+    <!-- 1. Drop Legacy Tables If Exist (Safety first) -->
+    <changeSet id="v21-drop-legacy-promotion-redemption" author="antigravity">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="promotion_redemption"/>
+        </preConditions>
+        <dropTable tableName="promotion_redemption"/>
+    </changeSet>
+
+    <changeSet id="v21-drop-legacy-promotion-rule" author="antigravity">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="promotion_rule"/>
+        </preConditions>
+        <dropTable tableName="promotion_rule"/>
+    </changeSet>
+
+    <changeSet id="v21-drop-legacy-promotion" author="antigravity">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="promotion"/>
+        </preConditions>
+        <dropTable tableName="promotion"/>
+    </changeSet>
+
+    <!-- 2. Create Core Promotion Engine Tables -->
+    <changeSet id="v21-create-promotion-engine" author="antigravity">
+        <!-- Main Promotion Table -->
+        <createTable tableName="promotion">
+            <!-- Common BaseTenantEntity columns -->
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp"/>
+
+            <column name="code" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="varchar(1024)"/>
+            <column name="status" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_at" type="timestamp"/>
+            <column name="end_at" type="timestamp"/>
+            <!-- Storing rule definitions dynamically using jsonb for extensibility -->
+            <column name="rule_json" type="jsonb">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_uses_limit" type="int"/>
+            <column name="current_uses" type="int" defaultValue="0">
+                <constraints nullable="false" />
+            </column>
+            <!-- Optimistic locking -->
+            <column name="version" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Index for efficient evaluation pipeline lookups -->
+        <!-- Justification: The engine loads active promotions by tenant and status within a time window -->
+        <createIndex tableName="promotion" indexName="idx_promo_tenant_status_time">
+            <column name="tenant_id"/>
+            <column name="status"/>
+            <column name="start_at"/>
+            <column name="end_at"/>
+        </createIndex>
+
+        <!-- Unique constraint for promo codes per tenant -->
+        <!-- Justification: Prevent duplicate coupon codes from being created -->
+        <addUniqueConstraint tableName="promotion"
+                             columnNames="tenant_id, code"
+                             constraintName="uq_promo_tenant_code"/>
+
+        <!-- Promotion Redemption Table -->
+        <createTable tableName="promotion_redemption">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp"/>
+
+            <column name="promotion_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="redemption_key" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="order_id" type="varchar(128)"/>
+            <column name="customer_id" type="varchar(128)"/>
+            <!-- Use bigint for currency/cents to prevent precision loss -->
+            <column name="discount_amount" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="promotion_redemption" baseColumnNames="promotion_id"
+                                 constraintName="fk_redemption_promotion"
+                                 referencedTableName="promotion" referencedColumnNames="id"/>
+
+        <!-- Unique constraint for Exactly-once idempotency under concurrency -->
+        <!-- Justification: Eliminates double spends of a valid redemption_key across concurrent requests -->
+        <addUniqueConstraint tableName="promotion_redemption"
+                             columnNames="tenant_id, redemption_key"
+                             constraintName="uq_redemption_tenant_key"/>
+
+        <!-- Pagination Index for Keyset pagination -->
+        <!-- Justification: Stable cursor sorting without OFFSET performance degradation -->
+        <createIndex tableName="promotion_redemption" indexName="idx_redemption_pagination">
+            <column name="tenant_id"/>
+            <column name="created_at" descending="true"/>
+            <column name="id" descending="true"/>
+        </createIndex>
+
+        <!-- Audit Log Table (ASVS Level 2 Requirement) -->
+        <!-- Justification: Required to track activate/pause/redeem actions reliably -->
+        <createTable tableName="promotion_audit_log">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="promotion_id" type="uuid"/>
+            <column name="action" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="actor_id" type="varchar(128)"/>
+            <column name="client_ip" type="varchar(50)"/>
+            <column name="details" type="jsonb"/>
+        </createTable>
+
+        <!-- Outbox Table for Transactional Events -->
+        <!-- Justification: Ensure domain events (like PRICING_APPLIED or PROMO_EXHAUSTED) don't get lost on crash -->
+        <createTable tableName="promotion_outbox">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="aggregate_type" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="aggregate_id" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_type" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="payload" type="jsonb">
+                <constraints nullable="false"/>
+            </column>
+            <column name="processed" type="boolean" defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="promotion_outbox" indexName="idx_promo_outbox_unprocessed">
+            <column name="processed"/>
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

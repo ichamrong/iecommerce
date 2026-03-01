@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+      v20 — Invoice Enterprise Hardening
+      ====================================
+      Tables: invoice (alter), invoice_line (alter), invoice_signature (new),
+              invoice_audit_log (new), invoice_outbox_event (new), invoice_tenant_counter (new)
+
+      Index strategy:
+        idx_invoice_tenant_created   → keyset cursor listing (tenant + created_at DESC, id DESC)
+        idx_invoice_tenant_status    → filter by status
+        uk_invoice_tenant_number     → uniqueness of invoice number per tenant
+        uk_invoice_signature         → one signature per invoice
+        idx_audit_tenant_created     → audit log cursor listing
+        idx_outbox_scan              → relay poll: find PENDING events due for retry
+    -->
+
+    <changeSet id="v20-invoice-enterprise-01-alter-invoice" author="antigravity">
+        <!-- ── 1. Extend the invoice table ────────────────────────────────── -->
+        <addColumn tableName="invoice">
+            <column name="customer_id" type="BIGINT"/>
+            <column name="currency" type="VARCHAR(3)"/>
+            <column name="subtotal" type="DECIMAL(19,4)" defaultValueNumeric="0"/>
+            <column name="tax_amount" type="DECIMAL(19,4)" defaultValueNumeric="0"/>
+            <column name="total" type="DECIMAL(19,4)" defaultValueNumeric="0"/>
+            <column name="issue_date" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="due_date" type="DATE"/>
+            <column name="void_reason" type="TEXT"/>
+            <column name="payment_reference" type="VARCHAR(255)"/>
+            <column name="seller_snapshot" type="TEXT"/>
+            <column name="buyer_snapshot" type="TEXT"/>
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <!-- Rename VOID → VOIDED for existing rows to match new enum -->
+        <sql>UPDATE invoice SET status = 'VOIDED' WHERE status = 'VOID'</sql>
+
+        <!-- invoice_number uniqueness is now per-tenant (drop old unique, add composite) -->
+        <dropUniqueConstraint tableName="invoice" constraintName="invoice_invoice_number_key"
+                              uniqueColumns="invoice_number"/>
+    </changeSet>
+
+    <changeSet id="v20-invoice-enterprise-02-invoice-indexes" author="antigravity">
+        <!-- Unique: (tenant_id, invoice_number) -->
+        <addUniqueConstraint
+            tableName="invoice"
+            columnNames="tenant_id, invoice_number"
+            constraintName="uk_invoice_tenant_number"/>
+
+        <!--
+          idx_invoice_tenant_created:
+          Used by the default listing query: WHERE tenant_id = ? ORDER BY created_at DESC, id DESC
+          Allows the DB to skip scanning non-tenant rows and supports the keyset cursor condition.
+        -->
+        <createIndex tableName="invoice" indexName="idx_invoice_tenant_created">
+            <column name="tenant_id"/>
+            <column name="created_at" descending="true"/>
+            <column name="id" descending="true"/>
+        </createIndex>
+
+        <!--
+          idx_invoice_tenant_status_issue:
+          Used when filtering: WHERE tenant_id = ? AND status = ? ORDER BY issue_date DESC, id DESC
+        -->
+        <createIndex tableName="invoice" indexName="idx_invoice_tenant_status_issue">
+            <column name="tenant_id"/>
+            <column name="status"/>
+            <column name="issue_date" descending="true"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="v20-invoice-enterprise-03-alter-invoice-line" author="antigravity">
+        <!-- ── 2. Extend the invoice_line table ──────────────────────────── -->
+        <addColumn tableName="invoice_line">
+            <column name="sku" type="VARCHAR(100)"/>
+            <column name="description" type="TEXT"/>
+            <column name="tax_rate" type="DECIMAL(7,4)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subtotal" type="DECIMAL(19,4)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subtotal_currency" type="VARCHAR(3)"/>
+            <column name="line_order" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="v20-invoice-enterprise-04-signature-table" author="antigravity">
+        <!-- ── 3. invoice_signature ──────────────────────────────────────── -->
+        <createTable tableName="invoice_signature">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <!--
+              UNIQUE invoice_id: one signature per invoice — enforced at DB + application level.
+              Prevents re-signing or signature collisions.
+            -->
+            <column name="invoice_id" type="BIGINT">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_invoice_signature"
+                             foreignKeyName="fk_signature_invoice" referencedTableName="invoice"
+                             referencedColumnNames="id"/>
+            </column>
+            <!--
+              content_hash: SHA-256 hex (64 chars) of the canonical invoice payload.
+              Used to detect tampering: re-canonicalize and compare.
+            -->
+            <column name="content_hash" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- signature_algorithm: "Ed25519" — stored for algorithm-agility during verification -->
+            <column name="signature_algorithm" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- signature_value: base64-encoded Ed25519 signature bytes -->
+            <column name="signature_value" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <!--
+              key_id: identifies which key pair was used.
+              Enables verification of historical invoices after key rotation.
+            -->
+            <column name="key_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="signed_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="v20-invoice-enterprise-05-audit-log" author="antigravity">
+        <!-- ── 4. invoice_audit_log ──────────────────────────────────────── -->
+        <createTable tableName="invoice_audit_log">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="invoice_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_audit_invoice" referencedTableName="invoice"
+                             referencedColumnNames="id"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- action: CREATED, LINE_ADDED, LINE_REMOVED, ISSUED, VOIDED, PAID, OVERDUE_FLAGGED -->
+            <column name="action" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- actor_id: JWT sub of the user, or "SYSTEM" for automated events -->
+            <column name="actor_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- details: JSON context. MUST NOT contain PII, payment card data, or key material -->
+            <column name="details" type="TEXT"/>
+            <column name="occurred_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!--
+          idx_audit_tenant_created:
+          Supports the cursor-paginated GET /invoices/{id}/audit-log endpoint:
+          WHERE invoice_id = ? AND tenant_id = ? ORDER BY occurred_at DESC, id DESC
+        -->
+        <createIndex tableName="invoice_audit_log" indexName="idx_audit_invoice_occurred">
+            <column name="invoice_id"/>
+            <column name="tenant_id"/>
+            <column name="occurred_at" descending="true"/>
+            <column name="id" descending="true"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="v20-invoice-enterprise-06-outbox" author="antigravity">
+        <!-- ── 5. invoice_outbox_event ────────────────────────────────────── -->
+        <createTable tableName="invoice_outbox_event">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- event_type: INVOICE_ISSUED, INVOICE_VOIDED, INVOICE_PAID -->
+            <column name="event_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- payload: JSON serialized event body -->
+            <column name="payload" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <!-- status: PENDING → SENT | FAILED -->
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- aggregate_id: invoiceId — for event ordering and deduplication -->
+            <column name="aggregate_id" type="BIGINT"/>
+            <column name="retry_count" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="processed_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <!--
+              next_attempt_at: set by exponential backoff on failure.
+              Relay query: WHERE status = 'PENDING' AND (next_attempt_at IS NULL OR next_attempt_at <= NOW())
+            -->
+            <column name="next_attempt_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <!-- trace_id: for distributed tracing correlation -->
+            <column name="trace_id" type="VARCHAR(64)"/>
+        </createTable>
+
+        <!--
+          idx_outbox_scan:
+          Critical for relay performance. Covers the SKIP LOCKED polling query:
+          WHERE status = 'PENDING' AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
+          ORDER BY created_at ASC
+        -->
+        <createIndex tableName="invoice_outbox_event" indexName="idx_invoice_outbox_scan">
+            <column name="status"/>
+            <column name="next_attempt_at"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="v20-invoice-enterprise-07-counter" author="antigravity">
+        <!-- ── 6. invoice_tenant_counter (sequential number generation) ──── -->
+        <createTable tableName="invoice_tenant_counter">
+            <!--
+              Composite PK: (tenant_id, year).
+              Separate row per tenant per year — allows independent numbering without gaps across tenants.
+            -->
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="year" type="INTEGER">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <!-- prefix: derived from tenantId, max 10 chars, e.g. "ACME" -->
+            <column name="prefix" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- last_seq: monotonically increasing; incremented atomically under PESSIMISTIC_WRITE lock -->
+            <column name="last_seq" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

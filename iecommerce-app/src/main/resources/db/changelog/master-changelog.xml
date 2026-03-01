@@ -24,4 +24,6 @@
     <include file="db/changelog/changelog-v17-inventory-hardening.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/changelog-v18-order-hardening.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/changelog-v19-promotion-hardening.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v20-invoice-enterprise.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v21-invoice-email-delivery.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>

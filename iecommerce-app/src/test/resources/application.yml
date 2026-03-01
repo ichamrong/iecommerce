@@ -1,0 +1,6 @@
+spring:
+  config:
+    import: "optional:vault://" # Make it optional for tests
+  cloud:
+    vault:
+      enabled: false

@@ -99,10 +99,7 @@ public class ReconciliationReportService {
                 Collectors.groupingBy(
                     Invoice::getOrderId,
                     Collectors.mapping(
-                        inv ->
-                            inv.getTotalAmount() != null
-                                ? inv.getTotalAmount().getAmount()
-                                : BigDecimal.ZERO,
+                        inv -> inv.getTotal() != null ? inv.getTotal() : BigDecimal.ZERO,
                         Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
 
     // Group payments by orderId

@@ -32,7 +32,8 @@ public class PosReceiptService {
     receipt.append("--------------------------------\n");
     receipt.append("Terminal: ").append(terminalId).append("\n");
     receipt.append("Invoice #: ").append(invoice.getInvoiceNumber()).append("\n");
-    receipt.append("Date: ").append(invoice.getInvoiceDate()).append("\n");
+    // Use issueDate (replaces legacy invoiceDate field)
+    receipt.append("Date: ").append(invoice.getIssueDate()).append("\n");
     receipt.append("--------------------------------\n");
 
     invoice
@@ -55,10 +56,8 @@ public class PosReceiptService {
             });
 
     receipt.append("--------------------------------\n");
-    receipt.append(
-        String.format(
-            "TOTAL: %.2f %s\n",
-            invoice.getTotalAmount().getAmount(), invoice.getTotalAmount().getCurrency()));
+    // Use getTotal() / getCurrency() — replaces legacy getTotalAmount()
+    receipt.append(String.format("TOTAL: %.2f %s\n", invoice.getTotal(), invoice.getCurrency()));
     receipt.append("--------------------------------\n");
     receipt.append("       THANK YOU!               \n");
     receipt.append("--------------------------------\n");

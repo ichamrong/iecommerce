@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!--
+        Changelog v21 — invoice_email_delivery
+        Purpose: Idempotency store for signed invoice email delivery attempts.
+
+        Design notes:
+        - UNIQUE (idempotency_key): prevents duplicate sends for the same invoice + message type.
+          Key format: "{invoiceId}:{messageType}" e.g. "42:INVOICE_ISSUED"
+        - INDEX (status, last_attempted_at): relay re-processing query — finds PENDING records
+          whose last_attempted_at < now - backoff_window.
+        - INDEX (invoice_id): resend lookup by invoice.
+        - status: PENDING → SENT (success) or PENDING → FAILED → PENDING (retry).
+        - sent_at is NULL until status = SENT; once SENT, record is never reprocessed.
+
+        ASVS controls:
+        - V14.5 — UNIQUE constraint enforces at-most-once delivery per (invoice, messageType).
+        - V7.1.1 — recipient_email stored here; callers MUST mask in logs.
+
+        ROLLBACK: Drop table is safe — table is additive and not referenced by FK from other tables.
+        ZERO-DOWNTIME: Additive-only; no existing v20 tables are modified.
+    -->
+
+    <changeSet id="v21-invoice-email-delivery" author="system">
+        <createTable tableName="invoice_email_delivery" remarks="Idempotency store for SMTP invoice email deliveries">
+
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="pk_invoice_email_delivery" nullable="false"/>
+            </column>
+
+            <column name="invoice_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Stored as-is; MUST be masked in all log output (ASVS V7.1.1) -->
+            <column name="recipient_email" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- INVOICE_ISSUED | INVOICE_RESEND -->
+            <column name="message_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- PENDING | SENT | FAILED -->
+            <column name="status" type="VARCHAR(20)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="attempt_count" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Null on first attempt; set on each attempt for backoff calculation -->
+            <column name="last_attempted_at" type="TIMESTAMPTZ"/>
+
+            <!-- Set only when status = SENT; null otherwise -->
+            <column name="sent_at" type="TIMESTAMPTZ"/>
+
+            <!-- Sanitised reason on FAILED; MUST NOT contain PII or SMTP credentials -->
+            <column name="error_message" type="TEXT"/>
+
+            <!--
+                Composite key: "{invoiceId}:{messageType}"
+                UNIQUE constraint enforces exactly-once delivery per event type per invoice.
+            -->
+            <column name="idempotency_key" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+
+        </createTable>
+
+        <!-- Idempotency — core guarantee; prevents duplicate sends -->
+        <addUniqueConstraint
+            tableName="invoice_email_delivery"
+            columnNames="idempotency_key"
+            constraintName="uk_email_delivery_idempotency"/>
+
+        <!-- Relay re-processing query: finds PENDING records to retry -->
+        <createIndex tableName="invoice_email_delivery"
+                     indexName="idx_email_delivery_status_last_attempted">
+            <column name="status"/>
+            <column name="last_attempted_at"/>
+        </createIndex>
+
+        <!-- Resend lookup by invoice -->
+        <createIndex tableName="invoice_email_delivery"
+                     indexName="idx_email_delivery_invoice_id">
+            <column name="invoice_id"/>
+        </createIndex>
+
+        <!-- Tenant scoped queries -->
+        <createIndex tableName="invoice_email_delivery"
+                     indexName="idx_email_delivery_tenant_id">
+            <column name="tenant_id"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>
