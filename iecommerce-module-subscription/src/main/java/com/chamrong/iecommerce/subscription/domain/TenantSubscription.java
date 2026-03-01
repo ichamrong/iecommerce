@@ -9,11 +9,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 @Getter
-@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "tenant_subscription")
 public class TenantSubscription extends BaseTenantEntity {
@@ -37,6 +38,21 @@ public class TenantSubscription extends BaseTenantEntity {
   @Column(nullable = false)
   private boolean autoRenew = true;
 
+  // ── Factory ───────────────────────────────────────────────────────────────
+
+  public static TenantSubscription startTrial(
+      String tenantId, SubscriptionPlan plan, int trialDays) {
+    var sub = new TenantSubscription();
+    sub.setTenantId(tenantId);
+    sub.plan = plan;
+    sub.status = SubscriptionStatus.TRIAL;
+    sub.startDate = Instant.now();
+    sub.endDate = sub.startDate.plusSeconds((long) trialDays * 86400);
+    sub.nextBillingDate = sub.endDate;
+    sub.autoRenew = true;
+    return sub;
+  }
+
   // ── Domain behaviour ───────────────────────────────────────────────────────
 
   public boolean isActive() {
@@ -55,5 +71,11 @@ public class TenantSubscription extends BaseTenantEntity {
 
   public void expire() {
     this.status = SubscriptionStatus.EXPIRED;
+  }
+
+  public void upgradeTo(SubscriptionPlan newPlan, Instant nextBillingDate) {
+    this.plan = newPlan;
+    this.status = SubscriptionStatus.ACTIVE;
+    this.nextBillingDate = nextBillingDate;
   }
 }

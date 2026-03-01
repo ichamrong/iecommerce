@@ -9,11 +9,12 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import java.util.HashSet;
 import java.util.Set;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
-@Setter
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "auth_group")
 public class Group extends BaseTenantEntity {
@@ -29,4 +30,17 @@ public class Group extends BaseTenantEntity {
       joinColumns = @JoinColumn(name = "group_id"),
       inverseJoinColumns = @JoinColumn(name = "user_id"))
   private Set<User> users = new HashSet<>();
+
+  public Group(String tenantId, String name) {
+    setTenantId(tenantId);
+    this.name = name;
+  }
+
+  public void addUser(User user) {
+    this.users.add(user);
+  }
+
+  public void removeUser(User user) {
+    this.users.remove(user);
+  }
 }

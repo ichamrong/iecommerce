@@ -6,7 +6,6 @@ import com.chamrong.iecommerce.subscription.application.dto.TenantSubscriptionRe
 import com.chamrong.iecommerce.subscription.application.dto.UpgradeRequest;
 import com.chamrong.iecommerce.subscription.domain.SubscriptionPlan;
 import com.chamrong.iecommerce.subscription.domain.SubscriptionPlanRepository;
-import com.chamrong.iecommerce.subscription.domain.SubscriptionStatus;
 import com.chamrong.iecommerce.subscription.domain.TenantSubscription;
 import com.chamrong.iecommerce.subscription.domain.TenantSubscriptionRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -54,14 +53,7 @@ public class SubscriptionService implements SubscriptionApi {
             .findByCode(planCode)
             .orElseThrow(() -> new EntityNotFoundException("Plan not found: " + planCode));
 
-    TenantSubscription sub = new TenantSubscription();
-    sub.setTenantId(tenantId);
-    sub.setPlan(plan);
-    sub.setStatus(SubscriptionStatus.TRIAL);
-    sub.setStartDate(Instant.now());
-    sub.setEndDate(Instant.now().plus(14, ChronoUnit.DAYS)); // 14-day trial
-    sub.setNextBillingDate(sub.getEndDate());
-    sub.setAutoRenew(true);
+    TenantSubscription sub = TenantSubscription.startTrial(tenantId, plan, 14);
 
     log.info("Started trial for tenant={} plan={}", tenantId, planCode);
     return toTenantResponse(tenantSubscriptionRepository.save(sub));
@@ -83,10 +75,8 @@ public class SubscriptionService implements SubscriptionApi {
                 () ->
                     new EntityNotFoundException("No active subscription for tenant: " + tenantId));
 
-    sub.setPlan(newPlan);
-    sub.setStatus(SubscriptionStatus.ACTIVE);
     // In a real app, logic for prorated billing would go here
-    sub.setNextBillingDate(Instant.now().plus(30, ChronoUnit.DAYS));
+    sub.upgradeTo(newPlan, Instant.now().plus(30, ChronoUnit.DAYS));
 
     log.info("Upgraded tenant={} to plan={}", tenantId, request.planCode());
     return toTenantResponse(tenantSubscriptionRepository.save(sub));

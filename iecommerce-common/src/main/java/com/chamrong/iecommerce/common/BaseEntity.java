@@ -1,20 +1,25 @@
 package com.chamrong.iecommerce.common;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
 import java.time.Instant;
+import java.util.Objects;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-@org.hibernate.annotations.FilterDef(
-    name = "softDeleteFilter",
-    parameters =
-        @org.hibernate.annotations.ParamDef(
-            name = "isDeleted",
-            type = org.hibernate.type.descriptor.java.BooleanJavaType.class))
-@org.hibernate.annotations.Filter(name = "softDeleteFilter", condition = "deleted = :isDeleted")
 public abstract class BaseEntity {
 
   @Id
@@ -34,43 +39,30 @@ public abstract class BaseEntity {
 
   private Instant deletedAt;
 
-  public Long getId() {
-    return id;
+  // ── Protected soft-delete behaviour ───────────────────────────────────────
+
+  protected void softDelete() {
+    this.deleted = true;
+    this.deletedAt = Instant.now();
   }
 
-  public void setId(Long id) {
-    this.id = id;
+  protected void restore() {
+    this.deleted = false;
+    this.deletedAt = null;
   }
 
-  public Instant getCreatedAt() {
-    return createdAt;
+  // ── Proxy-safe equals / hashCode ──────────────────────────────────────────
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+    BaseEntity that = (BaseEntity) o;
+    return id != null && Objects.equals(id, that.id);
   }
 
-  public void setCreatedAt(Instant createdAt) {
-    this.createdAt = createdAt;
-  }
-
-  public Instant getUpdatedAt() {
-    return updatedAt;
-  }
-
-  public void setUpdatedAt(Instant updatedAt) {
-    this.updatedAt = updatedAt;
-  }
-
-  public boolean isDeleted() {
-    return deleted;
-  }
-
-  public void setDeleted(boolean deleted) {
-    this.deleted = deleted;
-  }
-
-  public Instant getDeletedAt() {
-    return deletedAt;
-  }
-
-  public void setDeletedAt(Instant deletedAt) {
-    this.deletedAt = deletedAt;
+  @Override
+  public int hashCode() {
+    return getClass().hashCode();
   }
 }

@@ -11,16 +11,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * Entity to track idempotent write operations. Prevents re-execution of commands with the same
  * operation type and reference ID.
  */
-@Entity
 @Getter
-@Setter
 @NoArgsConstructor
+@Entity
 @Table(name = "order_idempotency")
 public class OrderIdempotency {
 
@@ -32,22 +30,27 @@ public class OrderIdempotency {
   @Column(name = "recorded_at", nullable = false, updatable = false)
   private Instant recordedAt = Instant.now();
 
-  public void setOperationType(String type) {
-    this.id.operationType = type;
+  public static OrderIdempotency of(
+      String operationType, String referenceId, String resultSnapshot) {
+    var e = new OrderIdempotency();
+    e.id.operationType = operationType;
+    e.id.referenceId = referenceId;
+    e.resultSnapshot = resultSnapshot;
+    return e;
   }
 
   public String getOperationType() {
     return this.id.operationType;
   }
 
-  public void setReferenceId(String ref) {
-    this.id.referenceId = ref;
-  }
-
   public String getReferenceId() {
     return this.id.referenceId;
   }
 
+  /**
+   * @Data is acceptable on @Embeddable composite keys — equals/hashCode on the key identity fields
+   * is required and correct here.
+   */
   @Data
   @Embeddable
   @NoArgsConstructor

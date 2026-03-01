@@ -30,12 +30,8 @@ public final class UserAccountFactory {
   public static @NonNull User createSelfRegistered(
       @NonNull final String username, @NonNull final String email, @NonNull final String tenantId) {
 
-    final User user = new User();
-    user.setUsername(username.trim().toLowerCase());
-    user.setEmail(email.trim().toLowerCase());
-    user.setTenantId(tenantId);
-    user.setEnabled(true);
-    user.setAccountState(UserAccountState.ACTIVE);
+    final User user = new User(tenantId, username.trim().toLowerCase(), email.trim().toLowerCase());
+    user.activate();
     return user;
   }
 
@@ -53,12 +49,8 @@ public final class UserAccountFactory {
   public static @NonNull User createAdminInvited(
       @NonNull final String username, @NonNull final String email, @NonNull final String tenantId) {
 
-    final User user = new User();
-    user.setUsername(username.trim().toLowerCase());
-    user.setEmail(email.trim().toLowerCase());
-    user.setTenantId(tenantId);
-    user.setEnabled(true); // login is allowed so first-login reset can happen
-    user.setAccountState(UserAccountState.PENDING);
+    final User user = new User(tenantId, username.trim().toLowerCase(), email.trim().toLowerCase());
+    user.pendingActivation();
     return user;
   }
 
@@ -76,12 +68,8 @@ public final class UserAccountFactory {
   public static @NonNull User createFromSocialLogin(
       @NonNull final String username, @NonNull final String email, @NonNull final String tenantId) {
 
-    final User user = new User();
-    user.setUsername(username.trim().toLowerCase());
-    user.setEmail(email.trim().toLowerCase());
-    user.setTenantId(tenantId);
-    user.setEnabled(true);
-    user.setAccountState(UserAccountState.ACTIVE);
+    final User user = new User(tenantId, username.trim().toLowerCase(), email.trim().toLowerCase());
+    user.activate();
     return user;
   }
 }

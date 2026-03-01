@@ -7,7 +7,6 @@ import com.chamrong.iecommerce.asset.domain.StorageService;
 import com.chamrong.iecommerce.asset.domain.exception.AssetErrorCode;
 import com.chamrong.iecommerce.asset.domain.exception.AssetException;
 import com.chamrong.iecommerce.common.TenantContext;
-import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +45,6 @@ public class AssetDeletionService {
     }
 
     List<Asset> assetsToUpdate = new java.util.ArrayList<>();
-    Instant now = Instant.now();
 
     for (Long id : ids) {
       Asset asset =
@@ -63,7 +61,7 @@ public class AssetDeletionService {
         storageService.delete(asset.getSource());
       }
 
-      asset.setDeletedAt(now);
+      asset.softDelete();
       assetsToUpdate.add(asset);
       evictAssetCaches(asset);
     }
@@ -88,7 +86,7 @@ public class AssetDeletionService {
       storageService.delete(asset.getSource());
     }
 
-    asset.setDeletedAt(Instant.now());
+    asset.softDelete();
     assetRepository.save(asset);
     evictAssetCaches(asset); // Clear related caches
     log.info("Deleted asset ID: {} and its children", id);

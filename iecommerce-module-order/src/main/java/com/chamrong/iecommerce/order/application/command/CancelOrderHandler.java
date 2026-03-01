@@ -42,13 +42,13 @@ public class CancelOrderHandler {
   private final MeterRegistry metrics;
 
   @Transactional
-  public OrderResponse handle(Long orderId, String requestId, String actor) {
+  public OrderResponse handle(Long orderId, String idempotencyKey, String actor) {
     Objects.requireNonNull(orderId, "orderId must not be null");
 
     final String tenantId = TenantContext.requireTenantId();
 
     // 1. Idempotency Check
-    var existingResult = idempotency.check("CANCEL_ORDER", requestId);
+    var existingResult = idempotency.check("CANCEL_ORDER", idempotencyKey);
     if (existingResult.isPresent()) {
       return orderRepository
           .findById(orderId)
@@ -110,7 +110,7 @@ public class CancelOrderHandler {
     }
 
     // 7. Idempotency Record
-    idempotency.record("CANCEL_ORDER", requestId, "");
+    idempotency.record("CANCEL_ORDER", idempotencyKey, "");
 
     metrics.counter("order.cancelled", "tenant", tenantId, "from", oldState.name()).increment();
     log.info("Order cancelled id={} prev_state={} tenantId={}", saved.getId(), oldState, tenantId);

@@ -48,11 +48,13 @@ public class CreatePosOrderHandler {
     order.setCustomerId(req.customerId());
 
     for (var itemReq : req.items()) {
-      OrderItem item = new OrderItem();
-      item.setProductVariantId(itemReq.productVariantId());
-      item.setQuantity(itemReq.quantity());
-      item.setUnitPrice(new Money(itemReq.price(), req.currency()));
-      order.addItem(item);
+      order.addItem(
+          OrderItem.of(
+              itemReq.productVariantId(),
+              itemReq.quantity(),
+              new Money(itemReq.price(), req.currency()),
+              null,
+              null));
     }
 
     order.setTotalManual(new Money(req.amountPaid(), req.currency()));

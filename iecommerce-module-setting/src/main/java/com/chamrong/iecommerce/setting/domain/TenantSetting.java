@@ -7,8 +7,6 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.Getter;
-import lombok.Setter;
 
 /**
  * Tenant-specific configuration entry.
@@ -18,8 +16,6 @@ import lombok.Setter;
  *
  * <p>Examples: {@code store_name}, {@code base_currency}, {@code smtp_password}.
  */
-@Getter
-@Setter
 @Entity
 @Table(
     name = "setting_tenant",
@@ -51,4 +47,71 @@ public class TenantSetting extends BaseTenantEntity {
    */
   @Column(name = "is_secret", nullable = false)
   private boolean secret = false;
+
+  public TenantSetting() {}
+
+  public TenantSetting(
+      String tenantId,
+      String key,
+      String value,
+      SettingCategory category,
+      SettingDataType dataType) {
+    setTenantId(tenantId);
+    this.key = key;
+    this.value = value;
+    this.category = category;
+    this.dataType = dataType;
+  }
+
+  public String getKey() {
+    return key;
+  }
+
+  public void setKey(String key) {
+    this.key = key;
+  }
+
+  public String getValue() {
+    return value;
+  }
+
+  public void setValue(String value) {
+    this.value = value;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public SettingCategory getCategory() {
+    return category;
+  }
+
+  public void setCategory(SettingCategory category) {
+    this.category = category;
+  }
+
+  public SettingDataType getDataType() {
+    return dataType;
+  }
+
+  public void setDataType(SettingDataType dataType) {
+    this.dataType = dataType;
+  }
+
+  public boolean isSecret() {
+    return secret;
+  }
+
+  public void setSecret(boolean secret) {
+    this.secret = secret;
+  }
+
+  public void updateValue(String newValue) {
+    this.value = newValue;
+  }
 }

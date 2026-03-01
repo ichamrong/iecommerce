@@ -1,6 +1,8 @@
 package com.chamrong.iecommerce.promotion.application.dto;
 
-import com.chamrong.iecommerce.promotion.domain.PromotionType;
+import com.chamrong.iecommerce.promotion.domain.model.PromotionStatus;
+import com.chamrong.iecommerce.promotion.domain.model.PromotionType;
+import java.math.BigDecimal;
 import java.time.Instant;
 
 public record PromotionResponse(
@@ -8,9 +10,12 @@ public record PromotionResponse(
     String name,
     String description,
     PromotionType type,
-    Double value,
+    BigDecimal value,
     String code,
     Instant validFrom,
     Instant validTo,
-    boolean active,
-    Instant createdAt) {}
+    PromotionStatus status,
+    int priority,
+    boolean stackable,
+    Integer usageLimit,
+    Integer usedCount) {}

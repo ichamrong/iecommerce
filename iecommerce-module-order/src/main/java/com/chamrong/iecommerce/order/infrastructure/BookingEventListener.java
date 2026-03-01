@@ -38,13 +38,9 @@ public class BookingEventListener {
     order.setCustomerId(event.customerId());
     order.assignCode("BOOK-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
 
-    OrderItem item = new OrderItem();
-    item.setProductVariantId(event.resourceVariantId());
-    item.setQuantity(1); // One booking
-    item.setUnitPrice(event.totalPrice());
-    item.setStartAt(event.startAt());
-    item.setEndAt(event.endAt());
-    order.addItem(item);
+    order.addItem(
+        OrderItem.of(
+            event.resourceVariantId(), 1, event.totalPrice(), event.startAt(), event.endAt()));
 
     // Let the domain logic calculate totals to prevent mismatch bugs
     order.recalculateTotals();

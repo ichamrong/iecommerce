@@ -176,13 +176,10 @@ public class KeycloakInitializer implements CommandLineRunner {
                 .orElseThrow(() -> new IllegalStateException("ROLE_PLATFORM_ADMIN not found"));
 
         com.chamrong.iecommerce.auth.domain.User localUser =
-            new com.chamrong.iecommerce.auth.domain.User();
-        localUser.setUsername(username);
-        localUser.setEmail(email);
-        localUser.setKeycloakId(keycloakId);
-        localUser.setTenantId("SYSTEM");
-        localUser.setRoles(java.util.Set.of(adminRole));
-        localUser.setEnabled(true);
+            new com.chamrong.iecommerce.auth.domain.User("SYSTEM", username, email);
+        localUser.linkKeycloak(keycloakId);
+        localUser.activate();
+        localUser.addRole(adminRole);
 
         userRepository.save(localUser);
       }

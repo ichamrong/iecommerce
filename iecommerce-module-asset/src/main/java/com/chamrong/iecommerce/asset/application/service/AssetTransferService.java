@@ -138,10 +138,7 @@ public class AssetTransferService {
       String newMaterializedPath = computeMaterializedPath(asset, targetFolder);
 
       String newSource = storageService.move(asset.getSource(), destinationPath);
-
-      asset.setSource(newSource);
-      asset.setParentId(targetFolderId);
-      asset.setPath(newMaterializedPath);
+      asset.moveTo(newSource, targetFolderId, newMaterializedPath);
       movedAssets.add(asset);
 
       log.info(
@@ -182,15 +179,15 @@ public class AssetTransferService {
 
       Asset asset = findAssetById(assetId);
       validateTenant(asset);
-      asset.setName(newName);
-
       String oldFileName = asset.getFileName();
+      String newFileName;
       if (oldFileName != null && oldFileName.contains(".") && !newName.contains(".")) {
         String extension = oldFileName.substring(oldFileName.lastIndexOf("."));
-        asset.setFileName(newName + extension);
+        newFileName = newName + extension;
       } else {
-        asset.setFileName(newName);
+        newFileName = newName;
       }
+      asset.rename(newName, newFileName);
       renamedAssets.add(asset);
       log.info("Renamed Asset ID: {} to {}", asset.getId(), newName);
     }
@@ -211,10 +208,7 @@ public class AssetTransferService {
     String newMaterializedPath = computeMaterializedPath(asset, targetFolder);
 
     String newSource = storageService.move(asset.getSource(), destinationPath);
-
-    asset.setSource(newSource);
-    asset.setParentId(targetFolderId);
-    asset.setPath(newMaterializedPath);
+    asset.moveTo(newSource, targetFolderId, newMaterializedPath);
     asset = assetRepository.save(asset);
 
     log.info(
@@ -228,15 +222,15 @@ public class AssetTransferService {
   private @NonNull Asset internalRename(@NonNull Long assetId, @NonNull String newName) {
     Asset asset = findAssetById(assetId);
     validateTenant(asset);
-    asset.setName(newName);
-
     String oldFileName = asset.getFileName();
+    String newFileName;
     if (oldFileName != null && oldFileName.contains(".") && !newName.contains(".")) {
       String extension = oldFileName.substring(oldFileName.lastIndexOf("."));
-      asset.setFileName(newName + extension);
+      newFileName = newName + extension;
     } else {
-      asset.setFileName(newName);
+      newFileName = newName;
     }
+    asset.rename(newName, newFileName);
 
     asset = assetRepository.save(asset);
     log.info("Renamed Asset ID: {} to {}", asset.getId(), newName);
@@ -295,32 +289,16 @@ public class AssetTransferService {
       @NonNull AssetType type,
       @Nullable Long parentId,
       @NonNull String materializedPath) {
-    Asset folder = new Asset();
-    folder.setTenantId(tenantId);
-    folder.setName(name);
-    folder.setFileName(name);
-    folder.setMimeType(StorageConstants.MIME_DIRECTORY);
-    folder.setFileSize(0L);
-    folder.setSource(source);
-    folder.setType(type);
-    folder.setParentId(parentId);
-    folder.setFolder(true);
-    folder.setPath(materializedPath);
-    return folder;
+    return Asset.folder(
+        tenantId, name, source, type, parentId, materializedPath, StorageConstants.MIME_DIRECTORY);
   }
 
   private @NonNull Asset createCopiedAsset(
       @NonNull Asset sourceAsset, @NonNull String newSource, @Nullable Long targetFolderId) {
-    Asset copiedAsset = new Asset();
-    copiedAsset.setTenantId(sourceAsset.getTenantId());
-    copiedAsset.setName(StorageConstants.COPY_PREFIX + sourceAsset.getName());
-    copiedAsset.setFileName(sourceAsset.getFileName());
-    copiedAsset.setMimeType(sourceAsset.getMimeType());
-    copiedAsset.setFileSize(sourceAsset.getFileSize());
-    copiedAsset.setSource(newSource);
-    copiedAsset.setType(sourceAsset.getType());
-    copiedAsset.setParentId(targetFolderId);
-    copiedAsset.setFolder(false);
-    return copiedAsset;
+    return Asset.copyOf(
+        sourceAsset,
+        newSource,
+        StorageConstants.COPY_PREFIX + sourceAsset.getName(),
+        targetFolderId);
   }
 }

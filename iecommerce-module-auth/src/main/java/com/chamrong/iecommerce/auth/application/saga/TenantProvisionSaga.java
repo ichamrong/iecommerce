@@ -34,7 +34,7 @@ public class TenantProvisionSaga {
     try {
       // 1. Initial State already saved by caller in a single transaction if needed,
       // but here we manage the lifecycle.
-      tenant.setProvisioningStatus(TenantProvisioningStatus.INITIAL);
+      tenant.updateProvisioningStatus(TenantProvisioningStatus.INITIAL);
       tenantRepository.save(tenant);
 
       // 2. Register Owner in IDP (Keycloak)
@@ -46,11 +46,11 @@ public class TenantProvisionSaga {
       log.debug("Step 2: Registering owner {} in IDP", ownerUsername);
       registerUserHandler.handle(regCmd);
 
-      tenant.setProvisioningStatus(TenantProvisioningStatus.IDP_CREATED);
+      tenant.updateProvisioningStatus(TenantProvisioningStatus.IDP_CREATED);
       tenantRepository.save(tenant);
 
       // 3. Finalize
-      tenant.setProvisioningStatus(TenantProvisioningStatus.COMPLETED);
+      tenant.updateProvisioningStatus(TenantProvisioningStatus.COMPLETED);
       tenantRepository.save(tenant);
 
       if (isSignup) {
@@ -64,7 +64,7 @@ public class TenantProvisionSaga {
     } catch (Exception e) {
       log.error(
           "Provisioning saga failed for tenant: {}. Triggering compensation...", tenantCode, e);
-      tenant.setProvisioningStatus(TenantProvisioningStatus.FAILED);
+      tenant.updateProvisioningStatus(TenantProvisioningStatus.FAILED);
       tenantRepository.save(tenant);
       throw e; // Rethrow to rollback transaction
     }

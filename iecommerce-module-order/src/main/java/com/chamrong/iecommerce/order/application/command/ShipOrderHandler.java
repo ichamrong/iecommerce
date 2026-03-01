@@ -39,13 +39,14 @@ public class ShipOrderHandler {
   private final MeterRegistry metrics;
 
   @Transactional
-  public OrderResponse handle(Long orderId, String trackingNumber, String requestId, String actor) {
+  public OrderResponse handle(
+      Long orderId, String trackingNumber, String idempotencyKey, String actor) {
     Objects.requireNonNull(orderId, "orderId must not be null");
 
     final String tenantId = TenantContext.requireTenantId();
 
     // 1. Idempotency Check
-    var existingResult = idempotency.check("SHIP_ORDER", requestId);
+    var existingResult = idempotency.check("SHIP_ORDER", idempotencyKey);
     if (existingResult.isPresent()) {
       return orderRepository
           .findById(orderId)
@@ -98,7 +99,7 @@ public class ShipOrderHandler {
     }
 
     // 7. Idempotency Record
-    idempotency.record("SHIP_ORDER", requestId, "");
+    idempotency.record("SHIP_ORDER", idempotencyKey, "");
 
     metrics.counter("order.shipped", "tenant", tenantId).increment();
     log.info(

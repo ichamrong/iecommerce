@@ -16,8 +16,9 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 /**
  * A Booking represents one confirmed reservation of a resource (room or service slot) by a customer
@@ -28,10 +29,38 @@ import lombok.Setter;
  * date midnight.
  */
 @Getter
-@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "booking")
 public class Booking extends BaseTenantEntity {
+
+  // ── Factory ───────────────────────────────────────────────────────────────
+
+  public static Booking create(
+      String tenantId,
+      Long customerId,
+      Long resourceProductId,
+      Long resourceVariantId,
+      Long assignedStaffId,
+      java.time.Instant startAt,
+      java.time.Instant endAt,
+      BookingType type,
+      String customerNotes,
+      Money totalPrice) {
+    var b = new Booking();
+    b.setTenantId(tenantId);
+    b.customerId = customerId;
+    b.resourceProductId = resourceProductId;
+    b.resourceVariantId = resourceVariantId;
+    b.assignedStaffId = assignedStaffId;
+    b.startAt = startAt;
+    b.endAt = endAt;
+    b.type = type;
+    b.status = BookingStatus.PENDING;
+    b.customerNotes = customerNotes;
+    b.totalPrice = totalPrice;
+    return b;
+  }
 
   // ── What is being booked ───────────────────────────────────────────────────
 

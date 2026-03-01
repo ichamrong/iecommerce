@@ -6,4 +6,4 @@ package com.chamrong.iecommerce.order.application.dto;
  * @param trackingNumber required; must be non-blank
  * @param idempotencyKey client-generated UUID for deduplication; maps to {@code X-Idempotency-Key}
  */
-public record ShipOrderRequest(String trackingNumber, String requestId) {}
+public record ShipOrderRequest(String trackingNumber, String idempotencyKey) {}

@@ -199,7 +199,7 @@ public class Order extends BaseTenantEntity {
               + MAX_QUANTITY
               + "]");
     }
-    item.setOrder(this);
+    item.assignOrder(this);
     items.add(item);
   }
 

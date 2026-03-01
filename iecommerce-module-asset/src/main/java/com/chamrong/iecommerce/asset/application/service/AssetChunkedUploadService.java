@@ -74,17 +74,17 @@ public class AssetChunkedUploadService {
         "application/octet-stream"; // A good default, ideally fetch from metadata/request
 
     // 3. Save to database
-    Asset asset = new Asset();
-    asset.setTenantId(tenantId);
-    asset.setName(metadata.path() != null ? metadata.path() : request.getKey());
-    asset.setFileName(request.getKey());
-    asset.setMimeType(mimeType);
-    asset.setFileSize(finalSize);
-    asset.setSource(fullKey);
-    asset.setType(metadata.type());
-    asset.setPath(metadata.path());
-    asset.setFolder(false);
-    asset.setPublic(metadata.isPublic());
+    Asset asset =
+        Asset.create(
+            tenantId,
+            metadata.path() != null ? metadata.path() : request.getKey(),
+            request.getKey(),
+            mimeType,
+            finalSize,
+            fullKey,
+            metadata.type(),
+            metadata.path(),
+            metadata.isPublic());
 
     log.info("Completed multipart upload for asset: key={}", request.getKey());
     return AssetMapper.toResponse(assetRepository.save(asset));

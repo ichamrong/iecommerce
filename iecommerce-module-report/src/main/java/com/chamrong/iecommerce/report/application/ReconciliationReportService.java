@@ -5,8 +5,8 @@ import com.chamrong.iecommerce.invoice.domain.InvoiceRepository;
 import com.chamrong.iecommerce.order.domain.Order;
 import com.chamrong.iecommerce.order.domain.OrderRepository;
 import com.chamrong.iecommerce.order.domain.OrderState;
-import com.chamrong.iecommerce.payment.domain.Payment;
-import com.chamrong.iecommerce.payment.domain.PaymentRepository;
+import com.chamrong.iecommerce.payment.domain.PaymentIntent;
+import com.chamrong.iecommerce.payment.domain.ports.PaymentIntentRepositoryPort;
 import com.chamrong.iecommerce.report.application.dto.PosReconciliationDto;
 import com.chamrong.iecommerce.report.application.dto.TenantReconciliationResultDto;
 import java.math.BigDecimal;
@@ -26,7 +26,7 @@ public class ReconciliationReportService {
 
   private final OrderRepository orderRepository;
   private final InvoiceRepository invoiceRepository;
-  private final PaymentRepository paymentRepository;
+  private final PaymentIntentRepositoryPort paymentRepository;
 
   /**
    * Generates a reconciliation report for a specific POS terminal session. This bridges Order and
@@ -89,7 +89,7 @@ public class ReconciliationReportService {
     List<Order> orders = orderRepository.findByTenantIdAndCreatedAtBetween(tenantId, start, end);
     List<Invoice> invoices =
         invoiceRepository.findByTenantIdAndCreatedAtBetween(tenantId, start, end);
-    List<Payment> payments =
+    List<PaymentIntent> payments =
         paymentRepository.findByTenantIdAndCreatedAtBetween(tenantId, start, end);
 
     // Group invoices by orderId
@@ -110,7 +110,7 @@ public class ReconciliationReportService {
         payments.stream()
             .collect(
                 Collectors.groupingBy(
-                    Payment::getOrderId,
+                    PaymentIntent::getOrderId,
                     Collectors.mapping(
                         pay ->
                             pay.getAmount() != null ? pay.getAmount().getAmount() : BigDecimal.ZERO,

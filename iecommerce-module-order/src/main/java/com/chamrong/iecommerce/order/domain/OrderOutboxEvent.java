@@ -6,11 +6,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import lombok.Getter;
-import lombok.Setter;
 
-@Entity
 @Getter
-@Setter
+@Entity
 @Table(name = "order_outbox_event")
 public class OrderOutboxEvent extends BaseOutboxEvent {
 
@@ -31,5 +29,13 @@ public class OrderOutboxEvent extends BaseOutboxEvent {
     e.setStatus(Status.PENDING);
     e.setCreatedAt(Instant.now());
     return e;
+  }
+
+  public void updateNextAttemptAt(Instant nextAttemptAt) {
+    this.nextAttemptAt = nextAttemptAt;
+  }
+
+  public void updateAggregateId(Long aggregateId) {
+    this.aggregateId = aggregateId;
   }
 }

@@ -64,29 +64,25 @@ public class BookingService implements BookingApi {
       }
     }
 
-    Booking booking = new Booking();
-    booking.setTenantId(tenantId);
-    booking.setResourceProductId(req.resourceProductId());
-    booking.setResourceVariantId(req.resourceVariantId());
-    booking.setAssignedStaffId(req.assignedStaffId());
-    booking.setCustomerId(req.customerId());
-    booking.setStartAt(req.startAt());
-    booking.setEndAt(req.endAt());
-    booking.setType(req.type());
-    booking.setStatus(BookingStatus.PENDING);
-    booking.setCustomerNotes(req.customerNotes());
-
-    if (req.totalPriceAmount() != null) {
-      booking.setTotalPrice(new Money(req.totalPriceAmount(), req.totalPriceCurrency()));
-    }
+    Booking booking =
+        Booking.create(
+            tenantId,
+            req.customerId(),
+            req.resourceProductId(),
+            req.resourceVariantId(),
+            req.assignedStaffId(),
+            req.startAt(),
+            req.endAt(),
+            req.type(),
+            req.customerNotes(),
+            req.totalPriceAmount() != null
+                ? new Money(req.totalPriceAmount(), req.totalPriceCurrency())
+                : null);
 
     // Block the slot immediately to prevent race-condition double-booking
-    BlockedSlot slot = new BlockedSlot();
-    slot.setResourceProductId(req.resourceProductId());
-    slot.setResourceVariantId(req.resourceVariantId());
-    slot.setStartAt(req.startAt());
-    slot.setEndAt(req.endAt());
-    slot.setReason(BlockedSlot.BlockedReason.BOOKING);
+    BlockedSlot slot =
+        BlockedSlot.forBooking(
+            req.resourceProductId(), req.resourceVariantId(), req.startAt(), req.endAt());
     booking.getBlockedSlots().add(slot);
 
     Booking saved = bookingRepository.save(booking);
@@ -250,17 +246,16 @@ public class BookingService implements BookingApi {
 
   @Transactional
   public AvailabilityRuleResponse addRule(String tenantId, AvailabilityRuleRequest req) {
-    AvailabilityRule rule = new AvailabilityRule();
-    rule.setTenantId(tenantId);
-    rule.setResourceProductId(req.resourceProductId());
-    rule.setResourceVariantId(req.resourceVariantId());
-    rule.setStaffId(req.staffId());
-    rule.setDayOfWeek(req.dayOfWeek());
-    rule.setOpenTime(req.openTime());
-    rule.setCloseTime(req.closeTime());
-    if (req.slotDurationMinutes() != null) {
-      rule.setSlotDurationMinutes(req.slotDurationMinutes());
-    }
+    AvailabilityRule rule =
+        AvailabilityRule.of(
+            tenantId,
+            req.resourceProductId(),
+            req.resourceVariantId(),
+            req.staffId(),
+            req.dayOfWeek(),
+            req.openTime(),
+            req.closeTime(),
+            req.slotDurationMinutes());
     return toRuleResponse(availabilityRuleRepository.save(rule));
   }
 

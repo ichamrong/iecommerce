@@ -10,15 +10,14 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import java.util.HashSet;
 import java.util.Set;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "auth_role")
-@Getter
-@Setter
-@NoArgsConstructor
 public class Role extends BaseTenantEntity {
 
   public static final String ROLE_PLATFORM_ADMIN = "ROLE_PLATFORM_ADMIN";
@@ -43,5 +42,17 @@ public class Role extends BaseTenantEntity {
 
   public Role(String name) {
     this.name = name;
+  }
+
+  public void describe(String description) {
+    this.description = description;
+  }
+
+  public void assignTo(String tenantId) {
+    setTenantId(tenantId);
+  }
+
+  public void setPermissions(Set<Permission> perms) {
+    this.permissions = perms;
   }
 }

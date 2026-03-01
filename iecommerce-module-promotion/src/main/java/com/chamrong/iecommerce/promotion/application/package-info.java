@@ -1,3 +1,6 @@
-/** Package com.chamrong.iecommerce.promotion.application. */
-@org.springframework.lang.NonNullApi
+/**
+ * Application Layer: Orchestrates use cases and implements inbound ports.
+ *
+ * <p>Dependency Rules: - Allowed: domain - Forbidden: api, infrastructure
+ */
 package com.chamrong.iecommerce.promotion.application;

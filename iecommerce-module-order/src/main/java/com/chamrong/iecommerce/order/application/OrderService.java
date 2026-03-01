@@ -99,15 +99,15 @@ public class OrderService implements OrderApi {
         throw new IllegalArgumentException(
             "Combined quantity " + newQty + " exceeds maximum " + Order.MAX_QUANTITY);
       }
-      item.setQuantity(newQty);
+      item.updateQuantity(newQty);
     } else {
-      final OrderItem item = new OrderItem();
-      item.setProductVariantId(req.productVariantId());
-      item.setQuantity(req.quantity());
-      // Always bind catalog price — never trust client-submitted prices
-      item.setUnitPrice(new Money(catalogVariant.priceAmount(), catalogVariant.priceCurrency()));
-      item.setStartAt(req.startAt());
-      item.setEndAt(req.endAt());
+      final OrderItem item =
+          OrderItem.of(
+              req.productVariantId(),
+              req.quantity(),
+              new Money(catalogVariant.priceAmount(), catalogVariant.priceCurrency()),
+              req.startAt(),
+              req.endAt());
       order.addItem(item);
     }
 
@@ -230,11 +230,13 @@ public class OrderService implements OrderApi {
     order.setCustomerId(req.customerId());
 
     for (CreatePosOrderRequest.Item itemReq : req.items()) {
-      OrderItem item = new OrderItem();
-      item.setProductVariantId(itemReq.productVariantId());
-      item.setQuantity(itemReq.quantity());
-      item.setUnitPrice(new Money(itemReq.price(), req.currency()));
-      order.addItem(item);
+      order.addItem(
+          OrderItem.of(
+              itemReq.productVariantId(),
+              itemReq.quantity(),
+              new Money(itemReq.price(), req.currency()),
+              null,
+              null));
     }
 
     order.setTotalManual(new Money(req.amountPaid(), req.currency()));

@@ -19,11 +19,8 @@ public class JpaOrderOutboxAdapter implements OrderOutboxPort {
 
   @Override
   public void publish(String tenantId, Long aggregateId, String eventType, String payload) {
-    OrderOutboxEvent event = new OrderOutboxEvent();
-    event.setTenantId(tenantId);
-    event.setAggregateId(aggregateId);
-    event.setEventType(eventType);
-    event.setPayload(payload);
+    OrderOutboxEvent event = OrderOutboxEvent.pending(tenantId, eventType, payload);
+    event.updateAggregateId(aggregateId);
     // trace_id would normally be populated from MDC/Span context if tracing is enabled
     repository.save(event);
   }

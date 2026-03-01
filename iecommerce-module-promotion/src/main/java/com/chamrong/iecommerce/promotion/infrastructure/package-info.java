@@ -1,3 +1,6 @@
-/** Package com.chamrong.iecommerce.promotion.infrastructure. */
-@org.springframework.lang.NonNullApi
+/**
+ * Infrastructure Layer: Adapters for external systems (DB, Cache, Messaging).
+ *
+ * <p>Dependency Rules: - Allowed: domain, application - Forbidden: api
+ */
 package com.chamrong.iecommerce.promotion.infrastructure;

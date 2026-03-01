@@ -13,7 +13,6 @@ import com.chamrong.iecommerce.auth.domain.User;
 import com.chamrong.iecommerce.auth.domain.UserRepository;
 import com.chamrong.iecommerce.auth.domain.event.UserRegisteredEvent;
 import com.chamrong.iecommerce.common.annotation.WithTenantContext;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -62,13 +61,9 @@ public class RegisterUserHandler {
             .findByName(targetRole)
             .orElseThrow(() -> new IllegalStateException(targetRole + " not found locally"));
 
-    var user = new User();
-    user.setUsername(cmd.username());
-    user.setEmail(cmd.email());
-    user.setKeycloakId(keycloakId);
-    user.setTenantId(cmd.tenantId());
-    user.setRoles(Set.of(localRole));
-    user.setEnabled(true);
+    var user = new User(cmd.tenantId(), cmd.username(), cmd.email());
+    user.linkKeycloak(keycloakId);
+    user.addRole(localRole);
 
     var saved = userRepository.save(user);
 

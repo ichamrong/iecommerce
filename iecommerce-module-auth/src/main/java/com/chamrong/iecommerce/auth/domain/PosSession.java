@@ -5,11 +5,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 @Getter
-@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "auth_pos_session")
 public class PosSession extends BaseTenantEntity {
@@ -30,6 +31,13 @@ public class PosSession extends BaseTenantEntity {
 
   @Column(nullable = false)
   private boolean active = true;
+
+  public PosSession(String tenantId, Long terminalId, Long cashierId) {
+    setTenantId(tenantId);
+    this.terminalId = terminalId;
+    this.cashierId = cashierId;
+    this.openedAt = Instant.now();
+  }
 
   public void closeSession(String notes) {
     if (!this.active) {

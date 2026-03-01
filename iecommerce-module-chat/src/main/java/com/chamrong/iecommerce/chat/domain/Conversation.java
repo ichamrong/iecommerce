@@ -10,11 +10,7 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
 @Entity
 @Table(name = "chat_conversation")
 public class Conversation extends BaseTenantEntity {
@@ -27,6 +23,29 @@ public class Conversation extends BaseTenantEntity {
   private Set<Long> participantIds = new HashSet<>();
 
   private Instant lastMessageTimestamp;
+
+  public Conversation() {}
+
+  public Conversation(String tenantId, Set<Long> participantIds) {
+    setTenantId(tenantId);
+    this.participantIds.addAll(participantIds);
+  }
+
+  public Set<Long> getParticipantIds() {
+    return participantIds;
+  }
+
+  public void setParticipantIds(Set<Long> participantIds) {
+    this.participantIds = participantIds;
+  }
+
+  public Instant getLastMessageTimestamp() {
+    return lastMessageTimestamp;
+  }
+
+  public void setLastMessageTimestamp(Instant lastMessageTimestamp) {
+    this.lastMessageTimestamp = lastMessageTimestamp;
+  }
 
   // ── Domain behaviour ───────────────────────────────────────────────────────
 

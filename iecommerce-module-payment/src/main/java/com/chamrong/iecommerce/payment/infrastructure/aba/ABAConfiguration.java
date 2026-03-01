@@ -13,4 +13,12 @@ public class ABAConfiguration {
   private String pushBackUrl;
   private String returnUrl;
   private String apiUrl;
+
+  public String getApiKey() {
+    return apiKey;
+  }
+
+  public String getMerchantId() {
+    return merchantId;
+  }
 }

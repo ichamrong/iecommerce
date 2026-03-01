@@ -8,14 +8,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import java.time.Instant;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@MappedSuperclass
 @Getter
-@Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@MappedSuperclass
 public abstract class BaseOutboxEvent {
 
   public enum Status {
@@ -47,6 +46,30 @@ public abstract class BaseOutboxEvent {
   private Instant processedAt;
 
   private int retryCount = 0;
+
+  // ── Protected setters — for use by subclass factory methods only ─────────
+
+  protected void setTenantId(String tenantId) {
+    this.tenantId = tenantId;
+  }
+
+  protected void setEventType(String eventType) {
+    this.eventType = eventType;
+  }
+
+  protected void setPayload(String payload) {
+    this.payload = payload;
+  }
+
+  protected void setStatus(Status status) {
+    this.status = status;
+  }
+
+  protected void setCreatedAt(Instant createdAt) {
+    this.createdAt = createdAt;
+  }
+
+  // ── Domain behaviour ─────────────────────────────────────────────────────
 
   public void markSent() {
     this.status = Status.SENT;

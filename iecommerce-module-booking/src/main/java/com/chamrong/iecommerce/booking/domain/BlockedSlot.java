@@ -7,8 +7,9 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 /**
  * Represents a blocked calendar interval for a resource.
@@ -17,7 +18,7 @@ import lombok.Setter;
  * periods (e.g., maintenance, holiday closure).
  */
 @Getter
-@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "booking_blocked_slot")
 public class BlockedSlot extends BaseEntity {
@@ -42,6 +43,28 @@ public class BlockedSlot extends BaseEntity {
 
   @Column(length = 50)
   private String sourcePlatform;
+
+  public static BlockedSlot forBooking(
+      Long resourceProductId, Long resourceVariantId, Instant startAt, Instant endAt) {
+    var slot = new BlockedSlot();
+    slot.resourceProductId = resourceProductId;
+    slot.resourceVariantId = resourceVariantId;
+    slot.startAt = startAt;
+    slot.endAt = endAt;
+    slot.reason = BlockedReason.BOOKING;
+    return slot;
+  }
+
+  public static BlockedSlot forMaintenance(
+      Long resourceProductId, Instant startAt, Instant endAt, String note) {
+    var slot = new BlockedSlot();
+    slot.resourceProductId = resourceProductId;
+    slot.startAt = startAt;
+    slot.endAt = endAt;
+    slot.reason = BlockedReason.MAINTENANCE;
+    slot.note = note;
+    return slot;
+  }
 
   public enum BlockedReason {
     BOOKING,

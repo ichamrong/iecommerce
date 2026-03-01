@@ -77,9 +77,9 @@ public class OrderController {
   @PostMapping("/{id}/confirm")
   public OrderResponse confirm(
       @PathVariable Long id,
-      @RequestHeader("idempotency-key") String requestId,
+      @RequestHeader("idempotency-key") String idempotencyKey,
       Principal principal) {
-    return confirmOrderHandler.handle(id, requestId, principal.getName());
+    return confirmOrderHandler.handle(id, idempotencyKey, principal.getName());
   }
 
   @Operation(summary = "Pick order items")
@@ -101,7 +101,8 @@ public class OrderController {
   @PreAuthorize("hasAuthority('orders:manage')")
   public OrderResponse ship(
       @PathVariable Long id, @Valid @RequestBody ShipOrderRequest req, Principal principal) {
-    return shipOrderHandler.handle(id, req.trackingNumber(), req.requestId(), principal.getName());
+    return shipOrderHandler.handle(
+        id, req.trackingNumber(), req.idempotencyKey(), principal.getName());
   }
 
   @Operation(summary = "Mark order as delivered")
@@ -122,8 +123,8 @@ public class OrderController {
   @PostMapping("/{id}/cancel")
   public OrderResponse cancel(
       @PathVariable Long id,
-      @RequestHeader("idempotency-key") String requestId,
+      @RequestHeader("idempotency-key") String idempotencyKey,
       Principal principal) {
-    return cancelOrderHandler.handle(id, requestId, principal.getName());
+    return cancelOrderHandler.handle(id, idempotencyKey, principal.getName());
   }
 }

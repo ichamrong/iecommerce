@@ -43,12 +43,13 @@ public class TenantProvisionHandler {
     }
 
     // 1. Create tenant shell
-    Tenant tenant = new Tenant();
-    tenant.setCode(cmd.tenantCode());
-    tenant.setName(cmd.shopName());
-    tenant.setPlan(cmd.plan());
-    tenant.setStatus(TenantStatus.ACTIVE);
-    tenant.setProvisioningStatus(TenantProvisioningStatus.INITIAL);
+    Tenant tenant =
+        Tenant.provision(
+            cmd.tenantCode(),
+            cmd.shopName(),
+            cmd.plan(),
+            TenantStatus.ACTIVE,
+            TenantProvisioningStatus.INITIAL);
     Tenant savedTenant = tenantRepository.save(tenant);
 
     // 2. Ensure local ROLE_TENANT_ADMIN exists
@@ -80,8 +81,8 @@ public class TenantProvisionHandler {
             .orElseGet(
                 () -> {
                   Role r = new Role(Role.ROLE_TENANT_ADMIN);
-                  r.setDescription("Tenant owner — manages their own store");
-                  r.setTenantId(tenantCode);
+                  r.describe("Tenant owner — manages their own store");
+                  r.assignTo(tenantCode);
                   return r;
                 });
     role.setPermissions(Set.of(profileRead));

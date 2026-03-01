@@ -13,9 +13,9 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import java.util.HashSet;
 import java.util.Set;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * User aggregate root for the auth domain.
@@ -29,6 +29,8 @@ import lombok.Setter;
  *       than a bare boolean {@code enabled} flag.
  * </ul>
  */
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(
     name = "auth_user",
@@ -37,9 +39,6 @@ import lombok.Setter;
       @Index(name = "idx_user_tenant_email", columnList = "tenant_id, email", unique = true),
       @Index(name = "idx_user_keycloak_id", columnList = "keycloak_id")
     })
-@Getter
-@Setter
-@NoArgsConstructor
 public class User extends BaseTenantEntity {
 
   @Column(nullable = false, length = 150)
@@ -76,6 +75,14 @@ public class User extends BaseTenantEntity {
       indexes = @Index(name = "idx_user_roles_role_id", columnList = "role_id"))
   private Set<Role> roles = new HashSet<>();
 
+  // ── Bootstrap ──────────────────────────────────────────────────────────────
+
+  public User(String tenantId, String username, String email) {
+    setTenantId(tenantId);
+    this.username = username;
+    this.email = email;
+  }
+
   // ── State transitions ───────────────────────────────────────────────────────
 
   /** Transitions account from PENDING → ACTIVE (e.g., after first-login password reset). */
@@ -84,7 +91,17 @@ public class User extends BaseTenantEntity {
     this.enabled = true;
   }
 
-  /** Transitions account to SUSPENDED — blocks login without deleting data. */
+  /** Sets account to PENDING — awaiting first-login password reset. */
+  public void pendingActivation() {
+    this.accountState = UserAccountState.PENDING;
+    this.enabled = true; // login is allowed so first-login reset can happen
+  }
+
+  /** Permanently disables the account — blocks login without deleting data. */
+  public void disable() {
+    this.enabled = false;
+  }
+
   public void suspend() {
     this.accountState = UserAccountState.SUSPENDED;
     this.enabled = false;
@@ -99,5 +116,13 @@ public class User extends BaseTenantEntity {
   /** Returns {@code true} if the account is in a terminal deleted state. */
   public boolean isDeleted() {
     return this.accountState == UserAccountState.DELETED;
+  }
+
+  public void linkKeycloak(String keycloakId) {
+    this.keycloakId = keycloakId;
+  }
+
+  public void addRole(Role role) {
+    this.roles.add(role);
   }
 }

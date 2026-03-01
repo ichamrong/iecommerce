@@ -85,7 +85,7 @@ public class HardenedOutboxRelayScheduler extends AbstractOutboxRelay<OrderOutbo
         // Simple backoff for non-SENT events
         int nextRetries = event.getRetryCount(); // Base class already increments retries on failure
         long delaySeconds = (long) Math.pow(2, nextRetries) * 5;
-        event.setNextAttemptAt(Instant.now().plusSeconds(delaySeconds));
+        event.updateNextAttemptAt(Instant.now().plusSeconds(delaySeconds));
         repository.save(event);
       }
     }

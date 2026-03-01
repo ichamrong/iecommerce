@@ -71,8 +71,8 @@ public class StaffEventListener {
 
     if (roleRepository.findByName(Role.ROLE_PLATFORM_STAFF).isEmpty()) {
       Role r = new Role(Role.ROLE_PLATFORM_STAFF);
-      r.setDescription("Platform staff — manages assigned tenant stores");
-      r.setTenantId(SYSTEM_TENANT);
+      r.describe("Platform staff — manages assigned tenant stores");
+      r.assignTo(SYSTEM_TENANT);
       r.setPermissions(Set.of(profileRead));
       roleRepository.save(r);
     }

@@ -4,17 +4,21 @@ package com.chamrong.iecommerce.payment.infrastructure.bakong;
 // import kh.gov.nbc.bakong_khqr.model.KhqrResponse;
 // import kh.gov.nbc.bakong_khqr.model.MerchantInfo;
 import java.math.BigDecimal;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /** Service for Bakong KHQR integration. In production, uncomment the SDK imports and usage. */
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class BakongService {
 
+  private static final Logger log = LoggerFactory.getLogger(BakongService.class);
+
   private final BakongConfiguration config;
+
+  public BakongService(BakongConfiguration config) {
+    this.config = config;
+  }
 
   public String generateKhqr(String orderId, BigDecimal amount) {
     log.info(

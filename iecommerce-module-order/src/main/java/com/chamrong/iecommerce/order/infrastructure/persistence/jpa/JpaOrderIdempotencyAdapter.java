@@ -24,11 +24,7 @@ public class JpaOrderIdempotencyAdapter implements OrderIdempotencyPort {
 
   @Override
   public void record(String operationType, String referenceId, String resultSnapshot) {
-    OrderIdempotency entry = new OrderIdempotency();
-    entry.setOperationType(operationType);
-    entry.setReferenceId(referenceId);
-    entry.setResultSnapshot(resultSnapshot);
-    repository.save(entry);
+    repository.save(OrderIdempotency.of(operationType, referenceId, resultSnapshot));
   }
 
   @Repository

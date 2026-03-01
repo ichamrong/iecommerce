@@ -42,19 +42,19 @@ public class ConfirmOrderHandler {
   private final MeterRegistry metrics;
 
   @Transactional
-  public OrderResponse handle(Long orderId, String requestId, String actor) {
+  public OrderResponse handle(Long orderId, String idempotencyKey, String actor) {
     Objects.requireNonNull(orderId, "orderId must not be null");
 
     final String tenantId = TenantContext.requireTenantId();
 
     // 1. Idempotency Check
-    var existingResult = idempotency.check("CONFIRM_ORDER", requestId);
+    var existingResult = idempotency.check("CONFIRM_ORDER", idempotencyKey);
     if (existingResult.isPresent()) {
       log.info(
-          "Duplicate confirm request detected for order {} and requestId {}. Returning cached"
+          "Duplicate confirm request detected for order {} and idempotencyKey {}. Returning cached"
               + " state.",
           orderId,
-          requestId);
+          idempotencyKey);
       return orderRepository
           .findById(orderId)
           .map(this::toResponse)
@@ -108,7 +108,7 @@ public class ConfirmOrderHandler {
     }
 
     // 8. Idempotency Record
-    idempotency.record("CONFIRM_ORDER", requestId, "");
+    idempotency.record("CONFIRM_ORDER", idempotencyKey, "");
 
     metrics.counter("order.confirmed", "tenant", tenantId).increment();
     log.info("Order confirmed id={} code={} tenantId={}", saved.getId(), saved.getCode(), tenantId);

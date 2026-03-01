@@ -6,22 +6,16 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
 @Entity
 @Table(
     name = "inventory_stock_level",
     uniqueConstraints = @UniqueConstraint(columnNames = {"product_id", "warehouse_id"}))
 public class StockLevel extends BaseTenantEntity {
 
-  // Package-private setters for JPA/Infra if needed, but prefer domain methods
-  @Setter
   @Column(nullable = false)
   private Long productId;
 
-  @Setter
   @Column(nullable = false)
   private Long warehouseId;
 
@@ -34,6 +28,44 @@ public class StockLevel extends BaseTenantEntity {
   @Version
   @Column(name = "version", nullable = false)
   private Long version = 0L;
+
+  public StockLevel() {}
+
+  public Long getProductId() {
+    return productId;
+  }
+
+  public void setProductId(Long productId) {
+    this.productId = productId;
+  }
+
+  public Long getWarehouseId() {
+    return warehouseId;
+  }
+
+  public void setWarehouseId(Long warehouseId) {
+    this.warehouseId = warehouseId;
+  }
+
+  public Integer getQuantity() {
+    return quantity;
+  }
+
+  public Integer getReservedQuantity() {
+    return reservedQuantity;
+  }
+
+  public void setReservedQuantity(Integer reservedQuantity) {
+    this.reservedQuantity = reservedQuantity;
+  }
+
+  public Long getVersion() {
+    return version;
+  }
+
+  public void setVersion(Long version) {
+    this.version = version;
+  }
 
   // ── Domain Logic ─────────────────────────────────────────────────────────
 

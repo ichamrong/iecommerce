@@ -2,7 +2,6 @@ package com.chamrong.iecommerce.auth.application.command.tenant;
 
 import com.chamrong.iecommerce.auth.application.command.UpdateTenantStatusCommand;
 import com.chamrong.iecommerce.auth.domain.TenantRepository;
-import com.chamrong.iecommerce.auth.domain.TenantStatus;
 import com.chamrong.iecommerce.auth.domain.event.TenantStatusUpdatedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -24,13 +23,7 @@ public class UpdateTenantStatusHandler {
             .findByCode(cmd.tenantId())
             .orElseThrow(() -> new IllegalArgumentException("Tenant not found: " + cmd.tenantId()));
 
-    tenant.setStatus(cmd.status());
-
-    if (cmd.status() == TenantStatus.DISABLED) {
-      tenant.setEnabled(false);
-    } else if (cmd.status() == TenantStatus.ACTIVE || cmd.status() == TenantStatus.TRIAL) {
-      tenant.setEnabled(true);
-    }
+    tenant.updateStatus(cmd.status());
 
     tenantRepository.save(tenant);
     eventPublisher.publishEvent(new TenantStatusUpdatedEvent(cmd.tenantId(), cmd.status()));

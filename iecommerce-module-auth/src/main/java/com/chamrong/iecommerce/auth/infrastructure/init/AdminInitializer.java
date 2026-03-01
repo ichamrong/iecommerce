@@ -91,8 +91,8 @@ public class AdminInitializer implements CommandLineRunner {
                 () -> {
                   log.info("Creating role: {}", roleName);
                   Role r = new Role(roleName);
-                  r.setDescription(description);
-                  r.setTenantId(SYSTEM_TENANT);
+                  r.describe(description);
+                  r.assignTo(SYSTEM_TENANT);
                   return r;
                 });
     role.getPermissions().clear();

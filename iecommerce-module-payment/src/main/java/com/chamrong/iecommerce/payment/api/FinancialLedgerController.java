@@ -11,8 +11,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(
@@ -40,9 +40,17 @@ public class FinancialLedgerController {
   @PostMapping("/{id}/execute")
   @PreAuthorize("hasAuthority('finance:manage')")
   public ResponseEntity<FinancialLedger> executePayout(
-      @PathVariable Long id,
-      @RequestParam String adminReferenceId,
-      @RequestParam String bankTransactionId) {
-    return ResponseEntity.ok(ledgerService.executePayout(id, adminReferenceId, bankTransactionId));
+      @PathVariable Long id, @jakarta.validation.Valid @RequestBody ExecutePayoutRequest request) {
+    return ResponseEntity.ok(
+        ledgerService.executePayout(id, request.adminReferenceId(), request.bankTransactionId()));
   }
+
+  public record ExecutePayoutRequest(
+      @jakarta.validation.constraints.NotBlank
+          @io.swagger.v3.oas.annotations.media.Schema(
+              description = "Internal admin reference ID for the payout")
+          String adminReferenceId,
+      @jakarta.validation.constraints.NotBlank
+          @io.swagger.v3.oas.annotations.media.Schema(description = "External bank transaction ID")
+          String bankTransactionId) {}
 }

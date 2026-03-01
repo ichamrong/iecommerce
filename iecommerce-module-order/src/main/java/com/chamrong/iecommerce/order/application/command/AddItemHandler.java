@@ -78,20 +78,20 @@ public class AddItemHandler {
         throw new IllegalArgumentException(
             "Combined quantity " + newQty + " exceeds maximum " + Order.MAX_QUANTITY);
       }
-      item.setQuantity(newQty);
+      item.updateQuantity(newQty);
       log.debug(
           "Merged quantity for variant {} in order {}. New qty: {}",
           req.productVariantId(),
           orderId,
           newQty);
     } else {
-      final OrderItem item = new OrderItem();
-      item.setProductVariantId(req.productVariantId());
-      item.setQuantity(req.quantity());
-      // Always bind catalog price — never trust client-submitted prices
-      item.setUnitPrice(new Money(catalogVariant.priceAmount(), catalogVariant.priceCurrency()));
-      item.setStartAt(req.startAt());
-      item.setEndAt(req.endAt());
+      final OrderItem item =
+          OrderItem.of(
+              req.productVariantId(),
+              req.quantity(),
+              new Money(catalogVariant.priceAmount(), catalogVariant.priceCurrency()),
+              req.startAt(),
+              req.endAt());
       order.addItem(item);
       log.debug("Added new item variant {} to order {}", req.productVariantId(), orderId);
     }

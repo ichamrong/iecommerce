@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+    <!-- Add Dynamic Rule Support to Promotion -->
+    <changeSet id="v20-add-dynamic-rules" author="chamrong">
+        <addColumn tableName="promotion">
+            <column name="rule_json" type="TEXT"/>
+            <column name="schema_version" type="VARCHAR(10)" defaultValue="v1"/>
+        </addColumn>
+        
+        <createIndex tableName="promotion" indexName="idx_promotion_active_lookup">
+            <column name="tenant_id"/>
+            <column name="status"/>
+            <column name="valid_from"/>
+            <column name="valid_to"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Enforce Redemtion Idempotency Index (ASVS L2) -->
+    <changeSet id="v21-redemption-idempotency" author="chamrong">
+        <addUniqueConstraint tableName="promotion_redemption"
+                             columnNames="tenant_id, redemption_key"
+                             constraintName="uk_redemption_idempotency"/>
+                             
+        <createIndex tableName="promotion_redemption" indexName="idx_redemption_pagination">
+            <column name="created_at" descending="true"/>
+            <column name="id" descending="true"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

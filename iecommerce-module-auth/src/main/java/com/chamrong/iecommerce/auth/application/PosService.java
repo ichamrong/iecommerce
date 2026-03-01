@@ -4,7 +4,6 @@ import com.chamrong.iecommerce.auth.domain.PosSession;
 import com.chamrong.iecommerce.auth.domain.PosSessionRepository;
 import com.chamrong.iecommerce.auth.domain.PosTerminal;
 import com.chamrong.iecommerce.auth.domain.PosTerminalRepository;
-import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,13 +21,7 @@ public class PosService {
   @Transactional
   public PosTerminal registerTerminal(
       String tenantId, String name, String hardwareId, String branchId) {
-    PosTerminal terminal = new PosTerminal();
-    terminal.setTenantId(tenantId);
-    terminal.setName(name);
-    terminal.setHardwareId(hardwareId);
-    terminal.setBranchId(branchId);
-    terminal.setPendingPairing(true);
-    return terminalRepository.save(terminal);
+    return terminalRepository.save(new PosTerminal(tenantId, name, hardwareId, branchId));
   }
 
   @Transactional
@@ -51,13 +44,7 @@ public class PosService {
               sessionRepository.save(s);
             });
 
-    PosSession session = new PosSession();
-    session.setTenantId(tenantId);
-    session.setTerminalId(terminalId);
-    session.setCashierId(cashierId);
-    session.setOpenedAt(Instant.now());
-
-    return sessionRepository.save(session);
+    return sessionRepository.save(new PosSession(tenantId, terminalId, cashierId));
   }
 
   @Transactional

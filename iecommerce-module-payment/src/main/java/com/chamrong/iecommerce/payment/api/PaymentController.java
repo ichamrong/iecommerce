@@ -1,79 +1,124 @@
 package com.chamrong.iecommerce.payment.api;
 
-import com.chamrong.iecommerce.payment.application.PaymentService;
-import com.chamrong.iecommerce.payment.application.dto.PaymentRequest;
-import com.chamrong.iecommerce.payment.application.dto.PaymentResponse;
+import com.chamrong.iecommerce.common.Money;
+import com.chamrong.iecommerce.payment.application.command.CreatePaymentIntentHandler;
+import com.chamrong.iecommerce.payment.domain.PaymentIntent;
+import com.chamrong.iecommerce.payment.domain.ProviderType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-/**
- * Payment transaction management.
- *
- * <p>Base path: {@code /api/v1/payments}
- */
-@Tag(name = "Payments", description = "Payment initiation and lifecycle management")
 @RestController
 @RequestMapping("/api/v1/payments")
 @RequiredArgsConstructor
-@PreAuthorize("isAuthenticated()")
+@Tag(name = "Payment API", description = "High-level entry for payment operations")
 public class PaymentController {
 
-  private final PaymentService paymentService;
+  private final CreatePaymentIntentHandler createHandler;
+  private final com.chamrong.iecommerce.payment.application.query.ListPaymentIntentsHandler
+      listHandler;
 
-  @Operation(summary = "Initiate a payment for an order")
-  @PostMapping
-  public ResponseEntity<PaymentResponse> initiate(
-      @RequestParam String tenantId, @RequestBody PaymentRequest req) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.initiate(tenantId, req));
-  }
+  @Operation(
+      summary = "Create a payment intent",
+      description = "Initializes a payment with a provider and returns the intent details.")
+  @PostMapping("/intents")
+  public ResponseEntity<PaymentIntentDto> createIntent(
+      @RequestHeader("X-Tenant-Id") String tenantId,
+      @jakarta.validation.Valid @RequestBody CreateIntentRequest request) {
 
-  @Operation(summary = "Get payment by ID")
-  @GetMapping("/{id}")
-  public ResponseEntity<PaymentResponse> getById(@PathVariable Long id) {
-    return paymentService
-        .findById(id)
-        .map(ResponseEntity::ok)
-        .orElse(ResponseEntity.notFound().build());
-  }
+    PaymentIntent intent =
+        createHandler.handle(
+            new CreatePaymentIntentHandler.Command(
+                tenantId,
+                request.orderId(),
+                new Money(request.amount(), request.currency()),
+                request.provider(),
+                request.idempotencyKey(),
+                request.returnUrl(),
+                request.cancelUrl()));
 
-  @Operation(summary = "Get payments for an order")
-  @GetMapping("/orders/{orderId}")
-  public List<PaymentResponse> getByOrder(@PathVariable Long orderId) {
-    return paymentService.findByOrderId(orderId);
+    return ResponseEntity.ok(toDto(intent));
   }
 
   @Operation(
-      summary = "Mark payment as succeeded",
-      description = "Call this after the gateway webhook confirms the charge.")
-  @PostMapping("/{id}/succeed")
-  @PreAuthorize("hasAuthority('payments:manage')")
-  public PaymentResponse succeed(@PathVariable Long id, @RequestParam String externalId) {
-    return paymentService.markSucceeded(id, externalId);
+      summary = "Get payment history",
+      description = "Retrieves a page of payment intents using keyset pagination.")
+  @GetMapping("/history")
+  public ResponseEntity<PaymentPageDto> getHistory(
+      @RequestHeader("X-Tenant-Id") String tenantId,
+      @RequestParam(required = false) java.time.Instant cursorTime,
+      @RequestParam(required = false) java.util.UUID cursorId,
+      @RequestParam(defaultValue = "20") int limit) {
+
+    var intents =
+        listHandler.handle(
+            new com.chamrong.iecommerce.payment.application.query.ListPaymentIntentsHandler.Query(
+                tenantId, cursorTime, cursorId, limit));
+
+    String nextCursorTime = null;
+    String nextCursorId = null;
+    if (!intents.isEmpty()) {
+      var last = intents.get(intents.size() - 1);
+      nextCursorTime = last.getCreatedAt().toString();
+      nextCursorId = last.getIntentId().toString();
+    }
+
+    return ResponseEntity.ok(
+        new PaymentPageDto(
+            intents.stream().map(this::toDto).toList(), nextCursorTime, nextCursorId));
   }
 
-  @Operation(summary = "Mark payment as failed")
-  @PostMapping("/{id}/fail")
-  @PreAuthorize("hasAuthority('payments:manage')")
-  public PaymentResponse fail(@PathVariable Long id) {
-    return paymentService.markFailed(id);
-  }
+  public record CreateIntentRequest(
+      @jakarta.validation.constraints.NotNull @jakarta.validation.constraints.Positive Long orderId,
+      @jakarta.validation.constraints.NotNull @jakarta.validation.constraints.Positive
+          java.math.BigDecimal amount,
+      @jakarta.validation.constraints.NotBlank
+          @jakarta.validation.constraints.Size(min = 3, max = 3)
+          String currency,
+      @jakarta.validation.constraints.NotNull ProviderType provider,
+      @jakarta.validation.constraints.NotBlank
+          @jakarta.validation.constraints.Size(min = 8, max = 128)
+          String idempotencyKey,
+      @jakarta.validation.constraints.NotBlank String returnUrl,
+      @jakarta.validation.constraints.NotBlank String cancelUrl) {}
 
-  @Operation(summary = "Refund a succeeded payment")
-  @PostMapping("/{id}/refund")
-  @PreAuthorize("hasAuthority('payments:manage')")
-  public PaymentResponse refund(@PathVariable Long id) {
-    return paymentService.refund(id);
+  public record PaymentIntentDto(
+      @io.swagger.v3.oas.annotations.media.Schema(description = "Internal unique intent ID")
+          String intentId,
+      @io.swagger.v3.oas.annotations.media.Schema(description = "Associated order ID") Long orderId,
+      @io.swagger.v3.oas.annotations.media.Schema(description = "Payment amount")
+          java.math.BigDecimal amount,
+      @io.swagger.v3.oas.annotations.media.Schema(description = "Currency code (e.g. USD)")
+          String currency,
+      @io.swagger.v3.oas.annotations.media.Schema(description = "Provider type") String provider,
+      @io.swagger.v3.oas.annotations.media.Schema(description = "Current payment status")
+          String status,
+      @io.swagger.v3.oas.annotations.media.Schema(description = "External ID from provider")
+          String externalId,
+      @io.swagger.v3.oas.annotations.media.Schema(description = "Checkout URL for redirection")
+          String checkoutUrl,
+      @io.swagger.v3.oas.annotations.media.Schema(description = "Client secret for mobile SDKs")
+          String clientSecret,
+      @io.swagger.v3.oas.annotations.media.Schema(description = "Creation timestamp")
+          String createdAt) {}
+
+  public record PaymentPageDto(
+      List<PaymentIntentDto> items, String nextCursorTime, String nextCursorId) {}
+
+  private PaymentIntentDto toDto(PaymentIntent p) {
+    return new PaymentIntentDto(
+        p.getIntentId().toString(),
+        p.getOrderId(),
+        p.getAmount().getAmount(),
+        p.getAmount().getCurrency(),
+        p.getProvider().name(),
+        p.getStatus().name(),
+        p.getExternalId(),
+        p.getCheckoutUrl(),
+        p.getClientSecret(),
+        p.getCreatedAt().toString());
   }
 }

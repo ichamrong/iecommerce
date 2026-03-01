@@ -4,32 +4,43 @@ import com.chamrong.iecommerce.common.Money;
 import com.chamrong.iecommerce.common.event.PaymentFailedEvent;
 import com.chamrong.iecommerce.common.event.PaymentSucceededEvent;
 import com.chamrong.iecommerce.payment.application.dto.PaymentRequest;
-import com.chamrong.iecommerce.payment.application.dto.PaymentResponse;
+import com.chamrong.iecommerce.payment.application.dto.PaymentResult;
 import com.chamrong.iecommerce.payment.application.spi.PaymentProvider;
 import com.chamrong.iecommerce.payment.domain.Payment;
 import com.chamrong.iecommerce.payment.domain.PaymentOutboxEvent;
 import com.chamrong.iecommerce.payment.domain.PaymentOutboxRepository;
 import com.chamrong.iecommerce.payment.domain.PaymentRepository;
 import com.chamrong.iecommerce.payment.domain.PaymentStatus;
+import com.chamrong.iecommerce.payment.domain.exception.PaymentDomainException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class PaymentService {
+
+  private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
 
   private final PaymentRepository paymentRepository;
   private final List<PaymentProvider> paymentProviders;
   private final PaymentOutboxRepository outboxRepository;
   private final ObjectMapper objectMapper;
+
+  public PaymentService(
+      PaymentRepository paymentRepository,
+      List<PaymentProvider> paymentProviders,
+      PaymentOutboxRepository outboxRepository,
+      ObjectMapper objectMapper) {
+    this.paymentRepository = paymentRepository;
+    this.paymentProviders = paymentProviders;
+    this.outboxRepository = outboxRepository;
+    this.objectMapper = objectMapper;
+  }
 
   public void saveOutbox(String tenantId, String eventType, Object event) {
     try {
@@ -44,7 +55,7 @@ public class PaymentService {
   // ── Commands ───────────────────────────────────────────────────────────────
 
   @Transactional
-  public PaymentResponse initiate(String tenantId, PaymentRequest req) {
+  public PaymentResult initiate(String tenantId, PaymentRequest req) {
     if (req.idempotencyKey() != null && !req.idempotencyKey().isBlank()) {
       Optional<Payment> existing = paymentRepository.findByIdempotencyKey(req.idempotencyKey());
       if (existing.isPresent()) {
@@ -85,7 +96,7 @@ public class PaymentService {
   }
 
   @Transactional
-  public PaymentResponse markSucceeded(Long paymentId, String externalId) {
+  public PaymentResult markSucceeded(Long paymentId, String externalId) {
     Payment p = require(paymentId);
     p.markSucceeded(externalId);
     Payment saved = paymentRepository.save(p);
@@ -105,7 +116,7 @@ public class PaymentService {
   }
 
   @Transactional
-  public PaymentResponse markFailed(Long paymentId) {
+  public PaymentResult markFailed(Long paymentId) {
     Payment p = require(paymentId);
     p.markFailed();
     Payment saved = paymentRepository.save(p);
@@ -121,7 +132,7 @@ public class PaymentService {
   }
 
   @Transactional
-  public PaymentResponse refund(Long paymentId) {
+  public PaymentResult refund(Long paymentId) {
     Payment p = require(paymentId);
     p.markRefunded();
     log.info("Payment refunded id={}", paymentId);
@@ -131,12 +142,12 @@ public class PaymentService {
   // ── Queries ────────────────────────────────────────────────────────────────
 
   @Transactional(readOnly = true)
-  public Optional<PaymentResponse> findById(Long id) {
+  public Optional<PaymentResult> findById(Long id) {
     return paymentRepository.findById(id).map(this::toResponse);
   }
 
   @Transactional(readOnly = true)
-  public List<PaymentResponse> findByOrderId(Long orderId) {
+  public List<PaymentResult> findByOrderId(Long orderId) {
     return paymentRepository.findByOrderId(orderId).stream().map(this::toResponse).toList();
   }
 
@@ -145,18 +156,11 @@ public class PaymentService {
   private Payment require(Long id) {
     return paymentRepository
         .findById(id)
-        .orElseThrow(() -> new EntityNotFoundException("Payment not found: " + id));
+        .orElseThrow(() -> new PaymentDomainException("Payment not found: " + id));
   }
 
-  private PaymentResponse toResponse(Payment p) {
-    return new PaymentResponse(
-        p.getId(),
-        p.getOrderId(),
-        p.getAmount(),
-        p.getMethod(),
-        p.getStatus().name(),
-        p.getExternalId(),
-        p.getCheckoutData(),
-        p.getCreatedAt());
+  private PaymentResult toResponse(Payment p) {
+    java.lang.Long id = p.getId();
+    return new PaymentResult(id);
   }
 }

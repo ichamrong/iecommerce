@@ -8,8 +8,9 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 /**
  * Defines the recurring availability schedule for a resource.
@@ -18,7 +19,7 @@ import lombok.Setter;
  * resource + day are supported for split schedules (e.g., 09:00–12:00 and 14:00–18:00).
  */
 @Getter
-@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "booking_availability_rule")
 public class AvailabilityRule extends BaseTenantEntity {
@@ -49,4 +50,25 @@ public class AvailabilityRule extends BaseTenantEntity {
 
   /** Maximum nights for ACCOMMODATION type. */
   private Integer maxStayNights;
+
+  public static AvailabilityRule of(
+      String tenantId,
+      Long resourceProductId,
+      Long resourceVariantId,
+      Long staffId,
+      DayOfWeek dayOfWeek,
+      LocalTime openTime,
+      LocalTime closeTime,
+      Integer slotDurationMinutes) {
+    var rule = new AvailabilityRule();
+    rule.setTenantId(tenantId);
+    rule.resourceProductId = resourceProductId;
+    rule.resourceVariantId = resourceVariantId;
+    rule.staffId = staffId;
+    rule.dayOfWeek = dayOfWeek;
+    rule.openTime = openTime;
+    rule.closeTime = closeTime;
+    rule.slotDurationMinutes = slotDurationMinutes != null ? slotDurationMinutes : 60;
+    return rule;
+  }
 }

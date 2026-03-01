@@ -23,7 +23,7 @@ public class DisableUserHandler {
         userRepository
             .findById(id)
             .orElseThrow(() -> new IllegalArgumentException("User not found: " + id));
-    user.setEnabled(false);
+    user.disable();
     userRepository.save(user);
 
     identityService.disableUser(user.getKeycloakId());

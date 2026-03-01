@@ -4,11 +4,12 @@ import com.chamrong.iecommerce.common.BaseTenantEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 @Getter
-@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "auth_pos_terminal")
 public class PosTerminal extends BaseTenantEntity {
@@ -27,6 +28,14 @@ public class PosTerminal extends BaseTenantEntity {
 
   @Column(nullable = false)
   private boolean pendingPairing = false;
+
+  public PosTerminal(String tenantId, String name, String hardwareId, String branchId) {
+    setTenantId(tenantId);
+    this.name = name;
+    this.hardwareId = hardwareId;
+    this.branchId = branchId;
+    this.pendingPairing = true;
+  }
 
   public void activate() {
     this.active = true;

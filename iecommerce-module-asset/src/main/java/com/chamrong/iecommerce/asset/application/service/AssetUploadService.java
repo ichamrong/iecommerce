@@ -69,7 +69,7 @@ public class AssetUploadService {
       Map<String, Object> extractedMetadata = extractMetadata(file, mimeType);
 
       Asset asset = createAsset(tenantId, originalName, mimeType, finalSize, source, metadata);
-      asset.setMetadata(extractedMetadata);
+      asset.updateMetadata(extractedMetadata);
 
       log.info(
           "Asset uploaded to storage name={} size={} type={} path={}",
@@ -184,17 +184,15 @@ public class AssetUploadService {
       long size,
       @NonNull String source,
       @NonNull UploadAssetMetadata metadata) {
-    Asset asset = new Asset();
-    asset.setTenantId(tenantId);
-    asset.setName(name);
-    asset.setFileName(name);
-    asset.setMimeType(mimeType);
-    asset.setFileSize(size);
-    asset.setSource(source);
-    asset.setType(metadata.type());
-    asset.setPath(metadata.path());
-    asset.setFolder(false);
-    asset.setPublic(metadata.isPublic());
-    return asset;
+    return Asset.create(
+        tenantId,
+        name,
+        name,
+        mimeType,
+        size,
+        source,
+        metadata.type(),
+        metadata.path(),
+        metadata.isPublic());
   }
 }

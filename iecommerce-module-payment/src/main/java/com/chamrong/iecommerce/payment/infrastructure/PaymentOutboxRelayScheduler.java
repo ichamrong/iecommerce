@@ -5,28 +5,45 @@ import com.chamrong.iecommerce.common.outbox.AbstractOutboxRelay;
 import com.chamrong.iecommerce.payment.domain.PaymentOutboxEvent;
 import com.chamrong.iecommerce.payment.domain.PaymentOutboxRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-@Slf4j
 @Component
 public class PaymentOutboxRelayScheduler extends AbstractOutboxRelay<PaymentOutboxEvent> {
+  private static final Logger log = LoggerFactory.getLogger(PaymentOutboxRelayScheduler.class);
 
   private final PaymentOutboxRepository outboxRepository;
+  private final Counter successCounter;
+  private final Counter failureCounter;
 
   public PaymentOutboxRelayScheduler(
       PaymentOutboxRepository outboxRepository,
       EventDispatcher eventDispatcher,
-      ObjectMapper objectMapper) {
+      ObjectMapper objectMapper,
+      MeterRegistry meterRegistry) {
     super(eventDispatcher, objectMapper);
     this.outboxRepository = outboxRepository;
+    this.successCounter = meterRegistry.counter("payment.outbox.relay.success");
+    this.failureCounter = meterRegistry.counter("payment.outbox.relay.failure");
   }
 
   @Scheduled(fixedDelay = 5000)
   @org.springframework.transaction.annotation.Transactional
   public void relay() {
-    processPendingEvents(outboxRepository.findPending(50));
+    try {
+      processPendingEvents(
+          outboxRepository.findPendingForUpdate(
+              org.springframework.data.domain.PageRequest.of(0, 50)));
+      successCounter.increment();
+    } catch (Exception e) {
+      log.error("Outbox relay failed", e);
+      failureCounter.increment();
+      throw e;
+    }
   }
 
   @Override

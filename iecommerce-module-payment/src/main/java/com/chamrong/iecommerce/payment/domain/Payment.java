@@ -2,25 +2,19 @@ package com.chamrong.iecommerce.payment.domain;
 
 import com.chamrong.iecommerce.common.BaseTenantEntity;
 import com.chamrong.iecommerce.common.Money;
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.AttributeOverrides;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
-import jakarta.persistence.Version;
-import lombok.Getter;
+import jakarta.persistence.*;
+import java.util.Objects;
+import org.hibernate.Hibernate;
 
-@Getter
 @Entity
 @Table(name = "payment_transaction")
 public class Payment extends BaseTenantEntity {
 
+  public Payment() {}
+
   @Version
-  @Column(nullable = false)
-  private Long version = 0L;
+  @Column(name = "version", nullable = false)
+  private Long version;
 
   @Column(nullable = false)
   private Long orderId;
@@ -49,6 +43,42 @@ public class Payment extends BaseTenantEntity {
 
   @Column(unique = true, length = 100)
   private String idempotencyKey;
+
+  public Long getVersion() {
+    return version;
+  }
+
+  public String getTenantId() {
+    return super.getTenantId();
+  }
+
+  public Long getOrderId() {
+    return orderId;
+  }
+
+  public Money getAmount() {
+    return amount;
+  }
+
+  public PaymentStatus getStatus() {
+    return status;
+  }
+
+  public String getMethod() {
+    return method;
+  }
+
+  public String getExternalId() {
+    return externalId;
+  }
+
+  public String getCheckoutData() {
+    return checkoutData;
+  }
+
+  public String getIdempotencyKey() {
+    return idempotencyKey;
+  }
 
   // ── Domain behaviour ───────────────────────────────────────────────────────
 
@@ -96,5 +126,18 @@ public class Payment extends BaseTenantEntity {
   public void setIdempotencyKey(String idempotencyKey) {
     if (this.idempotencyKey != null) throw new IllegalStateException("idempotencyKey already set");
     this.idempotencyKey = idempotencyKey;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+    Payment payment = (Payment) o;
+    return getId() != null && Objects.equals(getId(), payment.getId());
+  }
+
+  @Override
+  public int hashCode() {
+    return getClass().hashCode();
   }
 }

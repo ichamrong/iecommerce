@@ -11,7 +11,6 @@ import com.chamrong.iecommerce.auth.domain.Role;
 import com.chamrong.iecommerce.auth.domain.RoleRepository;
 import com.chamrong.iecommerce.auth.domain.Tenant;
 import com.chamrong.iecommerce.auth.domain.TenantPlan;
-import com.chamrong.iecommerce.auth.domain.TenantProvisioningStatus;
 import com.chamrong.iecommerce.auth.domain.TenantRepository;
 import com.chamrong.iecommerce.auth.domain.TenantStatus;
 import com.chamrong.iecommerce.common.annotation.WithTenantContext;
@@ -48,13 +47,7 @@ public class TenantSignupHandler {
     }
 
     // 1. Create the tenant shell
-    var tenant = new Tenant();
-    tenant.setCode(tenantCode);
-    tenant.setName(cmd.shopName());
-    tenant.setPlan(TenantPlan.FREE);
-    tenant.setStatus(TenantStatus.TRIAL);
-    tenant.setTrialEndsAt(Instant.now().plus(30, ChronoUnit.DAYS));
-    tenant.setProvisioningStatus(TenantProvisioningStatus.INITIAL);
+    var tenant = Tenant.signup(tenantCode, cmd.shopName(), Instant.now().plus(30, ChronoUnit.DAYS));
     var savedTenant = tenantRepository.save(tenant);
 
     // 2. Ensure local ROLE_TENANT_ADMIN exists
@@ -79,8 +72,8 @@ public class TenantSignupHandler {
             .orElseGet(
                 () -> {
                   var r = new Role(Role.ROLE_TENANT_ADMIN);
-                  r.setDescription("Tenant owner — manages their own store");
-                  r.setTenantId(tenantCode);
+                  r.describe("Tenant owner — manages their own store");
+                  r.assignTo(tenantCode);
                   return r;
                 });
     role.setPermissions(Set.of(profileRead));

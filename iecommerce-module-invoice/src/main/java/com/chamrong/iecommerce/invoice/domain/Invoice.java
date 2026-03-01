@@ -16,14 +16,12 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
 @Entity
 @Table(name = "invoice")
 public class Invoice extends BaseTenantEntity {
+
+  public Invoice() {}
 
   @Column(unique = true, nullable = false, length = 50)
   private String invoiceNumber;
@@ -57,6 +55,74 @@ public class Invoice extends BaseTenantEntity {
   @Column(unique = true, length = 100)
   private String idempotencyKey;
 
+  public String getInvoiceNumber() {
+    return invoiceNumber;
+  }
+
+  public void setInvoiceNumber(String invoiceNumber) {
+    this.invoiceNumber = invoiceNumber;
+  }
+
+  public Long getOrderId() {
+    return orderId;
+  }
+
+  public void setOrderId(Long orderId) {
+    this.orderId = orderId;
+  }
+
+  public Instant getInvoiceDate() {
+    return invoiceDate;
+  }
+
+  public void setInvoiceDate(Instant invoiceDate) {
+    this.invoiceDate = invoiceDate;
+  }
+
+  public InvoiceStatus getStatus() {
+    return status;
+  }
+
+  public void setStatus(InvoiceStatus status) {
+    this.status = status;
+  }
+
+  public Money getTotalAmount() {
+    return totalAmount;
+  }
+
+  public void setTotalAmount(Money totalAmount) {
+    this.totalAmount = totalAmount;
+  }
+
+  public List<InvoiceLine> getLines() {
+    return lines;
+  }
+
+  public void setLines(List<InvoiceLine> lines) {
+    this.lines = lines;
+  }
+
+  public String getDigitalSignature() {
+    return digitalSignature;
+  }
+
+  public void setDigitalSignature(String digitalSignature) {
+    this.digitalSignature = digitalSignature;
+  }
+
+  public Instant getSignedAt() {
+    return signedAt;
+  }
+
+  public void setSignedAt(Instant signedAt) {
+    this.signedAt = signedAt;
+  }
+
+  public String getIdempotencyKey() {
+    return idempotencyKey;
+  }
+
   // ── Domain behaviour ───────────────────────────────────────────────────────
 
   public void issue() {
@@ -78,6 +144,7 @@ public class Invoice extends BaseTenantEntity {
     this.status = InvoiceStatus.VOID;
   }
 
+  /** Write-once setter — idempotency key is set once at creation time. */
   public void setIdempotencyKey(String idempotencyKey) {
     if (this.idempotencyKey != null) throw new IllegalStateException("idempotencyKey already set");
     this.idempotencyKey = idempotencyKey;
