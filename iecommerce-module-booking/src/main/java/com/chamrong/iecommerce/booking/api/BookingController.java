@@ -1,6 +1,7 @@
 package com.chamrong.iecommerce.booking.api;
 
 import com.chamrong.iecommerce.booking.application.BookingService;
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.booking.application.dto.AvailabilityRuleRequest;
 import com.chamrong.iecommerce.booking.application.dto.AvailabilityRuleResponse;
 import com.chamrong.iecommerce.booking.application.dto.AvailableSlot;
@@ -67,14 +68,16 @@ public class BookingController {
   @Operation(summary = "Get all bookings for a customer")
   @GetMapping("/customers/{customerId}")
   public List<BookingResponse> getByCustomer(@PathVariable Long customerId) {
-    return bookingService.getCustomerBookings(customerId);
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    return bookingService.getCustomerBookings(tenantId, customerId);
   }
 
   @Operation(summary = "Get accepted bookings for a resource")
   @GetMapping("/resources/{resourceProductId}/accepted")
   @PreAuthorize("hasAuthority('bookings:manage')")
   public List<BookingResponse> getAcceptedByResource(@PathVariable Long resourceProductId) {
-    return bookingService.getResourceAcceptedBookings(resourceProductId);
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    return bookingService.getResourceAcceptedBookings(tenantId, resourceProductId);
   }
 
   // ── State transitions ──────────────────────────────────────────────────────
@@ -135,7 +138,8 @@ public class BookingController {
       @PathVariable Long resourceProductId,
       @RequestParam(required = false) Long staffId,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-    return bookingService.getAvailableSlots(resourceProductId, staffId, date);
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    return bookingService.getAvailableSlots(tenantId, resourceProductId, staffId, date);
   }
 
   // ── Availability rules (admin) ─────────────────────────────────────────────

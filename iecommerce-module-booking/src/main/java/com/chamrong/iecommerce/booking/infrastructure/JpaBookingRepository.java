@@ -15,21 +15,24 @@ import org.springframework.stereotype.Repository;
 public interface JpaBookingRepository extends JpaRepository<Booking, Long>, BookingRepository {
 
   @Override
-  List<Booking> findByCustomerId(Long customerId);
+  List<Booking> findByTenantIdAndCustomerId(String tenantId, Long customerId);
 
   @Override
-  List<Booking> findByResourceProductIdAndStatus(Long resourceProductId, BookingStatus status);
+  List<Booking> findByTenantIdAndResourceProductIdAndStatus(
+      String tenantId, Long resourceProductId, BookingStatus status);
 
   @Override
   @Query(
       """
       SELECT b FROM Booking b
-      WHERE b.resourceProductId = :pid
+      WHERE b.tenantId = :tenantId
+        AND b.resourceProductId = :pid
         AND b.status IN ('PENDING', 'ACCEPTED')
         AND b.startAt < :end
         AND b.endAt > :start
       """)
   List<Booking> findOverlappingBookings(
+      @Param("tenantId") String tenantId,
       @Param("pid") Long resourceProductId,
       @Param("start") Instant start,
       @Param("end") Instant end);
@@ -38,13 +41,17 @@ public interface JpaBookingRepository extends JpaRepository<Booking, Long>, Book
   @Query(
       """
       SELECT b FROM Booking b
-      WHERE b.assignedStaffId = :sid
+      WHERE b.tenantId = :tenantId
+        AND b.assignedStaffId = :sid
         AND b.status IN ('PENDING', 'ACCEPTED')
         AND b.startAt < :end
         AND b.endAt > :start
       """)
   List<Booking> findOverlappingStaffBookings(
-      @Param("sid") Long staffId, @Param("start") Instant start, @Param("end") Instant end);
+      @Param("tenantId") String tenantId,
+      @Param("sid") Long staffId,
+      @Param("start") Instant start,
+      @Param("end") Instant end);
 
   @Override
   List<Booking> findByStatusAndStartAtBetween(BookingStatus status, Instant start, Instant end);

@@ -44,10 +44,10 @@ public class BookingService implements BookingApi {
 
   @Transactional
   public BookingResponse createBooking(String tenantId, CreateBookingRequest req) {
-    // Guard: check for overlapping active bookings
+    // Guard: check for overlapping active bookings (tenant-scoped)
     List<Booking> conflicts =
         bookingRepository.findOverlappingBookings(
-            req.resourceProductId(), req.startAt(), req.endAt());
+            tenantId, req.resourceProductId(), req.startAt(), req.endAt());
     if (!conflicts.isEmpty()) {
       throw new IllegalStateException(
           "Resource is already booked during the requested time window ("
@@ -55,11 +55,11 @@ public class BookingService implements BookingApi {
               + " conflict(s))");
     }
 
-    // Guard: check for staff conflicts if assigned
+    // Guard: check for staff conflicts if assigned (tenant-scoped)
     if (req.assignedStaffId() != null) {
       List<Booking> staffConflicts =
           bookingRepository.findOverlappingStaffBookings(
-              req.assignedStaffId(), req.startAt(), req.endAt());
+              tenantId, req.assignedStaffId(), req.startAt(), req.endAt());
       if (!staffConflicts.isEmpty()) {
         throw new IllegalStateException("Staff member is already booked during this time");
       }
@@ -179,14 +179,20 @@ public class BookingService implements BookingApi {
   }
 
   @Transactional(readOnly = true)
-  public List<BookingResponse> getCustomerBookings(Long customerId) {
-    return bookingRepository.findByCustomerId(customerId).stream().map(this::toResponse).toList();
+  public List<BookingResponse> getCustomerBookings(String tenantId, Long customerId) {
+    return bookingRepository
+        .findByTenantIdAndCustomerId(tenantId, customerId)
+        .stream()
+        .map(this::toResponse)
+        .toList();
   }
 
   @Transactional(readOnly = true)
-  public List<BookingResponse> getResourceAcceptedBookings(Long resourceProductId) {
+  public List<BookingResponse> getResourceAcceptedBookings(
+      String tenantId, Long resourceProductId) {
     return bookingRepository
-        .findByResourceProductIdAndStatus(resourceProductId, BookingStatus.ACCEPTED)
+        .findByTenantIdAndResourceProductIdAndStatus(
+            tenantId, resourceProductId, BookingStatus.ACCEPTED)
         .stream()
         .map(this::toResponse)
         .toList();
@@ -211,7 +217,7 @@ public class BookingService implements BookingApi {
    */
   @Transactional(readOnly = true)
   public List<AvailableSlot> getAvailableSlots(
-      Long resourceProductId, Long staffId, LocalDate date) {
+      String tenantId, Long resourceProductId, Long staffId, LocalDate date) {
     DayOfWeek dow = date.getDayOfWeek();
 
     List<AvailabilityRule> rules;
@@ -234,12 +240,12 @@ public class BookingService implements BookingApi {
 
         boolean hasConflict =
             !bookingRepository
-                .findOverlappingBookings(resourceProductId, slotStart, slotEnd)
+                .findOverlappingBookings(tenantId, resourceProductId, slotStart, slotEnd)
                 .isEmpty();
         if (!hasConflict && staffId != null) {
           hasConflict =
               !bookingRepository
-                  .findOverlappingStaffBookings(staffId, slotStart, slotEnd)
+                  .findOverlappingStaffBookings(tenantId, staffId, slotStart, slotEnd)
                   .isEmpty();
         }
 

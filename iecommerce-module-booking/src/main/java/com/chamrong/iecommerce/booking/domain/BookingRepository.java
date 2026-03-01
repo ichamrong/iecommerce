@@ -9,15 +9,18 @@ public interface BookingRepository {
 
   Optional<Booking> findById(Long id);
 
-  List<Booking> findByCustomerId(Long customerId);
+  List<Booking> findByTenantIdAndCustomerId(String tenantId, Long customerId);
 
-  List<Booking> findByResourceProductIdAndStatus(Long resourceProductId, BookingStatus status);
+  List<Booking> findByTenantIdAndResourceProductIdAndStatus(
+      String tenantId, Long resourceProductId, BookingStatus status);
 
-  /** Returns all bookings for a resource that overlap with the given window. */
-  List<Booking> findOverlappingBookings(Long resourceProductId, Instant start, Instant end);
+  /** Returns all bookings for a resource that overlap with the given window. Tenant-scoped. */
+  List<Booking> findOverlappingBookings(
+      String tenantId, Long resourceProductId, Instant start, Instant end);
 
-  /** Returns all bookings for a staff member that overlap with the given window. */
-  List<Booking> findOverlappingStaffBookings(Long staffId, Instant start, Instant end);
+  /** Returns all bookings for a staff member that overlap with the given window. Tenant-scoped. */
+  List<Booking> findOverlappingStaffBookings(
+      String tenantId, Long staffId, Instant start, Instant end);
 
   List<Booking> findByStatusAndStartAtBetween(BookingStatus status, Instant start, Instant end);
 
