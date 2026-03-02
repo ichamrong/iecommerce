@@ -4,15 +4,14 @@ import com.chamrong.iecommerce.staff.application.StaffMapper;
 import com.chamrong.iecommerce.staff.application.dto.StaffCursorResponse;
 import com.chamrong.iecommerce.staff.application.dto.StaffResponse;
 import com.chamrong.iecommerce.staff.application.util.StaffCursorEncoder;
+import com.chamrong.iecommerce.staff.domain.StaffAccessDeniedException;
 import com.chamrong.iecommerce.staff.domain.StaffProfile;
 import com.chamrong.iecommerce.staff.domain.StaffRepositoryPort;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Read-model query handler for staff profiles.
@@ -29,7 +28,7 @@ public class StaffQueryHandler {
 
   /**
    * Returns a staff profile by id. When {@code tenantId} is present, the staff must have that
-   * tenant in their assigned tenants; otherwise 404 (no cross-tenant leak).
+   * tenant in their assigned tenants; otherwise access is denied (no cross-tenant leak).
    */
   @Transactional(readOnly = true)
   public StaffResponse findById(String tenantId, Long id) {
@@ -41,7 +40,7 @@ public class StaffQueryHandler {
                   && !tenantId.isBlank()
                   && (profile.getAssignedTenants() == null
                       || !profile.getAssignedTenants().contains(tenantId))) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Staff not found");
+                throw new StaffAccessDeniedException("Staff not accessible in this tenant context");
               }
               return mapper.toResponse(profile);
             })

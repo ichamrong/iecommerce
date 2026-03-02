@@ -5,6 +5,7 @@ import com.chamrong.iecommerce.staff.StaffCreatedEvent;
 import com.chamrong.iecommerce.staff.application.StaffMapper;
 import com.chamrong.iecommerce.staff.application.dto.StaffResponse;
 import com.chamrong.iecommerce.staff.application.util.StaffSecurityContext;
+import com.chamrong.iecommerce.staff.domain.StaffAuditActions;
 import com.chamrong.iecommerce.staff.domain.StaffAuditLog;
 import com.chamrong.iecommerce.staff.domain.StaffAuditLogPort;
 import com.chamrong.iecommerce.staff.domain.StaffProfile;
@@ -48,7 +49,10 @@ public class CreateStaffHandler {
     eventPublisher.publishEvent(new StaffCreatedEvent(null, profile.getId(), cmd.email()));
 
     auditLogPort.save(
-        new StaffAuditLog(StaffSecurityContext.currentActorId(), profile.getId(), "STAFF_CREATED"));
+        new StaffAuditLog(
+            StaffSecurityContext.currentActorId(),
+            profile.getId(),
+            StaffAuditActions.STAFF_CREATED));
     log.info("STAFF_CREATED: id={}, email={}", profile.getId(), maskEmail(cmd.email()));
     return mapper.toResponse(profile);
   }

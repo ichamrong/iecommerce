@@ -1,5 +1,6 @@
-package com.chamrong.iecommerce.sale.domain.service;
+package com.chamrong.iecommerce.sale.infrastructure.audit;
 
+import com.chamrong.iecommerce.sale.domain.ports.AuditPort;
 import com.chamrong.iecommerce.sale.infrastructure.persistence.jpa.JpaAuditLogRepository;
 import com.chamrong.iecommerce.sale.infrastructure.persistence.jpa.SaleAuditLogEntity;
 import java.nio.charset.StandardCharsets;
@@ -8,17 +9,23 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Infrastructure adapter that persists audit records using JPA.
+ *
+ * <p>Provides tamper-evident chaining via SHA-256 hashes.
+ */
 @Slf4j
-@Service
+@Component
 @RequiredArgsConstructor
-public class AuditService {
+public class JpaAuditAdapter implements AuditPort {
 
   private final JpaAuditLogRepository repository;
 
+  @Override
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void log(
       String tenantId,
@@ -27,11 +34,11 @@ public class AuditService {
       String entityName,
       String entityId,
       String correlationId,
-      Object beforeState,
-      Object afterState) {
+      String beforeState,
+      String afterState) {
 
-    String beforeHash = beforeState != null ? hash(beforeState.toString()) : null;
-    String afterHash = afterState != null ? hash(afterState.toString()) : null;
+    String beforeHash = beforeState != null ? hash(beforeState) : null;
+    String afterHash = afterState != null ? hash(afterState) : null;
 
     String prevHash =
         repository
@@ -62,7 +69,9 @@ public class AuditService {
   private String calculateRecordHash(String... parts) {
     StringBuilder sb = new StringBuilder();
     for (String part : parts) {
-      if (part != null) sb.append(part);
+      if (part != null) {
+        sb.append(part);
+      }
     }
     return hash(sb.toString());
   }
@@ -73,7 +82,7 @@ public class AuditService {
       byte[] hash = digest.digest(text.getBytes(StandardCharsets.UTF_8));
       return Base64.getEncoder().encodeToString(hash);
     } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException("SHA-256 algorithm not found", e);
+      throw new IllegalStateException("SHA-256 algorithm not found", e);
     }
   }
 }

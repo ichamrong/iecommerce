@@ -2,6 +2,7 @@ package com.chamrong.iecommerce.staff.application.command;
 
 import com.chamrong.iecommerce.staff.StaffTerminatedEvent;
 import com.chamrong.iecommerce.staff.application.util.StaffSecurityContext;
+import com.chamrong.iecommerce.staff.domain.StaffAuditActions;
 import com.chamrong.iecommerce.staff.domain.StaffAuditLog;
 import com.chamrong.iecommerce.staff.domain.StaffAuditLogPort;
 import com.chamrong.iecommerce.staff.domain.StaffRepositoryPort;
@@ -31,7 +32,8 @@ public class TerminateStaffHandler {
     staffRepository.save(profile);
 
     auditLogPort.save(
-        new StaffAuditLog(StaffSecurityContext.currentActorId(), id, "STAFF_TERMINATED"));
+        new StaffAuditLog(
+            StaffSecurityContext.currentActorId(), id, StaffAuditActions.STAFF_TERMINATED));
     eventPublisher.publishEvent(new StaffTerminatedEvent(null, id));
     log.info("STAFF_TERMINATED: id={}", id);
   }

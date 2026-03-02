@@ -5,9 +5,9 @@ import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.sale.domain.exception.SaleDomainException;
 import com.chamrong.iecommerce.sale.domain.model.SaleSession;
 import com.chamrong.iecommerce.sale.domain.model.Shift;
+import com.chamrong.iecommerce.sale.domain.ports.AuditPort;
 import com.chamrong.iecommerce.sale.domain.ports.SaleSessionRepositoryPort;
 import com.chamrong.iecommerce.sale.domain.ports.ShiftRepositoryPort;
-import com.chamrong.iecommerce.sale.domain.service.AuditService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ public class SaleSessionUseCase {
 
   private final SaleSessionRepositoryPort sessionRepository;
   private final ShiftRepositoryPort shiftRepository;
-  private final AuditService auditService;
+  private final AuditPort auditPort;
 
   @Transactional
   public SaleSession openSession(
@@ -52,7 +52,7 @@ public class SaleSessionUseCase {
     SaleSession session = new SaleSession(shift, tenantId, terminalId, currency);
     SaleSession saved = sessionRepository.save(session);
 
-    auditService.log(
+    auditPort.log(
         tenantId,
         shift.getStaffId(),
         "OPEN_SESSION",
@@ -77,7 +77,7 @@ public class SaleSessionUseCase {
     session.initiateClosing();
     SaleSession saved = sessionRepository.save(session);
 
-    auditService.log(
+    auditPort.log(
         tenantId,
         staffId,
         "INITIATE_CLOSING",
@@ -103,7 +103,7 @@ public class SaleSessionUseCase {
     session.close(actualCash);
     SaleSession saved = sessionRepository.save(session);
 
-    auditService.log(
+    auditPort.log(
         tenantId,
         staffId,
         "CLOSE_SESSION",

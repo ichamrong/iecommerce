@@ -10,53 +10,53 @@ import java.util.Set;
 public enum VerticalMode {
   ECOMMERCE(
       Set.of(
-          "order",
-          "catalog",
-          "inventory",
-          "customer",
-          "promotion",
-          "payment",
-          "invoice",
-          "report",
-          "setting")),
+          ModuleCodes.ORDER,
+          ModuleCodes.CATALOG,
+          ModuleCodes.INVENTORY,
+          ModuleCodes.CUSTOMER,
+          ModuleCodes.PROMOTION,
+          ModuleCodes.PAYMENT,
+          ModuleCodes.INVOICE,
+          ModuleCodes.REPORT,
+          ModuleCodes.SETTING)),
 
   POS(
       Set.of(
-          "sale",
-          "order",
-          "catalog",
-          "inventory",
-          "customer",
-          "promotion",
-          "payment",
-          "invoice",
-          "report",
-          "setting")),
+          ModuleCodes.SALE,
+          ModuleCodes.ORDER,
+          ModuleCodes.CATALOG,
+          ModuleCodes.INVENTORY,
+          ModuleCodes.CUSTOMER,
+          ModuleCodes.PROMOTION,
+          ModuleCodes.PAYMENT,
+          ModuleCodes.INVOICE,
+          ModuleCodes.REPORT,
+          ModuleCodes.SETTING)),
 
   ACCOMMODATION(
       Set.of(
-          "booking",
-          "catalog",
-          "inventory",
-          "customer",
-          "payment",
-          "invoice",
-          "report",
-          "setting")),
+          ModuleCodes.BOOKING,
+          ModuleCodes.CATALOG,
+          ModuleCodes.INVENTORY,
+          ModuleCodes.CUSTOMER,
+          ModuleCodes.PAYMENT,
+          ModuleCodes.INVOICE,
+          ModuleCodes.REPORT,
+          ModuleCodes.SETTING)),
 
   HYBRID(
       Set.of(
-          "order",
-          "sale",
-          "booking",
-          "catalog",
-          "inventory",
-          "customer",
-          "promotion",
-          "payment",
-          "invoice",
-          "report",
-          "setting"));
+          ModuleCodes.ORDER,
+          ModuleCodes.SALE,
+          ModuleCodes.BOOKING,
+          ModuleCodes.CATALOG,
+          ModuleCodes.INVENTORY,
+          ModuleCodes.CUSTOMER,
+          ModuleCodes.PROMOTION,
+          ModuleCodes.PAYMENT,
+          ModuleCodes.INVOICE,
+          ModuleCodes.REPORT,
+          ModuleCodes.SETTING));
 
   private final Set<String> allowedModules;
 

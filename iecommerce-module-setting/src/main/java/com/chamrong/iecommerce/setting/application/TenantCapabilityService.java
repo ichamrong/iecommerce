@@ -2,6 +2,7 @@ package com.chamrong.iecommerce.setting.application;
 
 import com.chamrong.iecommerce.common.security.CapabilityDeniedException;
 import com.chamrong.iecommerce.common.security.CapabilityGate;
+import com.chamrong.iecommerce.setting.domain.SettingKeys;
 import com.chamrong.iecommerce.setting.domain.VerticalMode;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -18,9 +19,6 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class TenantCapabilityService implements CapabilityGate {
-
-  /** Tenant setting key for vertical mode. */
-  public static final String KEY_VERTICAL_MODE = "vertical_mode";
 
   private final SettingService settingService;
 
@@ -44,7 +42,7 @@ public class TenantCapabilityService implements CapabilityGate {
 
   /** Resolves the tenant's vertical mode from settings; default ECOMMERCE. */
   public VerticalMode resolveVerticalMode(String tenantId) {
-    Optional<String> value = settingService.getTenantValue(tenantId, KEY_VERTICAL_MODE);
+    Optional<String> value = settingService.getTenantValue(tenantId, SettingKeys.VERTICAL_MODE);
     return VerticalMode.from(value.orElse(null));
   }
 }

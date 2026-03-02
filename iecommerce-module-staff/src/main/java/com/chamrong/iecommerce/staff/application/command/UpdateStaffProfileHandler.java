@@ -3,6 +3,7 @@ package com.chamrong.iecommerce.staff.application.command;
 import com.chamrong.iecommerce.staff.application.StaffMapper;
 import com.chamrong.iecommerce.staff.application.dto.StaffResponse;
 import com.chamrong.iecommerce.staff.application.util.StaffSecurityContext;
+import com.chamrong.iecommerce.staff.domain.StaffAuditActions;
 import com.chamrong.iecommerce.staff.domain.StaffAuditLog;
 import com.chamrong.iecommerce.staff.domain.StaffAuditLogPort;
 import com.chamrong.iecommerce.staff.domain.StaffRepositoryPort;
@@ -33,7 +34,8 @@ public class UpdateStaffProfileHandler {
 
     var saved = staffRepository.save(profile);
     auditLogPort.save(
-        new StaffAuditLog(StaffSecurityContext.currentActorId(), cmd.staffId(), "STAFF_UPDATED"));
+        new StaffAuditLog(
+            StaffSecurityContext.currentActorId(), cmd.staffId(), StaffAuditActions.STAFF_UPDATED));
     log.info("STAFF_UPDATED: id={}", cmd.staffId());
     return mapper.toResponse(saved);
   }

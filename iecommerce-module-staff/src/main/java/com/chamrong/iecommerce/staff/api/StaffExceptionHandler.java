@@ -1,5 +1,6 @@
 package com.chamrong.iecommerce.staff.api;
 
+import com.chamrong.iecommerce.staff.domain.StaffAccessDeniedException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +49,16 @@ public class StaffExceptionHandler {
   /** Staff ID not found. */
   @ExceptionHandler(EntityNotFoundException.class)
   public ResponseEntity<StaffErrorResponse> handleNotFound(EntityNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(StaffErrorResponse.of(ex.getMessage(), "STAFF_NOT_FOUND"));
+  }
+
+  /**
+   * Access denied for the requested staff member (e.g. cross-tenant access). We deliberately return
+   * 404 to avoid leaking the existence of resources across tenants.
+   */
+  @ExceptionHandler(StaffAccessDeniedException.class)
+  public ResponseEntity<StaffErrorResponse> handleAccessDenied(StaffAccessDeniedException ex) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
         .body(StaffErrorResponse.of(ex.getMessage(), "STAFF_NOT_FOUND"));
   }

@@ -4,6 +4,7 @@ import com.chamrong.iecommerce.auth.domain.event.StaffTenantsUpdatedEvent;
 import com.chamrong.iecommerce.staff.application.StaffMapper;
 import com.chamrong.iecommerce.staff.application.dto.StaffResponse;
 import com.chamrong.iecommerce.staff.application.util.StaffSecurityContext;
+import com.chamrong.iecommerce.staff.domain.StaffAuditActions;
 import com.chamrong.iecommerce.staff.domain.StaffAuditLog;
 import com.chamrong.iecommerce.staff.domain.StaffAuditLogPort;
 import com.chamrong.iecommerce.staff.domain.StaffRepositoryPort;
@@ -39,7 +40,9 @@ public class UpdateStaffTenantsHandler {
         new StaffTenantsUpdatedEvent(profile.getUserId(), cmd.tenantCodes()));
     auditLogPort.save(
         new StaffAuditLog(
-            StaffSecurityContext.currentActorId(), cmd.staffId(), "STAFF_TENANTS_UPDATED"));
+            StaffSecurityContext.currentActorId(),
+            cmd.staffId(),
+            StaffAuditActions.STAFF_TENANTS_UPDATED));
     log.info("STAFF_TENANTS_UPDATED: id={}", cmd.staffId());
     return mapper.toResponse(profile);
   }
