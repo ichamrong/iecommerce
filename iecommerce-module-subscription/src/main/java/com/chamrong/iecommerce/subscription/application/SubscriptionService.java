@@ -1,8 +1,10 @@
 package com.chamrong.iecommerce.subscription.application;
 
 import com.chamrong.iecommerce.subscription.SubscriptionApi;
+import com.chamrong.iecommerce.subscription.application.dto.CreatePlanRequest;
 import com.chamrong.iecommerce.subscription.application.dto.SubscriptionPlanResponse;
 import com.chamrong.iecommerce.subscription.application.dto.TenantSubscriptionResponse;
+import com.chamrong.iecommerce.subscription.application.dto.UpdatePlanRequest;
 import com.chamrong.iecommerce.subscription.application.dto.UpgradeRequest;
 import com.chamrong.iecommerce.subscription.domain.SubscriptionPlan;
 import com.chamrong.iecommerce.subscription.domain.SubscriptionPlanRepository;
@@ -28,9 +30,66 @@ public class SubscriptionService implements SubscriptionApi {
 
   // ── Plan Management (Admin) ────────────────────────────────────────────────
 
+  /**
+   * Returns all plans, including inactive ones.
+   *
+   * <p>Intended for backoffice administration screens.
+   */
   @Transactional(readOnly = true)
   public List<SubscriptionPlanResponse> getAllPlans() {
     return planRepository.findAll().stream().map(this::toPlanResponse).toList();
+  }
+
+  /**
+   * Creates a new subscription plan.
+   *
+   * @param request payload containing plan attributes
+   * @return created plan representation
+   */
+  @Transactional
+  public SubscriptionPlanResponse createPlan(CreatePlanRequest request) {
+    SubscriptionPlan plan = new SubscriptionPlan();
+    plan.setCode(request.code());
+    plan.setName(request.name());
+    plan.setDescription(request.description());
+    plan.setPrice(request.price());
+    plan.setMaxProducts(request.maxProducts());
+    plan.setMaxOrdersPerMonth(request.maxOrdersPerMonth());
+    plan.setMaxStaffProfiles(request.maxStaffProfiles());
+    plan.setCustomDomainAllowed(request.customDomainAllowed());
+    plan.setActive(request.active());
+
+    SubscriptionPlan saved = planRepository.save(plan);
+    log.info("Created subscription plan code={}", saved.getCode());
+    return toPlanResponse(saved);
+  }
+
+  /**
+   * Updates an existing subscription plan by id.
+   *
+   * @param planId identifier of the plan to update
+   * @param request new attributes for the plan
+   * @return updated plan representation
+   */
+  @Transactional
+  public SubscriptionPlanResponse updatePlan(Long planId, UpdatePlanRequest request) {
+    SubscriptionPlan plan =
+        planRepository
+            .findById(planId)
+            .orElseThrow(() -> new EntityNotFoundException("Plan not found: " + planId));
+
+    plan.setName(request.name());
+    plan.setDescription(request.description());
+    plan.setPrice(request.price());
+    plan.setMaxProducts(request.maxProducts());
+    plan.setMaxOrdersPerMonth(request.maxOrdersPerMonth());
+    plan.setMaxStaffProfiles(request.maxStaffProfiles());
+    plan.setCustomDomainAllowed(request.customDomainAllowed());
+    plan.setActive(request.active());
+
+    SubscriptionPlan saved = planRepository.save(plan);
+    log.info("Updated subscription plan id={} code={}", saved.getId(), saved.getCode());
+    return toPlanResponse(saved);
   }
 
   @Transactional(readOnly = true)
@@ -93,6 +152,26 @@ public class SubscriptionService implements SubscriptionApi {
 
     sub.cancel();
     log.info("Cancelled subscription for tenant={}", tenantId);
+    return toTenantResponse(tenantSubscriptionRepository.save(sub));
+  }
+
+  /**
+   * Resumes auto-renewal for a tenant's subscription.
+   *
+   * <p>If the subscription is expired, this method fails fast and the caller should create a new
+   * subscription instead.
+   */
+  @Transactional
+  public TenantSubscriptionResponse resume(String tenantId) {
+    TenantSubscription sub =
+        tenantSubscriptionRepository
+            .findByTenantId(tenantId)
+            .orElseThrow(
+                () ->
+                    new EntityNotFoundException("No active subscription for tenant: " + tenantId));
+
+    sub.resume();
+    log.info("Resumed subscription for tenant={}", tenantId);
     return toTenantResponse(tenantSubscriptionRepository.save(sub));
   }
 

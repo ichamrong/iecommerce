@@ -78,4 +78,20 @@ public class TenantSubscription extends BaseTenantEntity {
     this.status = SubscriptionStatus.ACTIVE;
     this.nextBillingDate = nextBillingDate;
   }
+
+  /**
+   * Resumes auto-renewal for a subscription that was previously cancelled or suspended.
+   *
+   * <p>Business rules: if the subscription is already expired, resuming is not allowed at the
+   * domain level and should be handled by creating a new subscription instead.
+   */
+  public void resume() {
+    if (status == SubscriptionStatus.EXPIRED) {
+      throw new IllegalStateException("Cannot resume an expired subscription.");
+    }
+    this.autoRenew = true;
+    if (status == SubscriptionStatus.CANCELLED || status == SubscriptionStatus.SUSPENDED) {
+      this.status = SubscriptionStatus.ACTIVE;
+    }
+  }
 }
