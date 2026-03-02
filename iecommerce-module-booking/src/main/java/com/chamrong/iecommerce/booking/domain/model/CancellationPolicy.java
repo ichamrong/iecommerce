@@ -8,13 +8,11 @@ import java.util.Objects;
  * Cancellation policy: free until cutoff, partial/full penalty after.
  *
  * @param freeCancellationUntil cutoff instant; cancel before = no penalty
- * @param penaltyPercent        percent of total (0-100) after cutoff
- * @param penaltyAmount         fixed amount override (optional)
+ * @param penaltyPercent percent of total (0-100) after cutoff
+ * @param penaltyAmount fixed amount override (optional)
  */
 public record CancellationPolicy(
-    Instant freeCancellationUntil,
-    int penaltyPercent,
-    Money penaltyAmount) {
+    Instant freeCancellationUntil, int penaltyPercent, Money penaltyAmount) {
 
   public CancellationPolicy {
     penaltyPercent = Math.max(0, Math.min(100, penaltyPercent));
@@ -24,8 +22,8 @@ public record CancellationPolicy(
   /**
    * Computes refund amount given total paid and cancellation time.
    *
-   * @param totalPaid    amount already paid
-   * @param cancelledAt  when cancellation occurs
+   * @param totalPaid amount already paid
+   * @param cancelledAt when cancellation occurs
    * @return refund amount (positive)
    */
   public Money computeRefund(Money totalPaid, Instant cancelledAt) {
@@ -39,7 +37,9 @@ public record CancellationPolicy(
     if (!penaltyAmount.isZero()) {
       return totalPaid.subtract(penaltyAmount);
     }
-    Money penalty = totalPaid.multiply(java.math.BigDecimal.valueOf(penaltyPercent).divide(java.math.BigDecimal.valueOf(100)));
+    Money penalty =
+        totalPaid.multiply(
+            java.math.BigDecimal.valueOf(penaltyPercent).divide(java.math.BigDecimal.valueOf(100)));
     return totalPaid.subtract(penalty);
   }
 }

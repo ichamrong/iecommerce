@@ -10,9 +10,7 @@ import java.time.Instant;
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- * JPA entity for audit_event table. Append-only; no updates. Tenant-scoped.
- */
+/** JPA entity for audit_event table. Append-only; no updates. Tenant-scoped. */
 @Entity
 @Table(name = "audit_event")
 @Getter

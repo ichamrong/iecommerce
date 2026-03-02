@@ -6,12 +6,12 @@ import java.util.List;
 /**
  * Pricing breakdown: base rate, taxes, fees, discounts. Immutable.
  *
- * @param baseAmount     base rate total
- * @param taxAmount      tax total
- * @param feeAmount      fees total
+ * @param baseAmount base rate total
+ * @param taxAmount tax total
+ * @param feeAmount fees total
  * @param discountAmount discount total
- * @param total          final total
- * @param lineItems      optional breakdown items
+ * @param total final total
+ * @param lineItems optional breakdown items
  */
 public record PricingBreakdown(
     Money baseAmount,
@@ -23,8 +23,12 @@ public record PricingBreakdown(
 
   public static PricingBreakdown of(Money total) {
     return new PricingBreakdown(
-        total, Money.zero(total.getCurrency()), Money.zero(total.getCurrency()),
-        Money.zero(total.getCurrency()), total, List.of());
+        total,
+        Money.zero(total.getCurrency()),
+        Money.zero(total.getCurrency()),
+        Money.zero(total.getCurrency()),
+        total,
+        List.of());
   }
 
   public record PricingLineItem(String description, Money amount, String type) {}

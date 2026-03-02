@@ -8,10 +8,10 @@ import java.util.Objects;
  *
  * @param resourceProductId product id
  * @param resourceVariantId optional variant
- * @param quantity         quantity
- * @param unitPrice        price per unit
- * @param totalPrice      line total
- * @param description      optional description
+ * @param quantity quantity
+ * @param unitPrice price per unit
+ * @param totalPrice line total
+ * @param description optional description
  */
 public record BookingItem(
     Long resourceProductId,

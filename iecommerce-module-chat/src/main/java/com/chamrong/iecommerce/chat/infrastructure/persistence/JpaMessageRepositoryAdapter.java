@@ -28,11 +28,7 @@ public class JpaMessageRepositoryAdapter implements MessageRepositoryPort {
 
   @Override
   public List<ChatMessage> findCursorPage(
-      String tenantId,
-      Long conversationId,
-      Instant afterCreatedAt,
-      Long afterId,
-      int limit) {
+      String tenantId, Long conversationId, Instant afterCreatedAt, Long afterId, int limit) {
     if (afterCreatedAt == null || afterId == null) {
       return jpaRepo.findFirstPage(tenantId, conversationId, PageRequest.of(0, limit));
     }

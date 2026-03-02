@@ -1,7 +1,7 @@
 package com.chamrong.iecommerce.customer.infrastructure.event;
 
 import com.chamrong.iecommerce.common.event.OrderCompletedEvent;
-import com.chamrong.iecommerce.customer.domain.CustomerRepository;
+import com.chamrong.iecommerce.customer.domain.ports.CustomerRepositoryPort;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,9 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class OrderEventListener {
 
-  private final CustomerRepository customerRepository;
+  private final CustomerRepositoryPort customerRepository;
 
-  public OrderEventListener(CustomerRepository customerRepository) {
+  public OrderEventListener(CustomerRepositoryPort customerRepository) {
     this.customerRepository = customerRepository;
   }
 

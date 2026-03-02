@@ -6,7 +6,7 @@ import java.util.Objects;
  * Target of the audited action: type and identifier.
  *
  * @param targetType e.g. ORDER, PAYMENT, PRODUCT
- * @param targetId   stable business or entity id
+ * @param targetId stable business or entity id
  */
 public record AuditTarget(String targetType, String targetId) {
 

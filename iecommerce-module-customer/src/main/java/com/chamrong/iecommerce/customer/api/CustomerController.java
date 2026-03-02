@@ -1,5 +1,6 @@
 package com.chamrong.iecommerce.customer.api;
 
+import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
 import com.chamrong.iecommerce.customer.application.command.AddAddressHandler;
 import com.chamrong.iecommerce.customer.application.command.BlockCustomerHandler;
 import com.chamrong.iecommerce.customer.application.command.CreateCustomerCommand;
@@ -8,13 +9,15 @@ import com.chamrong.iecommerce.customer.application.command.RemoveAddressHandler
 import com.chamrong.iecommerce.customer.application.command.UnblockCustomerHandler;
 import com.chamrong.iecommerce.customer.application.command.UpdateCustomerHandler;
 import com.chamrong.iecommerce.customer.application.dto.AddAddressRequest;
+import com.chamrong.iecommerce.customer.application.dto.CustomerFilters;
 import com.chamrong.iecommerce.customer.application.dto.CustomerResponse;
 import com.chamrong.iecommerce.customer.application.dto.UpdateCustomerRequest;
 import com.chamrong.iecommerce.customer.application.query.CustomerQueryHandler;
+import com.chamrong.iecommerce.customer.domain.model.CustomerStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.net.URI;
-import java.util.List;
+import java.time.Instant;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -51,11 +54,25 @@ public class CustomerController {
 
   // ── Reads ────────────────────────────────────────────────────────────────
 
-  @Operation(summary = "List all customers")
+  @Operation(summary = "List customers (cursor pagination)")
   @GetMapping
-  public ResponseEntity<List<CustomerResponse>> getAllCustomers(
-      @RequestHeader("X-Tenant-ID") String tenantId) {
-    return ResponseEntity.ok(customerQueryHandler.findAll(tenantId));
+  public ResponseEntity<CursorPageResponse<CustomerResponse>> listCustomers(
+      @RequestHeader("X-Tenant-ID") String tenantId,
+      @RequestParam(required = false) String cursor,
+      @RequestParam(defaultValue = "20") int limit,
+      @RequestParam(required = false) String status,
+      @RequestParam(required = false) String search,
+      @RequestParam(required = false) String createdAtFrom,
+      @RequestParam(required = false) String createdAtTo) {
+    CustomerStatus statusEnum =
+        status != null && !status.isBlank() ? CustomerStatus.valueOf(status) : null;
+    Instant from =
+        createdAtFrom != null && !createdAtFrom.isBlank() ? Instant.parse(createdAtFrom) : null;
+    Instant to = createdAtTo != null && !createdAtTo.isBlank() ? Instant.parse(createdAtTo) : null;
+    CustomerFilters filters = new CustomerFilters(statusEnum, search, from, to);
+    CursorPageResponse<CustomerResponse> page =
+        customerQueryHandler.findPage(tenantId, filters, cursor, limit);
+    return ResponseEntity.ok(page);
   }
 
   @Operation(summary = "Get customer by ID")

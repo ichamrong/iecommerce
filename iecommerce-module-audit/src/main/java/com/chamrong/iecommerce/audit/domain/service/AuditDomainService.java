@@ -7,8 +7,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 
 /**
- * Domain service for audit: canonical representation and hash computation (for tamper-evidence
- * hash chain). No I/O; pure functions.
+ * Domain service for audit: canonical representation and hash computation (for tamper-evidence hash
+ * chain). No I/O; pure functions.
  */
 public final class AuditDomainService {
 
@@ -27,11 +27,19 @@ public final class AuditDomainService {
     sb.append(event.getTenantId()).append("|");
     sb.append(event.getCreatedAt()).append("|");
     sb.append(event.getCorrelationId()).append("|");
-    sb.append(event.getActor().actorId()).append("|").append(event.getActor().actorType()).append("|").append(event.getActor().role()).append("|");
+    sb.append(event.getActor().actorId())
+        .append("|")
+        .append(event.getActor().actorType())
+        .append("|")
+        .append(event.getActor().role())
+        .append("|");
     sb.append(event.getEventType()).append("|");
     sb.append(event.getOutcome()).append("|");
     sb.append(event.getSeverity()).append("|");
-    sb.append(event.getTarget().targetType()).append("|").append(event.getTarget().targetId()).append("|");
+    sb.append(event.getTarget().targetType())
+        .append("|")
+        .append(event.getTarget().targetId())
+        .append("|");
     sb.append(event.getSourceModule()).append("|").append(event.getSourceEndpoint()).append("|");
     sb.append(event.getIpAddress() != null ? event.getIpAddress() : "").append("|");
     sb.append(event.getUserAgent() != null ? event.getUserAgent() : "").append("|");

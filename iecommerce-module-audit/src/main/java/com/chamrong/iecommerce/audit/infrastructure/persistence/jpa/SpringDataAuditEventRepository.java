@@ -15,8 +15,7 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface SpringDataAuditEventRepository
-    extends JpaRepository<AuditEventEntity, Long>,
-        JpaSpecificationExecutor<AuditEventEntity> {
+    extends JpaRepository<AuditEventEntity, Long>, JpaSpecificationExecutor<AuditEventEntity> {
 
   List<AuditEventEntity> findByTenantIdOrderByCreatedAtDescIdDesc(
       String tenantId, Pageable pageable);

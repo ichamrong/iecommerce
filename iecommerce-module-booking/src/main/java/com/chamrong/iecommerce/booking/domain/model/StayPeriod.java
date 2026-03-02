@@ -6,7 +6,7 @@ import java.util.Objects;
 /**
  * Check-in and check-out window for accommodation bookings.
  *
- * @param checkIn  check-in date/time (start of stay)
+ * @param checkIn check-in date/time (start of stay)
  * @param checkOut check-out date/time (end of stay)
  */
 public record StayPeriod(Instant checkIn, Instant checkOut) {

@@ -4,7 +4,7 @@ import com.chamrong.iecommerce.customer.CustomerCreatedEvent;
 import com.chamrong.iecommerce.customer.application.CustomerMapper;
 import com.chamrong.iecommerce.customer.application.dto.CustomerResponse;
 import com.chamrong.iecommerce.customer.domain.Customer;
-import com.chamrong.iecommerce.customer.domain.CustomerRepository;
+import com.chamrong.iecommerce.customer.domain.ports.CustomerRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CreateCustomerHandler {
 
-  private final CustomerRepository customerRepository;
+  private final CustomerRepositoryPort customerRepository;
   private final CustomerMapper mapper;
   private final ApplicationEventPublisher eventPublisher;
 

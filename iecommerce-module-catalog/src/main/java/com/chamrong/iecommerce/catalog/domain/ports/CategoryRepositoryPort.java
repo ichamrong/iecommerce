@@ -5,9 +5,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Port for category persistence. Implementations live in infrastructure/persistence.
- */
+/** Port for category persistence. Implementations live in infrastructure/persistence. */
 public interface CategoryRepositoryPort {
 
   Optional<Category> findById(Long id);

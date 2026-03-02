@@ -10,13 +10,13 @@ import static org.mockito.Mockito.when;
 
 import com.chamrong.iecommerce.customer.application.dto.AuthTokens;
 import com.chamrong.iecommerce.customer.domain.Customer;
-import com.chamrong.iecommerce.customer.domain.CustomerRepository;
 import com.chamrong.iecommerce.customer.domain.auth.AccountState;
 import com.chamrong.iecommerce.customer.domain.auth.DefaultLoginLockPolicy;
 import com.chamrong.iecommerce.customer.domain.auth.LoginLockPolicy;
 import com.chamrong.iecommerce.customer.domain.auth.port.CustomerCredentialPort;
 import com.chamrong.iecommerce.customer.domain.auth.port.LoginAttemptPort;
 import com.chamrong.iecommerce.customer.domain.auth.port.SessionStorePort;
+import com.chamrong.iecommerce.customer.domain.ports.CustomerRepositoryPort;
 import java.time.Instant;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +31,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class LoginCustomerHandlerTest {
 
-  @Mock private CustomerRepository customerRepository;
+  @Mock private CustomerRepositoryPort customerRepository;
   @Mock private CustomerCredentialPort credentialPort;
   @Mock private LoginAttemptPort attemptPort;
   @Mock private SessionStorePort sessionStorePort;
@@ -54,10 +54,13 @@ class LoginCustomerHandlerTest {
     // Doing nothing, defaults to ConcurrentLoginPolicy.INVALIDATE_OLD
   }
 
+  private static final String TENANT_ID = "tenant-1";
+
   @Test
   void shouldLoginSuccessfullyAndInvalidateOldSessions() {
-    LoginCommand cmd = new LoginCommand(email, password, "iPhone");
-    when(customerRepository.findByEmail(email)).thenReturn(Optional.of(testCustomer));
+    LoginCommand cmd = new LoginCommand(TENANT_ID, email, password, "iPhone");
+    when(customerRepository.findByTenantIdAndEmail(TENANT_ID, email))
+        .thenReturn(Optional.of(testCustomer));
     when(attemptPort.getAccountState("1")).thenReturn(new AccountState("1", 0, null));
     when(credentialPort.verify("1", password)).thenReturn(true);
     when(credentialPort.generateTokens(eq("1"), eq(1L), any()))
@@ -78,8 +81,9 @@ class LoginCustomerHandlerTest {
 
   @Test
   void shouldLockAccountAfterThresholdFailures() {
-    LoginCommand cmd = new LoginCommand(email, "wrong", "iPhone");
-    when(customerRepository.findByEmail(email)).thenReturn(Optional.of(testCustomer));
+    LoginCommand cmd = new LoginCommand(TENANT_ID, email, "wrong", "iPhone");
+    when(customerRepository.findByTenantIdAndEmail(TENANT_ID, email))
+        .thenReturn(Optional.of(testCustomer));
 
     // Simulating 2 failures currently
     AccountState state = new AccountState("1", 2, null);
@@ -97,8 +101,9 @@ class LoginCustomerHandlerTest {
 
   @Test
   void shouldRejectLoginIfAccountIsLocked() {
-    LoginCommand cmd = new LoginCommand(email, password, "iPhone");
-    when(customerRepository.findByEmail(email)).thenReturn(Optional.of(testCustomer));
+    LoginCommand cmd = new LoginCommand(TENANT_ID, email, password, "iPhone");
+    when(customerRepository.findByTenantIdAndEmail(TENANT_ID, email))
+        .thenReturn(Optional.of(testCustomer));
 
     // Account locked until 5 mins from now
     AccountState state = new AccountState("1", 7, Instant.now().plusSeconds(300));

@@ -35,16 +35,22 @@ class AuditQueryServiceCursorFilterMismatchTest {
 
   @Test
   void findPage_whenCursorHasDifferentFilterHash_throwsInvalidCursorFilterMismatch() {
-    String filterHashA = FilterHasher.computeHash(AuditQueryService.ENDPOINT_LIST_EVENTS, Map.of("actorId", "user1"));
-    String filterHashB = FilterHasher.computeHash(AuditQueryService.ENDPOINT_LIST_EVENTS, Map.of("actorId", "user2"));
+    String filterHashA =
+        FilterHasher.computeHash(
+            AuditQueryService.ENDPOINT_LIST_EVENTS, Map.of("actorId", "user1"));
+    String filterHashB =
+        FilterHasher.computeHash(
+            AuditQueryService.ENDPOINT_LIST_EVENTS, Map.of("actorId", "user2"));
     String cursorFromFilterA =
         CursorCodec.encode(
             new CursorPayload(1, Instant.parse("2025-03-01T12:00:00Z"), "99", filterHashA));
 
-    AuditSearchFilters filtersB = new AuditSearchFilters("user2", null, null, null, null, null, null, null, null);
+    AuditSearchFilters filtersB =
+        new AuditSearchFilters("user2", null, null, null, null, null, null, null, null);
     Map<String, Object> filterMapB = AuditQueryService.toFilterMap(filtersB);
 
-    assertThatThrownBy(() -> queryService.findPage(TENANT, filtersB, cursorFromFilterA, 20, filterMapB))
+    assertThatThrownBy(
+            () -> queryService.findPage(TENANT, filtersB, cursorFromFilterA, 20, filterMapB))
         .isInstanceOf(InvalidCursorException.class)
         .satisfies(
             e ->

@@ -50,7 +50,7 @@ public class AuditQueryService {
    * Returns verification result for an event: VALID if hash and chain link are correct.
    *
    * @param tenantId current tenant
-   * @param id       event id
+   * @param id event id
    * @return response with hashValid true/false and reason if invalid
    */
   @Transactional(readOnly = true)
@@ -111,7 +111,8 @@ public class AuditQueryService {
           CursorCodec.encode(
               new CursorPayload(1, last.getCreatedAt(), String.valueOf(last.getId()), filterHash));
     }
-    List<AuditEventResponse> data = pageData.stream().map(AuditEventProjection::toResponse).toList();
+    List<AuditEventResponse> data =
+        pageData.stream().map(AuditEventProjection::toResponse).toList();
     return CursorPageResponse.of(data, nextCursor, hasNext, effectiveLimit);
   }
 

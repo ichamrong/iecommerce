@@ -3,9 +3,7 @@ package com.chamrong.iecommerce.audit.application.query;
 import com.chamrong.iecommerce.audit.application.dto.AuditEventResponse;
 import com.chamrong.iecommerce.audit.domain.model.AuditEvent;
 
-/**
- * Maps domain AuditEvent to API AuditEventResponse. Used by query service.
- */
+/** Maps domain AuditEvent to API AuditEventResponse. Used by query service. */
 public final class AuditEventProjection {
 
   private AuditEventProjection() {}
@@ -13,7 +11,7 @@ public final class AuditEventProjection {
   /**
    * Maps a domain event to response DTO. hashValid is null for list/get; set by verify endpoint.
    *
-   * @param event   domain event
+   * @param event domain event
    * @param hashValid null, or result of tamper verification
    * @return response DTO
    */

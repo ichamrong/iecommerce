@@ -1,23 +1,20 @@
 package com.chamrong.iecommerce.audit.application.usecase;
 
-import com.chamrong.iecommerce.audit.application.dto.AuditEventListResponse;
+import com.chamrong.iecommerce.audit.application.command.RecordAuditEventCommand;
+import com.chamrong.iecommerce.audit.application.command.RecordAuditEventHandler;
 import com.chamrong.iecommerce.audit.application.dto.AuditEventRequest;
 import com.chamrong.iecommerce.audit.application.dto.AuditEventResponse;
 import com.chamrong.iecommerce.audit.application.dto.AuditSearchFilters;
-import com.chamrong.iecommerce.audit.application.command.RecordAuditEventCommand;
-import com.chamrong.iecommerce.audit.application.command.RecordAuditEventHandler;
 import com.chamrong.iecommerce.audit.application.query.AuditQueryService;
-import com.chamrong.iecommerce.audit.domain.model.AuditEvent;
 import com.chamrong.iecommerce.audit.domain.model.AuditActor;
+import com.chamrong.iecommerce.audit.domain.model.AuditEvent;
 import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-/**
- * Orchestration use case: record event, get by id, list with cursor, verify tamper.
- */
+/** Orchestration use case: record event, get by id, list with cursor, verify tamper. */
 @Service
 @RequiredArgsConstructor
 public class AuditUseCase {
@@ -47,10 +44,7 @@ public class AuditUseCase {
   }
 
   public CursorPageResponse<AuditEventResponse> list(
-      String tenantId,
-      AuditSearchFilters filters,
-      String cursor,
-      int limit) {
+      String tenantId, AuditSearchFilters filters, String cursor, int limit) {
     Map<String, Object> filterMap = AuditQueryService.toFilterMap(filters);
     return queryService.findPage(tenantId, filters, cursor, limit, filterMap);
   }

@@ -6,7 +6,6 @@ import com.chamrong.iecommerce.audit.application.dto.AuditSearchFilters;
 import com.chamrong.iecommerce.audit.application.usecase.AuditUseCase;
 import com.chamrong.iecommerce.audit.domain.model.AuditActor;
 import com.chamrong.iecommerce.auth.domain.Permissions;
-import com.chamrong.iecommerce.common.TenantContext;
 import com.chamrong.iecommerce.common.logging.LoggingHelper;
 import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
 import com.chamrong.iecommerce.common.security.TenantGuard;
@@ -43,14 +42,17 @@ public class AuditApiController {
 
   private final AuditUseCase auditUseCase;
 
-  @Operation(summary = "Record audit event", description = "Internal or AUDIT_WRITE. Tenant and actor from context.")
+  @Operation(
+      summary = "Record audit event",
+      description = "Internal or AUDIT_WRITE. Tenant and actor from context.")
   @PostMapping("/events")
   @PreAuthorize(Permissions.HAS_AUDIT_WRITE)
   public ResponseEntity<AuditEventResponse> record(
       @Valid @RequestBody AuditEventRequest request, HttpServletRequest httpRequest) {
     String tenantId = TenantGuard.requireTenantIdPresent();
     AuditActor actor = currentActor();
-    String correlationId = LoggingHelper.getCorrelationId() != null ? LoggingHelper.getCorrelationId() : "";
+    String correlationId =
+        LoggingHelper.getCorrelationId() != null ? LoggingHelper.getCorrelationId() : "";
     String ip = ipAddress(httpRequest);
     String userAgent = httpRequest.getHeader("User-Agent");
     if (userAgent != null && userAgent.length() > 500) userAgent = userAgent.substring(0, 500);
@@ -78,7 +80,15 @@ public class AuditApiController {
     String tenantId = TenantGuard.requireTenantIdPresent();
     AuditSearchFilters filters =
         new AuditSearchFilters(
-            actorId, eventType, outcome, severity, targetType, targetId, dateFrom, dateTo, searchTerm);
+            actorId,
+            eventType,
+            outcome,
+            severity,
+            targetType,
+            targetId,
+            dateFrom,
+            dateTo,
+            searchTerm);
     return auditUseCase.list(tenantId, filters, cursor, Math.min(100, Math.max(1, limit)));
   }
 
@@ -119,7 +129,8 @@ public class AuditApiController {
     return ip != null && ip.length() > 45 ? ip.substring(0, 45) : ip;
   }
 
-  private static AuditEventResponse toResponse(com.chamrong.iecommerce.audit.domain.model.AuditEvent event) {
+  private static AuditEventResponse toResponse(
+      com.chamrong.iecommerce.audit.domain.model.AuditEvent event) {
     return new AuditEventResponse(
         event.getId(),
         event.getTenantId(),

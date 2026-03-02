@@ -4,9 +4,7 @@ import com.chamrong.iecommerce.chat.domain.model.ConversationType;
 import java.time.Instant;
 import java.util.Set;
 
-/**
- * Domain event when a conversation is created.
- */
+/** Domain event when a conversation is created. */
 public record ConversationCreatedEvent(
     String tenantId,
     Long conversationId,

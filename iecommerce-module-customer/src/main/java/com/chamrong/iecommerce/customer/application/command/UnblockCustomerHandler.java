@@ -2,7 +2,7 @@ package com.chamrong.iecommerce.customer.application.command;
 
 import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.customer.CustomerUnblockedEvent;
-import com.chamrong.iecommerce.customer.domain.CustomerRepository;
+import com.chamrong.iecommerce.customer.domain.ports.CustomerRepositoryPort;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UnblockCustomerHandler {
 
-  private final CustomerRepository customerRepository;
+  private final CustomerRepositoryPort customerRepository;
   private final ApplicationEventPublisher eventPublisher;
 
   public void handle(String tenantId, Long id) {

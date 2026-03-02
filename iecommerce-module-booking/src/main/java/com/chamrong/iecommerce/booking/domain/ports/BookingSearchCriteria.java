@@ -3,9 +3,7 @@ package com.chamrong.iecommerce.booking.domain.ports;
 import com.chamrong.iecommerce.booking.domain.model.BookingStatus;
 import java.time.Instant;
 
-/**
- * Search criteria for booking list (cursor-safe; included in filterHash).
- */
+/** Search criteria for booking list (cursor-safe; included in filterHash). */
 public record BookingSearchCriteria(
     Long customerId,
     Long resourceProductId,

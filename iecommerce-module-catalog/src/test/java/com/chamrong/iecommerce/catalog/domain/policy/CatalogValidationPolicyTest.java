@@ -15,9 +15,11 @@ class CatalogValidationPolicyTest {
 
     @Test
     void acceptsLowercaseAlphanumericAndHyphens() {
-      assertThatCode(() -> CatalogValidationPolicy.validateSlug("valid-slug")).doesNotThrowAnyException();
+      assertThatCode(() -> CatalogValidationPolicy.validateSlug("valid-slug"))
+          .doesNotThrowAnyException();
       assertThatCode(() -> CatalogValidationPolicy.validateSlug("a")).doesNotThrowAnyException();
-      assertThatCode(() -> CatalogValidationPolicy.validateSlug("abc123")).doesNotThrowAnyException();
+      assertThatCode(() -> CatalogValidationPolicy.validateSlug("abc123"))
+          .doesNotThrowAnyException();
     }
 
     @Test
@@ -51,7 +53,8 @@ class CatalogValidationPolicyTest {
     @Test
     void acceptsNullOrNonBlank() {
       assertThatCode(() -> CatalogValidationPolicy.validateSku(null)).doesNotThrowAnyException();
-      assertThatCode(() -> CatalogValidationPolicy.validateSku("SKU-001")).doesNotThrowAnyException();
+      assertThatCode(() -> CatalogValidationPolicy.validateSku("SKU-001"))
+          .doesNotThrowAnyException();
     }
 
     @Test

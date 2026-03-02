@@ -6,9 +6,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Port for booking persistence. All queries MUST be tenant-scoped.
- */
+/** Port for booking persistence. All queries MUST be tenant-scoped. */
 public interface BookingRepositoryPort {
 
   Booking save(Booking booking);

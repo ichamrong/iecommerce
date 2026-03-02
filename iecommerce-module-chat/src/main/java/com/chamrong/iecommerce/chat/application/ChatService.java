@@ -43,13 +43,15 @@ public class ChatService {
   // ── Messages ───────────────────────────────────────────────────────────────
 
   @Transactional
-  public ChatMessageResponse sendMessage(String tenantId, Long conversationId, SendMessageRequest req) {
+  public ChatMessageResponse sendMessage(
+      String tenantId, Long conversationId, SendMessageRequest req) {
     Conversation conv =
         conversationRepository
             .findById(conversationId)
             .orElseThrow(
                 () -> new EntityNotFoundException("Conversation not found: " + conversationId));
-    com.chamrong.iecommerce.common.security.TenantGuard.requireSameTenant(conv.getTenantId(), tenantId);
+    com.chamrong.iecommerce.common.security.TenantGuard.requireSameTenant(
+        conv.getTenantId(), tenantId);
 
     if (!conv.hasParticipant(req.senderId())) {
       throw new IllegalStateException("Sender is not a participant in this conversation");

@@ -2,9 +2,7 @@ package com.chamrong.iecommerce.audit.domain.ports;
 
 import com.chamrong.iecommerce.audit.domain.event.AuditRecordedEvent;
 
-/**
- * Optional port for publishing audit events (e.g. outbox, Kafka). Implementations may be no-op.
- */
+/** Optional port for publishing audit events (e.g. outbox, Kafka). Implementations may be no-op. */
 public interface AuditPublisherPort {
 
   /**

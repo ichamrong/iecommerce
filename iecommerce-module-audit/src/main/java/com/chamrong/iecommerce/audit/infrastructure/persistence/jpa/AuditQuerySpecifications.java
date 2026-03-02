@@ -7,9 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.springframework.data.jpa.domain.Specification;
 
-/**
- * JPA specifications for audit_event: tenant-scoped keyset and optional filters.
- */
+/** JPA specifications for audit_event: tenant-scoped keyset and optional filters. */
 public final class AuditQuerySpecifications {
 
   private AuditQuerySpecifications() {}

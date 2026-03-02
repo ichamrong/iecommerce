@@ -21,8 +21,7 @@ public interface AuditEventRepositoryPort {
   AuditEvent save(AuditEvent event);
 
   /**
-   * Finds an event by id. Caller must enforce tenant check (IDOR: event.tenantId ==
-   * TenantContext).
+   * Finds an event by id. Caller must enforce tenant check (IDOR: event.tenantId == TenantContext).
    *
    * @param id event id
    * @return event if found
@@ -32,9 +31,9 @@ public interface AuditEventRepositoryPort {
   /**
    * First page for tenant; no cursor. Returns at most limitPlusOne rows.
    *
-   * @param tenantId   current tenant (required)
-   * @param filters    optional filters (actorId, eventType, outcome, severity, targetType, targetId,
-   *                   dateFrom, dateTo)
+   * @param tenantId current tenant (required)
+   * @param filters optional filters (actorId, eventType, outcome, severity, targetType, targetId,
+   *     dateFrom, dateTo)
    * @param limitPlusOne limit + 1 to detect hasNext
    * @return list ordered by created_at DESC, id DESC
    */
@@ -43,11 +42,11 @@ public interface AuditEventRepositoryPort {
   /**
    * Next page using keyset cursor.
    *
-   * @param tenantId       current tenant
-   * @param filters        same as first page
+   * @param tenantId current tenant
+   * @param filters same as first page
    * @param cursorCreatedAt last item's created_at
-   * @param cursorId        last item's id
-   * @param limitPlusOne   limit + 1
+   * @param cursorId last item's id
+   * @param limitPlusOne limit + 1
    * @return list ordered by created_at DESC, id DESC
    */
   List<AuditEvent> findNextPage(

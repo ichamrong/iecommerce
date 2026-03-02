@@ -18,8 +18,7 @@ class SearchNormalizationServiceTest {
   @Test
   @DisplayName("normalizeKeyword trims and lowercases")
   void normalizeKeyword_trimAndLowercase() {
-    assertThat(SearchNormalizationService.normalizeKeyword("  Foo Bar  "))
-        .isEqualTo("foo bar");
+    assertThat(SearchNormalizationService.normalizeKeyword("  Foo Bar  ")).isEqualTo("foo bar");
     assertThat(SearchNormalizationService.normalizeKeyword("UPPER")).isEqualTo("upper");
   }
 }

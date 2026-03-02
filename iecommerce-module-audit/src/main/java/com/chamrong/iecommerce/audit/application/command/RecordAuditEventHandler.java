@@ -4,8 +4,8 @@ import com.chamrong.iecommerce.audit.domain.model.AuditEvent;
 import com.chamrong.iecommerce.audit.domain.model.AuditOutcome;
 import com.chamrong.iecommerce.audit.domain.model.AuditSeverity;
 import com.chamrong.iecommerce.audit.domain.ports.AuditEventRepositoryPort;
-import com.chamrong.iecommerce.audit.domain.ports.AuditTamperProofPort;
 import com.chamrong.iecommerce.audit.domain.ports.AuditPublisherPort;
+import com.chamrong.iecommerce.audit.domain.ports.AuditTamperProofPort;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +30,7 @@ public class RecordAuditEventHandler {
   public AuditEvent handle(RecordAuditEventCommand command) {
     validator.validate(command.request());
 
-    String prevHash =
-        repository.findPreviousHashForTenant(command.tenantId()).orElse(null);
+    String prevHash = repository.findPreviousHashForTenant(command.tenantId()).orElse(null);
 
     AuditEvent event =
         AuditEvent.builder()
@@ -43,8 +42,12 @@ public class RecordAuditEventHandler {
             .outcome(AuditOutcome.valueOf(command.request().outcome()))
             .severity(AuditSeverity.valueOf(command.request().severity()))
             .target(command.targetFromRequest())
-            .sourceModule(command.request().sourceModule() != null ? command.request().sourceModule() : "")
-            .sourceEndpoint(command.request().sourceEndpoint() != null ? command.request().sourceEndpoint() : "")
+            .sourceModule(
+                command.request().sourceModule() != null ? command.request().sourceModule() : "")
+            .sourceEndpoint(
+                command.request().sourceEndpoint() != null
+                    ? command.request().sourceEndpoint()
+                    : "")
             .ipAddress(truncate(command.ipAddress(), 45))
             .userAgent(truncate(command.userAgent(), 500))
             .metadataJson(command.request().metadataJson())
@@ -52,24 +55,25 @@ public class RecordAuditEventHandler {
             .build();
 
     String hash = tamperProof.computeHash(event);
-    event = AuditEvent.builder()
-        .id(null)
-        .tenantId(event.getTenantId())
-        .createdAt(event.getCreatedAt())
-        .correlationId(event.getCorrelationId())
-        .actor(event.getActor())
-        .eventType(event.getEventType())
-        .outcome(event.getOutcome())
-        .severity(event.getSeverity())
-        .target(event.getTarget())
-        .sourceModule(event.getSourceModule())
-        .sourceEndpoint(event.getSourceEndpoint())
-        .ipAddress(event.getIpAddress())
-        .userAgent(event.getUserAgent())
-        .metadataJson(event.getMetadataJson())
-        .prevHash(event.getPrevHash())
-        .hash(hash)
-        .build();
+    event =
+        AuditEvent.builder()
+            .id(null)
+            .tenantId(event.getTenantId())
+            .createdAt(event.getCreatedAt())
+            .correlationId(event.getCorrelationId())
+            .actor(event.getActor())
+            .eventType(event.getEventType())
+            .outcome(event.getOutcome())
+            .severity(event.getSeverity())
+            .target(event.getTarget())
+            .sourceModule(event.getSourceModule())
+            .sourceEndpoint(event.getSourceEndpoint())
+            .ipAddress(event.getIpAddress())
+            .userAgent(event.getUserAgent())
+            .metadataJson(event.getMetadataJson())
+            .prevHash(event.getPrevHash())
+            .hash(hash)
+            .build();
 
     AuditEvent saved = repository.save(event);
     try {

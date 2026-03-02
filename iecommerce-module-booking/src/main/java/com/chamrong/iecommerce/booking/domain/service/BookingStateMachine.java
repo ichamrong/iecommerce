@@ -3,17 +3,14 @@ package com.chamrong.iecommerce.booking.domain.service;
 import com.chamrong.iecommerce.booking.domain.model.Booking;
 import com.chamrong.iecommerce.booking.domain.model.BookingStatus;
 
-/**
- * Validates and executes booking state transitions. Pure domain logic.
- */
+/** Validates and executes booking state transitions. Pure domain logic. */
 public final class BookingStateMachine {
 
   private BookingStateMachine() {}
 
   public static Booking confirm(Booking booking) {
     if (!booking.canConfirm()) {
-      throw new IllegalStateException(
-          "Cannot confirm booking in status: " + booking.getStatus());
+      throw new IllegalStateException("Cannot confirm booking in status: " + booking.getStatus());
     }
     return Booking.builder()
         .id(booking.getId())
@@ -43,8 +40,7 @@ public final class BookingStateMachine {
 
   public static Booking checkIn(Booking booking) {
     if (!booking.canCheckIn()) {
-      throw new IllegalStateException(
-          "Cannot check-in booking in status: " + booking.getStatus());
+      throw new IllegalStateException("Cannot check-in booking in status: " + booking.getStatus());
     }
     return Booking.builder()
         .id(booking.getId())
@@ -74,8 +70,7 @@ public final class BookingStateMachine {
 
   public static Booking checkOut(Booking booking) {
     if (!booking.canCheckOut()) {
-      throw new IllegalStateException(
-          "Cannot check-out booking in status: " + booking.getStatus());
+      throw new IllegalStateException("Cannot check-out booking in status: " + booking.getStatus());
     }
     return Booking.builder()
         .id(booking.getId())
@@ -105,8 +100,7 @@ public final class BookingStateMachine {
 
   public static Booking cancel(Booking booking, String reason) {
     if (!booking.canCancel()) {
-      throw new IllegalStateException(
-          "Cannot cancel booking in status: " + booking.getStatus());
+      throw new IllegalStateException("Cannot cancel booking in status: " + booking.getStatus());
     }
     return Booking.builder()
         .id(booking.getId())

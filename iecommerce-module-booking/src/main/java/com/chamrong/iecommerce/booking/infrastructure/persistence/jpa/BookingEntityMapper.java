@@ -7,9 +7,7 @@ import com.chamrong.iecommerce.booking.domain.model.GuestInfo;
 import com.chamrong.iecommerce.booking.domain.model.PricingBreakdown;
 import org.springframework.stereotype.Component;
 
-/**
- * Maps between domain.Booking (JPA entity) and domain.model.Booking (pure).
- */
+/** Maps between domain.Booking (JPA entity) and domain.model.Booking (pure). */
 @Component
 public class BookingEntityMapper {
 
@@ -20,7 +18,10 @@ public class BookingEntityMapper {
         .tenantId(entity.getTenantId())
         .createdAt(entity.getCreatedAt())
         .version(null)
-        .kind(entity.getType() != null ? BookingKind.valueOf(entity.getType().name()) : BookingKind.ACCOMMODATION)
+        .kind(
+            entity.getType() != null
+                ? BookingKind.valueOf(entity.getType().name())
+                : BookingKind.ACCOMMODATION)
         .resourceProductId(entity.getResourceProductId())
         .resourceVariantId(entity.getResourceVariantId())
         .resourceId(null)
@@ -30,13 +31,15 @@ public class BookingEntityMapper {
         .endAt(entity.getEndAt())
         .status(mapStatus(entity.getStatus()))
         .source(com.chamrong.iecommerce.booking.domain.model.BookingSource.WEB)
-        .guestInfo(new GuestInfo(
-            entity.getGuestFirstName(),
-            entity.getGuestLastName(),
-            entity.getGuestEmail(),
-            entity.getGuestPhone()))
+        .guestInfo(
+            new GuestInfo(
+                entity.getGuestFirstName(),
+                entity.getGuestLastName(),
+                entity.getGuestEmail(),
+                entity.getGuestPhone()))
         .totalPrice(entity.getTotalPrice())
-        .pricingBreakdown(entity.getTotalPrice() != null ? PricingBreakdown.of(entity.getTotalPrice()) : null)
+        .pricingBreakdown(
+            entity.getTotalPrice() != null ? PricingBreakdown.of(entity.getTotalPrice()) : null)
         .customerNotes(entity.getCustomerNotes())
         .internalNotes(entity.getInternalNotes())
         .holdToken(null)

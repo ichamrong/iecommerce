@@ -3,14 +3,12 @@ package com.chamrong.iecommerce.audit.application.command;
 import com.chamrong.iecommerce.audit.application.dto.AuditEventRequest;
 import com.chamrong.iecommerce.audit.domain.exception.AuditDomainException;
 import com.chamrong.iecommerce.audit.domain.model.AuditOutcome;
-import com.chamrong.iecommerce.audit.domain.policy.AuditPolicy;
 import com.chamrong.iecommerce.audit.domain.model.AuditSeverity;
+import com.chamrong.iecommerce.audit.domain.policy.AuditPolicy;
 import java.nio.charset.StandardCharsets;
 import org.springframework.stereotype.Component;
 
-/**
- * Validates audit event request: outcome/severity enum, metadata size, PII rules.
- */
+/** Validates audit event request: outcome/severity enum, metadata size, PII rules. */
 @Component
 public class AuditEventValidator {
 

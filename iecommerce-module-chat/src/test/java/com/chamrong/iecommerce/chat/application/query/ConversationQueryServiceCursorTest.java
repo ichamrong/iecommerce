@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import com.chamrong.iecommerce.chat.domain.Conversation;
 import com.chamrong.iecommerce.chat.domain.ports.ConversationRepositoryPort;
 import com.chamrong.iecommerce.common.TenantContext;
 import com.chamrong.iecommerce.common.pagination.CursorCodec;
@@ -44,7 +43,8 @@ class ConversationQueryServiceCursorTest {
 
   @Test
   void findPage_firstPage_returnsCursorPageResponse() {
-    when(conversationRepository.findCursorPage(eq(TENANT), eq(1L), eq(null), eq(null), any(Integer.class)))
+    when(conversationRepository.findCursorPage(
+            eq(TENANT), eq(1L), eq(null), eq(null), any(Integer.class)))
         .thenReturn(List.of());
 
     var result = service.findPage(TENANT, 1L, null, 20);
@@ -61,8 +61,7 @@ class ConversationQueryServiceCursorTest {
         FilterHasher.computeHash(
             ConversationQueryService.ENDPOINT_LIST_CONVERSATIONS,
             java.util.Map.of("participantId", 1L));
-    String cursor =
-        CursorCodec.encode(new CursorPayload(1, Instant.now(), "1", hashParticipant1));
+    String cursor = CursorCodec.encode(new CursorPayload(1, Instant.now(), "1", hashParticipant1));
 
     assertThatThrownBy(() -> service.findPage(TENANT, 2L, cursor, 20))
         .isInstanceOf(InvalidCursorException.class)

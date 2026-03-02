@@ -5,9 +5,7 @@ import com.chamrong.iecommerce.audit.domain.ports.AuditTamperProofPort;
 import com.chamrong.iecommerce.audit.domain.service.AuditDomainService;
 import org.springframework.stereotype.Component;
 
-/**
- * Tamper-evidence adapter using hash chain: hash(canonical_form) and chain link verification.
- */
+/** Tamper-evidence adapter using hash chain: hash(canonical_form) and chain link verification. */
 @Component
 public class AuditTamperProofAdapter implements AuditTamperProofPort {
 

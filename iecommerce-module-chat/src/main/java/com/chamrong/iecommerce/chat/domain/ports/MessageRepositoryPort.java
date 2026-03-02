@@ -5,9 +5,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Port for message persistence. Implementations in infrastructure.
- */
+/** Port for message persistence. Implementations in infrastructure. */
 public interface MessageRepositoryPort {
 
   ChatMessage save(ChatMessage message);
@@ -22,9 +20,5 @@ public interface MessageRepositoryPort {
    * @param limit max rows
    */
   List<ChatMessage> findCursorPage(
-      String tenantId,
-      Long conversationId,
-      Instant afterCreatedAt,
-      Long afterId,
-      int limit);
+      String tenantId, Long conversationId, Instant afterCreatedAt, Long afterId, int limit);
 }

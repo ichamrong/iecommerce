@@ -1,7 +1,7 @@
 package com.chamrong.iecommerce.customer.infrastructure;
 
+import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
 import com.chamrong.iecommerce.customer.CustomerApi;
-import com.chamrong.iecommerce.customer.api.dto.CursorResponse;
 import com.chamrong.iecommerce.customer.application.dto.AddAddressRequest;
 import com.chamrong.iecommerce.customer.application.dto.CustomerResponse;
 import com.chamrong.iecommerce.customer.application.dto.UpdateCustomerRequest;
@@ -31,7 +31,7 @@ public class CustomerController {
 
   @GetMapping
   @Operation(summary = "List customers with cursor pagination")
-  public ResponseEntity<CursorResponse<CustomerResponse>> listCustomers(
+  public ResponseEntity<CursorPageResponse<CustomerResponse>> listCustomers(
       @RequestHeader("X-Tenant-ID") String tenantId,
       @RequestParam(required = false) String cursor,
       @RequestParam(defaultValue = "20") int limit) {

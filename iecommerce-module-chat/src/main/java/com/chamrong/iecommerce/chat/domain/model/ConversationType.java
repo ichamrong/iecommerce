@@ -1,8 +1,6 @@
 package com.chamrong.iecommerce.chat.domain.model;
 
-/**
- * Type of conversation for routing and access control.
- */
+/** Type of conversation for routing and access control. */
 public enum ConversationType {
 
   /** Customer support: customer ↔ staff. */

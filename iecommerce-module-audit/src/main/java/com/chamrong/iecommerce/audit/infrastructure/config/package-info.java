@@ -1,4 +1,2 @@
-/**
- * Audit module configuration and beans.
- */
+/** Audit module configuration and beans. */
 package com.chamrong.iecommerce.audit.infrastructure.config;

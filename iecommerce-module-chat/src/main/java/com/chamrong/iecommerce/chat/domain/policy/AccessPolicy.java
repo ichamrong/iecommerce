@@ -1,11 +1,8 @@
 package com.chamrong.iecommerce.chat.domain.policy;
 
 import com.chamrong.iecommerce.chat.domain.Conversation;
-import java.util.Set;
 
-/**
- * Who can see what: participant checks and staff overrides.
- */
+/** Who can see what: participant checks and staff overrides. */
 public final class AccessPolicy {
 
   private AccessPolicy() {}

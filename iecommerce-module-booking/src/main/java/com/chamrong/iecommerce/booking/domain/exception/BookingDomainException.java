@@ -1,8 +1,6 @@
 package com.chamrong.iecommerce.booking.domain.exception;
 
-/**
- * Base domain exception for booking operations.
- */
+/** Base domain exception for booking operations. */
 public class BookingDomainException extends RuntimeException {
 
   private final String errorCode;

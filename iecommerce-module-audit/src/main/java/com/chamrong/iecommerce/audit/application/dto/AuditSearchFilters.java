@@ -5,14 +5,14 @@ import java.time.Instant;
 /**
  * Request filters for audit list endpoint (cursor-safe; included in filterHash).
  *
- * @param actorId    optional
- * @param eventType  optional
- * @param outcome    optional
- * @param severity   optional
+ * @param actorId optional
+ * @param eventType optional
+ * @param outcome optional
+ * @param severity optional
  * @param targetType optional
- * @param targetId   optional
- * @param dateFrom   optional
- * @param dateTo     optional
+ * @param targetId optional
+ * @param dateFrom optional
+ * @param dateTo optional
  * @param searchTerm optional
  */
 public record AuditSearchFilters(

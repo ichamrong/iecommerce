@@ -4,8 +4,8 @@ package com.chamrong.iecommerce.catalog.domain.model;
  * Lifecycle status of a catalog item.
  *
  * <p>DRAFT → PUBLISHED → ARCHIVED. Soft delete (ARCHIVED) preferred for audit and historical
- * invoice accuracy. Maps to {@link com.chamrong.iecommerce.catalog.domain.ProductStatus} ACTIVE
- * as PUBLISHED.
+ * invoice accuracy. Maps to {@link com.chamrong.iecommerce.catalog.domain.ProductStatus} ACTIVE as
+ * PUBLISHED.
  */
 public enum CatalogStatus {
 

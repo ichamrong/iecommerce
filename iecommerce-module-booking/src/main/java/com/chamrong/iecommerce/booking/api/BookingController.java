@@ -1,12 +1,12 @@
 package com.chamrong.iecommerce.booking.api;
 
 import com.chamrong.iecommerce.booking.application.BookingService;
-import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.booking.application.dto.AvailabilityRuleRequest;
 import com.chamrong.iecommerce.booking.application.dto.AvailabilityRuleResponse;
 import com.chamrong.iecommerce.booking.application.dto.AvailableSlot;
 import com.chamrong.iecommerce.booking.application.dto.BookingResponse;
 import com.chamrong.iecommerce.booking.application.dto.CreateBookingRequest;
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;

@@ -24,13 +24,17 @@ class ContentPolicyTest {
   @Test
   void validateAttachmentCount_acceptsWithinLimit() {
     assertThatCode(() -> ContentPolicy.validateAttachmentCount(0)).doesNotThrowAnyException();
-    assertThatCode(() -> ContentPolicy.validateAttachmentCount(ContentPolicy.MAX_ATTACHMENTS_PER_MESSAGE))
+    assertThatCode(
+            () -> ContentPolicy.validateAttachmentCount(ContentPolicy.MAX_ATTACHMENTS_PER_MESSAGE))
         .doesNotThrowAnyException();
   }
 
   @Test
   void validateAttachmentCount_rejectsOverLimit() {
-    assertThatThrownBy(() -> ContentPolicy.validateAttachmentCount(ContentPolicy.MAX_ATTACHMENTS_PER_MESSAGE + 1))
+    assertThatThrownBy(
+            () ->
+                ContentPolicy.validateAttachmentCount(
+                    ContentPolicy.MAX_ATTACHMENTS_PER_MESSAGE + 1))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Max");
   }

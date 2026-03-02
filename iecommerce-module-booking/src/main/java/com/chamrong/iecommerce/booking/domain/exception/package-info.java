@@ -1,4 +1,2 @@
-/**
- * Domain exceptions for booking.
- */
+/** Domain exceptions for booking. */
 package com.chamrong.iecommerce.booking.domain.exception;

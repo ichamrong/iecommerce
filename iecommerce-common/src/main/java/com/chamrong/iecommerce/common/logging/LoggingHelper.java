@@ -46,7 +46,10 @@ public final class LoggingHelper {
     return MDC.get(MDC_CORRELATION_ID);
   }
 
-  /** Returns tenant ID from MDC. Null if not set. Prefer TenantContext.getCurrentTenant() when available. */
+  /**
+   * Returns tenant ID from MDC. Null if not set. Prefer TenantContext.getCurrentTenant() when
+   * available.
+   */
   public static String getTenantIdFromMdc() {
     return MDC.get(MDC_TENANT_ID);
   }

@@ -1,8 +1,6 @@
 package com.chamrong.iecommerce.chat.domain.model;
 
-/**
- * Status of a message for display and audit.
- */
+/** Status of a message for display and audit. */
 public enum MessageStatus {
 
   /** Delivered; visible. */

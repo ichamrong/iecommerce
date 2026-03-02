@@ -3,8 +3,8 @@ package com.chamrong.iecommerce.catalog.domain.policy;
 /**
  * Encapsulates validation rules for catalog items (required fields, uniqueness, consistency).
  *
- * <p>Used before create/update/publish. Examples: ROOM_UNIT must reference ROOM_TYPE;
- * POS_ITEM should have SKU or barcode; slug format and uniqueness.
+ * <p>Used before create/update/publish. Examples: ROOM_UNIT must reference ROOM_TYPE; POS_ITEM
+ * should have SKU or barcode; slug format and uniqueness.
  */
 public final class CatalogValidationPolicy {
 

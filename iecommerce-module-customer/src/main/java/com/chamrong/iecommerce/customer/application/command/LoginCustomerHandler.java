@@ -2,13 +2,13 @@ package com.chamrong.iecommerce.customer.application.command;
 
 import com.chamrong.iecommerce.customer.application.dto.AuthTokens;
 import com.chamrong.iecommerce.customer.domain.Customer;
-import com.chamrong.iecommerce.customer.domain.CustomerRepository;
 import com.chamrong.iecommerce.customer.domain.auth.AccountState;
 import com.chamrong.iecommerce.customer.domain.auth.ConcurrentLoginPolicy;
 import com.chamrong.iecommerce.customer.domain.auth.LoginLockPolicy;
 import com.chamrong.iecommerce.customer.domain.auth.port.CustomerCredentialPort;
 import com.chamrong.iecommerce.customer.domain.auth.port.LoginAttemptPort;
 import com.chamrong.iecommerce.customer.domain.auth.port.SessionStorePort;
+import com.chamrong.iecommerce.customer.domain.ports.CustomerRepositoryPort;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -21,20 +21,20 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class LoginCustomerHandler {
 
-  private final CustomerRepository customerRepository;
+  private final CustomerRepositoryPort customerRepository;
   private final CustomerCredentialPort credentialPort;
   private final LoginAttemptPort attemptPort;
   private final SessionStorePort sessionStorePort;
   private final LoginLockPolicy lockPolicy;
 
-  // Ideally this is injected via @Value, defaulting to ALLOW_MULTIPLE for now
+  // Ideally this is injected via @Value, defaulting to INVALIDATE_OLD for now
   private final ConcurrentLoginPolicy concurrentPolicy = ConcurrentLoginPolicy.INVALIDATE_OLD;
 
   @Transactional
   public AuthTokens handle(LoginCommand cmd) {
     Customer customer =
         customerRepository
-            .findByEmail(cmd.username())
+            .findByTenantIdAndEmail(cmd.tenantId(), cmd.username())
             .orElseThrow(() -> new RuntimeException("Bad credentials")); // Obscure existence
 
     String customerId = customer.getId().toString();

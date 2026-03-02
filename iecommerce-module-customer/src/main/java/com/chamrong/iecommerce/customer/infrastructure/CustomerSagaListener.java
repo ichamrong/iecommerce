@@ -1,7 +1,7 @@
 package com.chamrong.iecommerce.customer.infrastructure;
 
 import com.chamrong.iecommerce.common.event.OrderCompletedEvent;
-import com.chamrong.iecommerce.customer.domain.CustomerRepository;
+import com.chamrong.iecommerce.customer.domain.ports.CustomerRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CustomerSagaListener {
 
-  private final CustomerRepository customerRepository;
+  private final CustomerRepositoryPort customerRepository;
 
   @EventListener
   @Transactional

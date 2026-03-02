@@ -8,9 +8,9 @@ import java.util.Objects;
 /**
  * Command to record a single audit event. Tenant and actor come from context (not from request).
  *
- * @param request   validated request body
- * @param tenantId  from TenantContext
- * @param actor     from security context
+ * @param request validated request body
+ * @param tenantId from TenantContext
+ * @param actor from security context
  * @param correlationId from MDC
  * @param ipAddress optional
  * @param userAgent optional
@@ -32,7 +32,6 @@ public record RecordAuditEventCommand(
 
   public AuditTarget targetFromRequest() {
     return new AuditTarget(
-        request.targetType(),
-        request.targetId() != null ? request.targetId() : "");
+        request.targetType(), request.targetId() != null ? request.targetId() : "");
   }
 }

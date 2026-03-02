@@ -21,7 +21,9 @@ public class AuditEventEntityMapper {
         .tenantId(e.getTenantId())
         .createdAt(e.getCreatedAt())
         .correlationId(e.getCorrelationId())
-        .actor(new AuditActor(e.getActorId(), e.getActorType(), e.getActorRole() != null ? e.getActorRole() : ""))
+        .actor(
+            new AuditActor(
+                e.getActorId(), e.getActorType(), e.getActorRole() != null ? e.getActorRole() : ""))
         .eventType(e.getEventType())
         .outcome(AuditOutcome.valueOf(e.getOutcome()))
         .severity(AuditSeverity.valueOf(e.getSeverity()))

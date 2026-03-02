@@ -62,7 +62,8 @@ public class ConversationQueryService {
       try {
         afterId = Long.valueOf(payload.getId());
       } catch (NumberFormatException e) {
-        throw new InvalidCursorException(InvalidCursorException.INVALID_CURSOR, "Invalid cursor id");
+        throw new InvalidCursorException(
+            InvalidCursorException.INVALID_CURSOR, "Invalid cursor id");
       }
     }
 
@@ -86,9 +87,6 @@ public class ConversationQueryService {
 
   private ConversationResponse toResponse(Conversation c) {
     return new ConversationResponse(
-        c.getId(),
-        c.getParticipantIds(),
-        c.getLastMessageTimestamp(),
-        c.getCreatedAt());
+        c.getId(), c.getParticipantIds(), c.getLastMessageTimestamp(), c.getCreatedAt());
   }
 }

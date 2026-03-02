@@ -5,14 +5,14 @@ import java.time.Instant;
 /**
  * Criteria for filtering audit events (cursor-safe; used in filterHash).
  *
- * @param actorId    optional
- * @param eventType  optional
- * @param outcome    optional
- * @param severity   optional
+ * @param actorId optional
+ * @param eventType optional
+ * @param outcome optional
+ * @param severity optional
  * @param targetType optional
- * @param targetId   optional
- * @param dateFrom   optional
- * @param dateTo     optional
+ * @param targetId optional
+ * @param dateFrom optional
+ * @param dateTo optional
  * @param searchTerm optional free text (metadata/action); use with care
  */
 public record AuditSearchCriteria(

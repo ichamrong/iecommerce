@@ -30,7 +30,7 @@ public interface AuditTamperProofPort {
   /**
    * Verifies chain link: event.prevHash equals previous event's hash. Call after verifyEventHash.
    *
-   * @param event       current event
+   * @param event current event
    * @param prevEventHash hash of the previous event in tenant order (null if first)
    * @return true if chain link is valid
    */

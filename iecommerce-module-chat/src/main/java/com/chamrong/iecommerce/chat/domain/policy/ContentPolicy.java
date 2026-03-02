@@ -1,8 +1,6 @@
 package com.chamrong.iecommerce.chat.domain.policy;
 
-/**
- * Content limits: message size, attachment count. Anti-abuse.
- */
+/** Content limits: message size, attachment count. Anti-abuse. */
 public final class ContentPolicy {
 
   /** Max plain-text message length (bytes/characters). */

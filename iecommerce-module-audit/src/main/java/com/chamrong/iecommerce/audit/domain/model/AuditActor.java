@@ -5,9 +5,9 @@ import java.util.Objects;
 /**
  * Actor who performed the audited action: identifier, type, and optional role.
  *
- * @param actorId   stable identifier (e.g. user UUID, "SYSTEM")
+ * @param actorId stable identifier (e.g. user UUID, "SYSTEM")
  * @param actorType e.g. USER, SYSTEM, SERVICE
- * @param role      optional role at time of action
+ * @param role optional role at time of action
  */
 public record AuditActor(String actorId, String actorType, String role) {
 

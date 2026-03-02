@@ -8,10 +8,7 @@ import java.time.Instant;
  * <p>Consumers may invalidate caches or sync to search index.
  */
 public record CatalogItemPublishedEvent(
-    String tenantId,
-    Long itemId,
-    String slug,
-    Instant occurredAt) {
+    String tenantId, Long itemId, String slug, Instant occurredAt) {
 
   public CatalogItemPublishedEvent(String tenantId, Long itemId, String slug) {
     this(tenantId, itemId, slug, Instant.now());

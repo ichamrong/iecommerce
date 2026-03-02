@@ -3,8 +3,8 @@ package com.chamrong.iecommerce.audit.domain.model;
 /**
  * Stable event type codes for audit events.
  *
- * <p>Use consistent codes (e.g. ORDER_CONFIRM, PAYMENT_CAPTURE) for filtering and reporting.
- * Extend as needed per module; avoid free-form strings in API.
+ * <p>Use consistent codes (e.g. ORDER_CONFIRM, PAYMENT_CAPTURE) for filtering and reporting. Extend
+ * as needed per module; avoid free-form strings in API.
  */
 public enum AuditEventType {
 

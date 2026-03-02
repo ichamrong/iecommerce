@@ -3,7 +3,6 @@ package com.chamrong.iecommerce.booking.domain.model;
 import com.chamrong.iecommerce.common.Money;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -63,28 +62,93 @@ public final class Booking {
     this.items = b.items != null ? List.copyOf(b.items) : List.of();
   }
 
-  public Long getId() { return id; }
-  public String getTenantId() { return tenantId; }
-  public Instant getCreatedAt() { return createdAt; }
-  public Long getVersion() { return version; }
-  public BookingKind getKind() { return kind; }
-  public Long getResourceProductId() { return resourceProductId; }
-  public Long getResourceVariantId() { return resourceVariantId; }
-  public Long getResourceId() { return resourceId; }
-  public Long getCustomerId() { return customerId; }
-  public Long getAssignedStaffId() { return assignedStaffId; }
-  public Instant getStartAt() { return startAt; }
-  public Instant getEndAt() { return endAt; }
-  public BookingStatus getStatus() { return status; }
-  public BookingSource getSource() { return source; }
-  public GuestInfo getGuestInfo() { return guestInfo; }
-  public Money getTotalPrice() { return totalPrice; }
-  public PricingBreakdown getPricingBreakdown() { return pricingBreakdown; }
-  public String getCustomerNotes() { return customerNotes; }
-  public String getInternalNotes() { return internalNotes; }
-  public String getHoldToken() { return holdToken; }
-  public String getIdempotencyKey() { return idempotencyKey; }
-  public List<BookingItem> getItems() { return items; }
+  public Long getId() {
+    return id;
+  }
+
+  public String getTenantId() {
+    return tenantId;
+  }
+
+  public Instant getCreatedAt() {
+    return createdAt;
+  }
+
+  public Long getVersion() {
+    return version;
+  }
+
+  public BookingKind getKind() {
+    return kind;
+  }
+
+  public Long getResourceProductId() {
+    return resourceProductId;
+  }
+
+  public Long getResourceVariantId() {
+    return resourceVariantId;
+  }
+
+  public Long getResourceId() {
+    return resourceId;
+  }
+
+  public Long getCustomerId() {
+    return customerId;
+  }
+
+  public Long getAssignedStaffId() {
+    return assignedStaffId;
+  }
+
+  public Instant getStartAt() {
+    return startAt;
+  }
+
+  public Instant getEndAt() {
+    return endAt;
+  }
+
+  public BookingStatus getStatus() {
+    return status;
+  }
+
+  public BookingSource getSource() {
+    return source;
+  }
+
+  public GuestInfo getGuestInfo() {
+    return guestInfo;
+  }
+
+  public Money getTotalPrice() {
+    return totalPrice;
+  }
+
+  public PricingBreakdown getPricingBreakdown() {
+    return pricingBreakdown;
+  }
+
+  public String getCustomerNotes() {
+    return customerNotes;
+  }
+
+  public String getInternalNotes() {
+    return internalNotes;
+  }
+
+  public String getHoldToken() {
+    return holdToken;
+  }
+
+  public String getIdempotencyKey() {
+    return idempotencyKey;
+  }
+
+  public List<BookingItem> getItems() {
+    return items;
+  }
 
   public boolean canConfirm() {
     return status == BookingStatus.PENDING;
@@ -95,7 +159,9 @@ public final class Booking {
   }
 
   public boolean canCancel() {
-    return status != BookingStatus.CHECKOUT && status != BookingStatus.CANCEL && status != BookingStatus.REJECTED;
+    return status != BookingStatus.CHECKOUT
+        && status != BookingStatus.CANCEL
+        && status != BookingStatus.REJECTED;
   }
 
   public boolean canCheckIn() {
@@ -134,28 +200,115 @@ public final class Booking {
     private String idempotencyKey;
     private List<BookingItem> items;
 
-    public Builder id(Long id) { this.id = id; return this; }
-    public Builder tenantId(String tenantId) { this.tenantId = tenantId; return this; }
-    public Builder createdAt(Instant createdAt) { this.createdAt = createdAt; return this; }
-    public Builder version(Long version) { this.version = version; return this; }
-    public Builder kind(BookingKind kind) { this.kind = kind; return this; }
-    public Builder resourceProductId(Long resourceProductId) { this.resourceProductId = resourceProductId; return this; }
-    public Builder resourceVariantId(Long resourceVariantId) { this.resourceVariantId = resourceVariantId; return this; }
-    public Builder resourceId(Long resourceId) { this.resourceId = resourceId; return this; }
-    public Builder customerId(Long customerId) { this.customerId = customerId; return this; }
-    public Builder assignedStaffId(Long assignedStaffId) { this.assignedStaffId = assignedStaffId; return this; }
-    public Builder startAt(Instant startAt) { this.startAt = startAt; return this; }
-    public Builder endAt(Instant endAt) { this.endAt = endAt; return this; }
-    public Builder status(BookingStatus status) { this.status = status; return this; }
-    public Builder source(BookingSource source) { this.source = source; return this; }
-    public Builder guestInfo(GuestInfo guestInfo) { this.guestInfo = guestInfo; return this; }
-    public Builder totalPrice(Money totalPrice) { this.totalPrice = totalPrice; return this; }
-    public Builder pricingBreakdown(PricingBreakdown pricingBreakdown) { this.pricingBreakdown = pricingBreakdown; return this; }
-    public Builder customerNotes(String customerNotes) { this.customerNotes = customerNotes; return this; }
-    public Builder internalNotes(String internalNotes) { this.internalNotes = internalNotes; return this; }
-    public Builder holdToken(String holdToken) { this.holdToken = holdToken; return this; }
-    public Builder idempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; return this; }
-    public Builder items(List<BookingItem> items) { this.items = items != null ? new ArrayList<>(items) : new ArrayList<>(); return this; }
+    public Builder id(Long id) {
+      this.id = id;
+      return this;
+    }
+
+    public Builder tenantId(String tenantId) {
+      this.tenantId = tenantId;
+      return this;
+    }
+
+    public Builder createdAt(Instant createdAt) {
+      this.createdAt = createdAt;
+      return this;
+    }
+
+    public Builder version(Long version) {
+      this.version = version;
+      return this;
+    }
+
+    public Builder kind(BookingKind kind) {
+      this.kind = kind;
+      return this;
+    }
+
+    public Builder resourceProductId(Long resourceProductId) {
+      this.resourceProductId = resourceProductId;
+      return this;
+    }
+
+    public Builder resourceVariantId(Long resourceVariantId) {
+      this.resourceVariantId = resourceVariantId;
+      return this;
+    }
+
+    public Builder resourceId(Long resourceId) {
+      this.resourceId = resourceId;
+      return this;
+    }
+
+    public Builder customerId(Long customerId) {
+      this.customerId = customerId;
+      return this;
+    }
+
+    public Builder assignedStaffId(Long assignedStaffId) {
+      this.assignedStaffId = assignedStaffId;
+      return this;
+    }
+
+    public Builder startAt(Instant startAt) {
+      this.startAt = startAt;
+      return this;
+    }
+
+    public Builder endAt(Instant endAt) {
+      this.endAt = endAt;
+      return this;
+    }
+
+    public Builder status(BookingStatus status) {
+      this.status = status;
+      return this;
+    }
+
+    public Builder source(BookingSource source) {
+      this.source = source;
+      return this;
+    }
+
+    public Builder guestInfo(GuestInfo guestInfo) {
+      this.guestInfo = guestInfo;
+      return this;
+    }
+
+    public Builder totalPrice(Money totalPrice) {
+      this.totalPrice = totalPrice;
+      return this;
+    }
+
+    public Builder pricingBreakdown(PricingBreakdown pricingBreakdown) {
+      this.pricingBreakdown = pricingBreakdown;
+      return this;
+    }
+
+    public Builder customerNotes(String customerNotes) {
+      this.customerNotes = customerNotes;
+      return this;
+    }
+
+    public Builder internalNotes(String internalNotes) {
+      this.internalNotes = internalNotes;
+      return this;
+    }
+
+    public Builder holdToken(String holdToken) {
+      this.holdToken = holdToken;
+      return this;
+    }
+
+    public Builder idempotencyKey(String idempotencyKey) {
+      this.idempotencyKey = idempotencyKey;
+      return this;
+    }
+
+    public Builder items(List<BookingItem> items) {
+      this.items = items != null ? new ArrayList<>(items) : new ArrayList<>();
+      return this;
+    }
 
     public Booking build() {
       return new Booking(this);

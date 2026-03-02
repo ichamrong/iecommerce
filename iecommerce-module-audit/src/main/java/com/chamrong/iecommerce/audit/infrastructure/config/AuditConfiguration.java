@@ -5,9 +5,7 @@ import java.time.Instant;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * Audit module configuration. Retention policy default: no archiving (override for production).
- */
+/** Audit module configuration. Retention policy default: no archiving (override for production). */
 @Configuration
 public class AuditConfiguration {
 

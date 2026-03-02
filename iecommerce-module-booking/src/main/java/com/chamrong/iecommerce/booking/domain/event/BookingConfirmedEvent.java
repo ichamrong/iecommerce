@@ -3,9 +3,7 @@ package com.chamrong.iecommerce.booking.domain.event;
 import com.chamrong.iecommerce.common.Money;
 import java.time.Instant;
 
-/**
- * Published when a booking is confirmed.
- */
+/** Published when a booking is confirmed. */
 public record BookingConfirmedEvent(
     String tenantId,
     Long bookingId,

@@ -1,17 +1,22 @@
 package com.chamrong.iecommerce.customer.application;
 
+import com.chamrong.iecommerce.common.pagination.CursorCodec;
+import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
+import com.chamrong.iecommerce.common.pagination.CursorPayload;
+import com.chamrong.iecommerce.common.pagination.FilterHasher;
+import com.chamrong.iecommerce.common.pagination.InvalidCursorException;
 import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.customer.CustomerApi;
-import com.chamrong.iecommerce.customer.api.dto.CursorResponse;
-import com.chamrong.iecommerce.customer.api.util.CursorEncoder;
 import com.chamrong.iecommerce.customer.application.dto.AddAddressRequest;
 import com.chamrong.iecommerce.customer.application.dto.AddressResponse;
 import com.chamrong.iecommerce.customer.application.dto.CustomerResponse;
 import com.chamrong.iecommerce.customer.application.dto.UpdateCustomerRequest;
 import com.chamrong.iecommerce.customer.domain.Address;
 import com.chamrong.iecommerce.customer.domain.Customer;
-import com.chamrong.iecommerce.customer.domain.CustomerRepository;
+import com.chamrong.iecommerce.customer.domain.ports.CustomerRepositoryPort;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CustomerService implements CustomerApi {
 
-  private final CustomerRepository customerRepository;
+  public static final String ENDPOINT_LIST_CUSTOMERS = "customer:listCustomers";
+
+  private final CustomerRepositoryPort customerRepository;
 
   @Override
   @Transactional(readOnly = true)
@@ -40,23 +47,44 @@ public class CustomerService implements CustomerApi {
 
   @Override
   @Transactional(readOnly = true)
-  public CursorResponse<CustomerResponse> listCustomers(
+  public CursorPageResponse<CustomerResponse> listCustomers(
       String tenantId, String cursorStr, int limit) {
-    CursorEncoder.Cursor cursor = CursorEncoder.decode(cursorStr);
+    int effectiveLimit = Math.min(Math.max(limit, 1), 100);
+    int fetchSize = effectiveLimit + 1;
+    Map<String, Object> filterMap = new LinkedHashMap<>();
+    filterMap.put("_endpoint", ENDPOINT_LIST_CUSTOMERS);
+    String filterHash = FilterHasher.computeHash(ENDPOINT_LIST_CUSTOMERS, filterMap);
 
-    List<Customer> customers = customerRepository.findNextPage(tenantId, cursor, limit + 1);
+    java.time.Instant afterCreatedAt = null;
+    Long afterId = null;
+    if (cursorStr != null && !cursorStr.isBlank()) {
+      CursorPayload payload = CursorCodec.decodeAndValidateFilter(cursorStr, filterHash);
+      afterCreatedAt = payload.getCreatedAt();
+      try {
+        afterId = Long.valueOf(payload.getId());
+      } catch (NumberFormatException e) {
+        throw new InvalidCursorException(
+            InvalidCursorException.INVALID_CURSOR, "Invalid cursor id");
+      }
+    }
 
-    boolean hasNext = customers.size() > limit;
-    List<Customer> dataPage = hasNext ? customers.subList(0, limit) : customers;
+    List<Customer> customers =
+        customerRepository.findCursorPage(tenantId, afterCreatedAt, afterId, fetchSize);
+
+    boolean hasNext = customers.size() == fetchSize;
+    List<Customer> dataPage = hasNext ? customers.subList(0, effectiveLimit) : customers;
 
     String nextCursor = null;
     if (hasNext && !dataPage.isEmpty()) {
       Customer lastItem = dataPage.get(dataPage.size() - 1);
-      nextCursor = CursorEncoder.encode(lastItem.getCreatedAt(), lastItem.getId());
+      nextCursor =
+          CursorCodec.encode(
+              new CursorPayload(
+                  1, lastItem.getCreatedAt(), String.valueOf(lastItem.getId()), filterHash));
     }
 
     List<CustomerResponse> dtoList = dataPage.stream().map(this::mapToResponse).toList();
-    return new CursorResponse<>(dtoList, nextCursor, hasNext);
+    return CursorPageResponse.of(dtoList, nextCursor, hasNext, effectiveLimit);
   }
 
   @Override

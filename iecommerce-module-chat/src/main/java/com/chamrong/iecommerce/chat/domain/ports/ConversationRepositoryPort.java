@@ -5,9 +5,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Port for conversation persistence. Implementations in infrastructure.
- */
+/** Port for conversation persistence. Implementations in infrastructure. */
 public interface ConversationRepositoryPort {
 
   Conversation save(Conversation conversation);
@@ -25,9 +23,5 @@ public interface ConversationRepositoryPort {
    * @param limit max rows
    */
   List<Conversation> findCursorPage(
-      String tenantId,
-      Long participantId,
-      Instant afterCreatedAt,
-      Long afterId,
-      int limit);
+      String tenantId, Long participantId, Instant afterCreatedAt, Long afterId, int limit);
 }

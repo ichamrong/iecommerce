@@ -180,9 +180,7 @@ public class BookingService implements BookingApi {
 
   @Transactional(readOnly = true)
   public List<BookingResponse> getCustomerBookings(String tenantId, Long customerId) {
-    return bookingRepository
-        .findByTenantIdAndCustomerId(tenantId, customerId)
-        .stream()
+    return bookingRepository.findByTenantIdAndCustomerId(tenantId, customerId).stream()
         .map(this::toResponse)
         .toList();
   }

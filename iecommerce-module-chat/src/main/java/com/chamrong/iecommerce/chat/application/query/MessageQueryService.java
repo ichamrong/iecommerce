@@ -32,8 +32,8 @@ public class MessageQueryService {
   private final ConversationRepositoryPort conversationRepository;
 
   /**
-   * Cursor-paginated messages in a conversation. Caller must be participant (enforced by controller).
-   * filterHash includes conversationId.
+   * Cursor-paginated messages in a conversation. Caller must be participant (enforced by
+   * controller). filterHash includes conversationId.
    */
   @Transactional(readOnly = true)
   public CursorPageResponse<ChatMessageResponse> findPage(
@@ -41,7 +41,8 @@ public class MessageQueryService {
     Conversation conv =
         conversationRepository
             .findById(conversationId)
-            .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Conversation not found"));
+            .orElseThrow(
+                () -> new jakarta.persistence.EntityNotFoundException("Conversation not found"));
     TenantGuard.requireSameTenant(conv.getTenantId(), tenantId);
     if (!conv.hasParticipant(actorId)) {
       throw new com.chamrong.iecommerce.chat.domain.exception.ChatDomainException(
@@ -62,7 +63,8 @@ public class MessageQueryService {
       try {
         afterId = Long.valueOf(payload.getId());
       } catch (NumberFormatException e) {
-        throw new InvalidCursorException(InvalidCursorException.INVALID_CURSOR, "Invalid cursor id");
+        throw new InvalidCursorException(
+            InvalidCursorException.INVALID_CURSOR, "Invalid cursor id");
       }
     }
 

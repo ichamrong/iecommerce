@@ -17,7 +17,9 @@ public class ChatExceptionHandler {
   public ResponseEntity<ChatErrorResponse> handleInvalidCursor(InvalidCursorException ex) {
     log.debug("[Chat] Invalid cursor: {} - {}", ex.getErrorCode(), ex.getMessage());
     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-        .body(new ChatErrorResponse(ex.getMessage(), ex.getErrorCode() != null ? ex.getErrorCode() : "INVALID_CURSOR"));
+        .body(
+            new ChatErrorResponse(
+                ex.getMessage(), ex.getErrorCode() != null ? ex.getErrorCode() : "INVALID_CURSOR"));
   }
 
   @ExceptionHandler(ChatDomainException.class)

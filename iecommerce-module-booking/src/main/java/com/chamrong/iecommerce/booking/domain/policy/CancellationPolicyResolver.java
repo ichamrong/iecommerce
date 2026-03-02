@@ -1,12 +1,9 @@
 package com.chamrong.iecommerce.booking.domain.policy;
 
-import com.chamrong.iecommerce.booking.domain.model.CancellationPolicy;
 import com.chamrong.iecommerce.booking.domain.model.Booking;
-import java.time.Instant;
+import com.chamrong.iecommerce.booking.domain.model.CancellationPolicy;
 
-/**
- * Resolves cancellation policy for a booking (e.g. from resource config, tenant settings).
- */
+/** Resolves cancellation policy for a booking (e.g. from resource config, tenant settings). */
 public interface CancellationPolicyResolver {
 
   /**

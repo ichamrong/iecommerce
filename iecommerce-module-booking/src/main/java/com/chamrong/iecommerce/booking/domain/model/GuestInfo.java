@@ -1,14 +1,12 @@
 package com.chamrong.iecommerce.booking.domain.model;
 
-import java.util.Objects;
-
 /**
  * Guest details (PII minimized). Store only what is required for check-in verification.
  *
  * @param firstName optional
- * @param lastName  optional
- * @param email     optional; validate format if used
- * @param phone     optional
+ * @param lastName optional
+ * @param email optional; validate format if used
+ * @param phone optional
  */
 public record GuestInfo(String firstName, String lastName, String email, String phone) {
 

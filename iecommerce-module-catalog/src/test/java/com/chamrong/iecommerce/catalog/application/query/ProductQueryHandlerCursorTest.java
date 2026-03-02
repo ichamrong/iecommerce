@@ -2,7 +2,6 @@ package com.chamrong.iecommerce.catalog.application.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -10,7 +9,6 @@ import static org.mockito.Mockito.when;
 import com.chamrong.iecommerce.catalog.application.CatalogMapper;
 import com.chamrong.iecommerce.catalog.application.dto.ProductResponse;
 import com.chamrong.iecommerce.catalog.domain.CatalogCachePort;
-import com.chamrong.iecommerce.catalog.domain.Product;
 import com.chamrong.iecommerce.catalog.domain.ProductStatus;
 import com.chamrong.iecommerce.catalog.domain.ports.ProductRepositoryPort;
 import com.chamrong.iecommerce.common.TenantContext;
@@ -55,11 +53,11 @@ class ProductQueryHandlerCursorTest {
   @Test
   @DisplayName("First page returns CursorPageResponse with data and limit")
   void list_firstPage_returnsCursorPageResponse() {
-    when(productRepository.findCursorPage(eq(TENANT), eq(null), eq(null), eq(null), eq(null), eq(null), anyInt()))
+    when(productRepository.findCursorPage(
+            eq(TENANT), eq(null), eq(null), eq(null), eq(null), eq(null), anyInt()))
         .thenReturn(List.of());
 
-    CursorPageResponse<ProductResponse> result =
-        handler.list(null, 20, null, null, null, "en");
+    CursorPageResponse<ProductResponse> result = handler.list(null, 20, null, null, null, "en");
 
     assertThat(result.getData()).isEmpty();
     assertThat(result.getNextCursor()).isNull();
@@ -71,13 +69,13 @@ class ProductQueryHandlerCursorTest {
   @DisplayName("Cursor with different filterHash throws INVALID_CURSOR_FILTER_MISMATCH")
   void list_cursorFromDifferentFilters_throwsFilterMismatch() {
     Map<String, Object> filtersA = ProductQueryHandler.toFilterMap(ProductStatus.DRAFT, null, null);
-    Map<String, Object> filtersB = ProductQueryHandler.toFilterMap(ProductStatus.ACTIVE, null, null);
+    Map<String, Object> filtersB =
+        ProductQueryHandler.toFilterMap(ProductStatus.ACTIVE, null, null);
     String hashA = FilterHasher.computeHash(ProductQueryHandler.ENDPOINT_LIST_PRODUCTS, filtersA);
     String hashB = FilterHasher.computeHash(ProductQueryHandler.ENDPOINT_LIST_PRODUCTS, filtersB);
     assertThat(hashA).isNotEqualTo(hashB);
 
-    String cursorForA =
-        CursorCodec.encode(new CursorPayload(1, Instant.now(), "1", hashA));
+    String cursorForA = CursorCodec.encode(new CursorPayload(1, Instant.now(), "1", hashA));
 
     assertThatThrownBy(() -> handler.list(cursorForA, 20, ProductStatus.ACTIVE, null, null, "en"))
         .isInstanceOf(InvalidCursorException.class)

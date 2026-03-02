@@ -1,8 +1,6 @@
 package com.chamrong.iecommerce.chat.domain.model;
 
-/**
- * Lifecycle status of a conversation.
- */
+/** Lifecycle status of a conversation. */
 public enum ConversationStatus {
 
   /** Active; participants can send messages. */

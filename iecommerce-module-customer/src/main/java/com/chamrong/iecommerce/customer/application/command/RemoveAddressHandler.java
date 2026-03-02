@@ -4,7 +4,7 @@ import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.customer.AddressRemovedEvent;
 import com.chamrong.iecommerce.customer.application.CustomerMapper;
 import com.chamrong.iecommerce.customer.application.dto.CustomerResponse;
-import com.chamrong.iecommerce.customer.domain.CustomerRepository;
+import com.chamrong.iecommerce.customer.domain.ports.CustomerRepositoryPort;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class RemoveAddressHandler {
 
-  private final CustomerRepository customerRepository;
+  private final CustomerRepositoryPort customerRepository;
   private final CustomerMapper mapper;
   private final ApplicationEventPublisher eventPublisher;
 

@@ -33,11 +33,7 @@ public class JpaConversationRepositoryAdapter implements ConversationRepositoryP
 
   @Override
   public List<Conversation> findCursorPage(
-      String tenantId,
-      Long participantId,
-      Instant afterCreatedAt,
-      Long afterId,
-      int limit) {
+      String tenantId, Long participantId, Instant afterCreatedAt, Long afterId, int limit) {
     if (afterCreatedAt == null || afterId == null) {
       return jpaRepo.findFirstPage(tenantId, participantId, PageRequest.of(0, limit));
     }

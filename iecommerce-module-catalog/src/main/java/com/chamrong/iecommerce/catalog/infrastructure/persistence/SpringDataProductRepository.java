@@ -17,8 +17,7 @@ interface SpringDataProductRepository extends JpaRepository<Product, Long> {
 
   Optional<Product> findByTenantIdAndSlug(String tenantId, String slug);
 
-  @Query(
-      "SELECT p FROM Product p JOIN p.variants v WHERE p.tenantId = :tenantId AND v.sku = :sku")
+  @Query("SELECT p FROM Product p JOIN p.variants v WHERE p.tenantId = :tenantId AND v.sku = :sku")
   Optional<Product> findByTenantIdAndVariantSku(
       @Param("tenantId") String tenantId, @Param("sku") String sku);
 

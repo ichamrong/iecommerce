@@ -5,8 +5,8 @@ import com.chamrong.iecommerce.catalog.application.dto.ProductResponse;
 import com.chamrong.iecommerce.catalog.application.dto.ProductTranslationsResponse;
 import com.chamrong.iecommerce.catalog.domain.CatalogCachePort;
 import com.chamrong.iecommerce.catalog.domain.Product;
-import com.chamrong.iecommerce.catalog.domain.ports.ProductRepositoryPort;
 import com.chamrong.iecommerce.catalog.domain.ProductStatus;
+import com.chamrong.iecommerce.catalog.domain.ports.ProductRepositoryPort;
 import com.chamrong.iecommerce.common.TenantContext;
 import com.chamrong.iecommerce.common.pagination.CursorCodec;
 import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
@@ -80,7 +80,8 @@ public class ProductQueryHandler {
       try {
         afterId = Long.valueOf(payload.getId());
       } catch (NumberFormatException e) {
-        throw new InvalidCursorException(InvalidCursorException.INVALID_CURSOR, "Invalid cursor id");
+        throw new InvalidCursorException(
+            InvalidCursorException.INVALID_CURSOR, "Invalid cursor id");
       }
     }
 
@@ -159,7 +160,8 @@ public class ProductQueryHandler {
     Product product =
         productRepository
             .findByTenantIdAndBarcode(tenantId, barcode)
-            .orElseThrow(() -> new EntityNotFoundException("Product not found for barcode: " + barcode));
+            .orElseThrow(
+                () -> new EntityNotFoundException("Product not found for barcode: " + barcode));
     return mapper.toProductResponse(product, locale);
   }
 
