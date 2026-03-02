@@ -1,5 +1,7 @@
 package com.chamrong.iecommerce.notification.api;
 
+import com.chamrong.iecommerce.common.TenantContext;
+import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
 import com.chamrong.iecommerce.notification.application.NotificationService;
 import com.chamrong.iecommerce.notification.application.dto.NotificationRequest;
 import com.chamrong.iecommerce.notification.application.dto.NotificationResponse;
@@ -33,32 +35,36 @@ public class NotificationController {
 
   @Operation(summary = "Send an email notification")
   @PostMapping("/email")
-  public ResponseEntity<NotificationResponse> sendEmail(
-      @RequestParam String tenantId, @RequestBody NotificationRequest req) {
+  public ResponseEntity<NotificationResponse> sendEmail(@RequestBody NotificationRequest req) {
+    String tenantId = TenantContext.requireTenantId();
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(notificationService.sendEmail(tenantId, req));
   }
 
   @Operation(summary = "Send an SMS notification")
   @PostMapping("/sms")
-  public ResponseEntity<NotificationResponse> sendSms(
-      @RequestParam String tenantId, @RequestBody NotificationRequest req) {
+  public ResponseEntity<NotificationResponse> sendSms(@RequestBody NotificationRequest req) {
+    String tenantId = TenantContext.requireTenantId();
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(notificationService.sendSms(tenantId, req));
   }
 
   @Operation(summary = "Send a push notification")
   @PostMapping("/push")
-  public ResponseEntity<NotificationResponse> sendPush(
-      @RequestParam String tenantId, @RequestBody NotificationRequest req) {
+  public ResponseEntity<NotificationResponse> sendPush(@RequestBody NotificationRequest req) {
+    String tenantId = TenantContext.requireTenantId();
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(notificationService.sendPush(tenantId, req));
   }
 
-  @Operation(summary = "Get notification history for a tenant")
+  @Operation(
+      summary = "List notifications for current tenant (cursor paginated)",
+      description = "Sorted by created_at DESC, id DESC using shared cursor pagination.")
   @GetMapping
-  public List<NotificationResponse> listByTenant(@RequestParam String tenantId) {
-    return notificationService.getByTenant(tenantId);
+  public CursorPageResponse<NotificationResponse> listByTenant(
+      @RequestParam(required = false) String cursor, @RequestParam(defaultValue = "20") int limit) {
+    String tenantId = TenantContext.requireTenantId();
+    return notificationService.listByTenantCursor(tenantId, cursor, limit);
   }
 
   @Operation(

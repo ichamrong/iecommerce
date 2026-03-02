@@ -1,9 +1,9 @@
 package com.chamrong.iecommerce.promotion.infrastructure.persistence.jpa;
 
-import com.chamrong.iecommerce.common.dto.CursorPage;
 import com.chamrong.iecommerce.promotion.domain.model.Promotion;
 import com.chamrong.iecommerce.promotion.domain.model.PromotionStatus;
 import com.chamrong.iecommerce.promotion.domain.ports.PromotionRepository;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -42,17 +42,13 @@ public class PromotionPersistenceAdapter implements PromotionRepository {
   }
 
   @Override
-  public CursorPage<Promotion> findAll(
-      String tenantId, PromotionStatus status, Long lastId, int limit) {
-    List<Promotion> results =
-        jpaPromotionRepository.findWithCursor(
-            tenantId, status, lastId, PageRequest.of(0, limit + 1));
-
-    boolean hasMore = results.size() > limit;
-    List<Promotion> pageData = hasMore ? results.subList(0, limit) : results;
-    String nextCursor =
-        pageData.isEmpty() ? null : String.valueOf(pageData.get(pageData.size() - 1).getId());
-
-    return CursorPage.of(pageData, nextCursor, hasMore);
+  public List<Promotion> findPage(
+      String tenantId,
+      PromotionStatus status,
+      Instant createdAtCursor,
+      Long idCursor,
+      int limitPlusOne) {
+    return jpaPromotionRepository.findPage(
+        tenantId, status, createdAtCursor, idCursor, PageRequest.of(0, limitPlusOne));
   }
 }

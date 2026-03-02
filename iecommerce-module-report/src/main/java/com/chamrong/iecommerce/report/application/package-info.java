@@ -1,3 +1,6 @@
-/** Package com.chamrong.iecommerce.report.application. */
-@org.springframework.lang.NonNullApi
+@NonNullApi
+@NonNullFields
 package com.chamrong.iecommerce.report.application;
+
+import org.springframework.lang.NonNullApi;
+import org.springframework.lang.NonNullFields;

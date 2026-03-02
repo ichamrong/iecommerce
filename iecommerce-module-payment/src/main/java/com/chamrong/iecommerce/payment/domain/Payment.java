@@ -84,18 +84,15 @@ public class Payment extends BaseTenantEntity {
 
   public void markSucceeded(String externalId) {
     this.externalId = externalId;
-    this.status = PaymentStatus.SUCCEEDED;
+    this.status = PaymentStateMachine.onAuthorizedOrCaptured(this.status);
   }
 
   public void markFailed() {
-    this.status = PaymentStatus.FAILED;
+    this.status = PaymentStateMachine.onFailure(this.status);
   }
 
   public void markRefunded() {
-    if (this.status != PaymentStatus.SUCCEEDED) {
-      throw new IllegalStateException("Only succeeded payments can be refunded");
-    }
-    this.status = PaymentStatus.REFUNDED;
+    this.status = PaymentStateMachine.onRefund(this.status);
   }
 
   // ── Bootstrap/JPA setters (Write-once pattern) ──────────────────────────

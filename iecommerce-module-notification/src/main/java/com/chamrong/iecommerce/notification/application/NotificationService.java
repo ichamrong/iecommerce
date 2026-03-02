@@ -1,5 +1,10 @@
 package com.chamrong.iecommerce.notification.application;
 
+import com.chamrong.iecommerce.common.pagination.CursorCodec;
+import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
+import com.chamrong.iecommerce.common.pagination.CursorPayload;
+import com.chamrong.iecommerce.common.pagination.FilterHasher;
+import com.chamrong.iecommerce.common.pagination.InvalidCursorException;
 import com.chamrong.iecommerce.notification.NotificationApi;
 import com.chamrong.iecommerce.notification.application.dto.NotificationRequest;
 import com.chamrong.iecommerce.notification.application.dto.NotificationResponse;
@@ -10,7 +15,11 @@ import com.chamrong.iecommerce.notification.domain.NotificationRepository;
 import com.chamrong.iecommerce.notification.domain.NotificationStatus;
 import com.chamrong.iecommerce.notification.domain.NotificationTemplateRepository;
 import com.chamrong.iecommerce.notification.domain.NotificationType;
+import com.chamrong.iecommerce.notification.infrastructure.NotificationKeysetQuery;
+import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,12 +33,17 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class NotificationService implements NotificationApi {
 
+  private static final int DEFAULT_PAGE_SIZE = 20;
+  private static final int MAX_PAGE_SIZE = 100;
+  private static final String ENDPOINT_LIST_NOTIFICATIONS = "notification:list";
+
   private final NotificationRepository notificationRepository;
   private final NotificationTemplateRepository templateRepository;
   private final TemplateEngine templateEngine;
   private final JavaMailSender mailSender;
   private final List<SmsProvider> smsProviders;
   private final TelegramProvider telegramProvider;
+  private final NotificationKeysetQuery keysetQuery;
 
   @Value("${notification.sms.provider:twilio}")
   private String activeSmsProvider;
@@ -136,6 +150,55 @@ public class NotificationService implements NotificationApi {
   }
 
   // ── Internal ───────────────────────────────────────────────────────────────
+
+  /**
+   * Cursor-paginated notifications for a tenant, sorted by created_at DESC, id DESC.
+   *
+   * @param tenantId current tenant
+   * @param cursor opaque cursor; null/blank = first page
+   * @param limit requested page size (1–100)
+   */
+  @Transactional(readOnly = true)
+  public CursorPageResponse<NotificationResponse> listByTenantCursor(
+      String tenantId, String cursor, int limit) {
+    int effectiveLimit = Math.min(Math.max(limit, 1), MAX_PAGE_SIZE);
+    int fetchLimit = effectiveLimit + 1;
+
+    Map<String, Object> filterMap = new LinkedHashMap<>();
+    filterMap.put("tenantId", tenantId);
+    String filterHash = FilterHasher.computeHash(ENDPOINT_LIST_NOTIFICATIONS, filterMap);
+
+    Instant afterCreatedAt = null;
+    Long afterId = null;
+    if (cursor != null && !cursor.isBlank()) {
+      CursorPayload payload = CursorCodec.decodeAndValidateFilter(cursor, filterHash);
+      afterCreatedAt = payload.getCreatedAt();
+      try {
+        afterId = Long.valueOf(payload.getId());
+      } catch (NumberFormatException e) {
+        throw new InvalidCursorException(
+            InvalidCursorException.INVALID_CURSOR, "Invalid cursor id");
+      }
+    }
+
+    List<Notification> items =
+        keysetQuery.findNextPage(tenantId, afterCreatedAt, afterId, fetchLimit);
+
+    boolean hasNext = items.size() > effectiveLimit;
+    List<Notification> page = hasNext ? items.subList(0, effectiveLimit) : items;
+
+    List<NotificationResponse> data = page.stream().map(this::toResponse).toList();
+
+    String nextCursor = null;
+    if (hasNext && !page.isEmpty()) {
+      Notification last = page.get(page.size() - 1);
+      nextCursor =
+          CursorCodec.encode(
+              new CursorPayload(1, last.getCreatedAt(), String.valueOf(last.getId()), filterHash));
+    }
+
+    return CursorPageResponse.of(data, nextCursor, hasNext, effectiveLimit);
+  }
 
   private NotificationResponse dispatch(
       String tenantId, NotificationRequest req, NotificationType type) {

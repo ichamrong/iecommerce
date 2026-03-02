@@ -1,18 +1,23 @@
 package com.chamrong.iecommerce.inventory.application.query;
 
-import com.chamrong.iecommerce.inventory.application.dto.InventoryCursorResponse;
+import com.chamrong.iecommerce.common.pagination.CursorCodec;
+import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
+import com.chamrong.iecommerce.common.pagination.CursorPayload;
+import com.chamrong.iecommerce.common.pagination.FilterHasher;
+import com.chamrong.iecommerce.common.pagination.InvalidCursorException;
 import com.chamrong.iecommerce.inventory.application.dto.LedgerEntryResponse;
 import com.chamrong.iecommerce.inventory.application.dto.OnHandResponse;
 import com.chamrong.iecommerce.inventory.application.dto.ReservationResponse;
-import com.chamrong.iecommerce.inventory.application.util.InventoryCursorEncoder;
-import com.chamrong.iecommerce.inventory.application.util.InventoryCursorEncoder.CursorDecoded;
 import com.chamrong.iecommerce.inventory.domain.InventoryItem;
 import com.chamrong.iecommerce.inventory.domain.LedgerPort;
 import com.chamrong.iecommerce.inventory.domain.OnHandProjectionPort;
 import com.chamrong.iecommerce.inventory.domain.ReservationPort;
 import com.chamrong.iecommerce.inventory.domain.StockLedgerEntry;
 import com.chamrong.iecommerce.inventory.domain.StockReservation;
+import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +39,11 @@ public class InventoryQueryHandler {
 
   static final int DEFAULT_LIMIT = 20;
   static final int MAX_LIMIT = 100;
+
+  /** Endpoint keys for filter hashing. */
+  static final String ENDPOINT_LEDGER = "inventory:ledger";
+
+  static final String ENDPOINT_RESERVATIONS = "inventory:reservations";
 
   private final OnHandProjectionPort projection;
   private final LedgerPort ledger;
@@ -65,22 +75,33 @@ public class InventoryQueryHandler {
    * @param cursor opaque cursor; null = first page
    * @param limit page size (capped at {@value #MAX_LIMIT})
    */
-  public InventoryCursorResponse<LedgerEntryResponse> getLedgerHistory(
+  public CursorPageResponse<LedgerEntryResponse> getLedgerHistory(
       String tenantId, Long productId, Long warehouseId, String cursor, int limit) {
 
     int pageSize = Math.min(limit <= 0 ? DEFAULT_LIMIT : limit, MAX_LIMIT);
     int fetchSize = pageSize + 1;
 
-    CursorDecoded decoded = InventoryCursorEncoder.decode(cursor);
+    Map<String, Object> filterMap = new LinkedHashMap<>();
+    filterMap.put("tenantId", tenantId);
+    filterMap.put("productId", productId);
+    filterMap.put("warehouseId", warehouseId);
+    String filterHash = FilterHasher.computeHash(ENDPOINT_LEDGER, filterMap);
+
+    Instant cursorCreatedAt = null;
+    Long cursorId = null;
+    if (cursor != null && !cursor.isBlank()) {
+      CursorPayload payload = CursorCodec.decodeAndValidateFilter(cursor, filterHash);
+      cursorCreatedAt = payload.getCreatedAt();
+      try {
+        cursorId = Long.valueOf(payload.getId());
+      } catch (NumberFormatException e) {
+        throw new InvalidCursorException(
+            InvalidCursorException.INVALID_CURSOR, "Invalid cursor id");
+      }
+    }
 
     List<StockLedgerEntry> rows =
-        ledger.findPage(
-            tenantId,
-            productId,
-            warehouseId,
-            decoded != null ? decoded.createdAt() : null,
-            decoded != null ? decoded.id() : null,
-            fetchSize);
+        ledger.findPage(tenantId, productId, warehouseId, cursorCreatedAt, cursorId, fetchSize);
 
     boolean hasNext = rows.size() == fetchSize;
     List<StockLedgerEntry> page = hasNext ? rows.subList(0, pageSize) : rows;
@@ -88,11 +109,13 @@ public class InventoryQueryHandler {
     String nextCursor = null;
     if (hasNext && !page.isEmpty()) {
       var last = page.get(page.size() - 1);
-      nextCursor = InventoryCursorEncoder.encode(last.getCreatedAt(), last.getId());
+      nextCursor =
+          CursorCodec.encode(
+              new CursorPayload(1, last.getCreatedAt(), String.valueOf(last.getId()), filterHash));
     }
 
     List<LedgerEntryResponse> data = page.stream().map(this::toLedgerResponse).toList();
-    return new InventoryCursorResponse<>(data, nextCursor, hasNext);
+    return CursorPageResponse.of(data, nextCursor, hasNext, pageSize);
   }
 
   // ── Reservations ─────────────────────────────────────────────────────────
@@ -106,7 +129,7 @@ public class InventoryQueryHandler {
    * @param cursor opaque cursor; null = first page
    * @param limit page size
    */
-  public InventoryCursorResponse<ReservationResponse> getReservations(
+  public CursorPageResponse<ReservationResponse> getReservations(
       String tenantId,
       Long productId,
       StockReservation.ReservationStatus status,
@@ -116,16 +139,27 @@ public class InventoryQueryHandler {
     int pageSize = Math.min(limit <= 0 ? DEFAULT_LIMIT : limit, MAX_LIMIT);
     int fetchSize = pageSize + 1;
 
-    CursorDecoded decoded = InventoryCursorEncoder.decode(cursor);
+    Map<String, Object> filterMap = new LinkedHashMap<>();
+    filterMap.put("tenantId", tenantId);
+    filterMap.put("productId", productId);
+    filterMap.put("status", status != null ? status.name() : null);
+    String filterHash = FilterHasher.computeHash(ENDPOINT_RESERVATIONS, filterMap);
+
+    Instant cursorCreatedAt = null;
+    Long cursorId = null;
+    if (cursor != null && !cursor.isBlank()) {
+      CursorPayload payload = CursorCodec.decodeAndValidateFilter(cursor, filterHash);
+      cursorCreatedAt = payload.getCreatedAt();
+      try {
+        cursorId = Long.valueOf(payload.getId());
+      } catch (NumberFormatException e) {
+        throw new InvalidCursorException(
+            InvalidCursorException.INVALID_CURSOR, "Invalid cursor id");
+      }
+    }
 
     List<StockReservation> rows =
-        reservations.findPage(
-            tenantId,
-            productId,
-            status,
-            decoded != null ? decoded.createdAt() : null,
-            decoded != null ? decoded.id() : null,
-            fetchSize);
+        reservations.findPage(tenantId, productId, status, cursorCreatedAt, cursorId, fetchSize);
 
     boolean hasNext = rows.size() == fetchSize;
     List<StockReservation> page = hasNext ? rows.subList(0, pageSize) : rows;
@@ -133,11 +167,13 @@ public class InventoryQueryHandler {
     String nextCursor = null;
     if (hasNext && !page.isEmpty()) {
       var last = page.get(page.size() - 1);
-      nextCursor = InventoryCursorEncoder.encode(last.getCreatedAt(), last.getId());
+      nextCursor =
+          CursorCodec.encode(
+              new CursorPayload(1, last.getCreatedAt(), String.valueOf(last.getId()), filterHash));
     }
 
     List<ReservationResponse> data = page.stream().map(this::toReservationResponse).toList();
-    return new InventoryCursorResponse<>(data, nextCursor, hasNext);
+    return CursorPageResponse.of(data, nextCursor, hasNext, pageSize);
   }
 
   // ── Mappers ───────────────────────────────────────────────────────────────

@@ -1,13 +1,13 @@
 package com.chamrong.iecommerce.invoice.api;
 
 import com.chamrong.iecommerce.auth.domain.Permissions;
+import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
 import com.chamrong.iecommerce.invoice.application.InvoiceApplicationService;
 import com.chamrong.iecommerce.invoice.application.command.CreateInvoiceDraftCommand;
 import com.chamrong.iecommerce.invoice.application.command.IssueInvoiceCommand;
 import com.chamrong.iecommerce.invoice.application.command.MarkInvoicePaidCommand;
 import com.chamrong.iecommerce.invoice.application.command.VoidInvoiceCommand;
 import com.chamrong.iecommerce.invoice.application.dto.AuditEntryResponse;
-import com.chamrong.iecommerce.invoice.application.dto.CursorPageResponse;
 import com.chamrong.iecommerce.invoice.application.dto.InvoiceDetailResponse;
 import com.chamrong.iecommerce.invoice.application.dto.SignatureVerificationResponse;
 import com.chamrong.iecommerce.invoice.domain.InvoiceStatus;

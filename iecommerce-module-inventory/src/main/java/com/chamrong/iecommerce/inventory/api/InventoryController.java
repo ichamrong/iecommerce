@@ -1,12 +1,12 @@
 package com.chamrong.iecommerce.inventory.api;
 
 import com.chamrong.iecommerce.common.TenantContext;
+import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
 import com.chamrong.iecommerce.inventory.application.command.AdjustStockHandler;
 import com.chamrong.iecommerce.inventory.application.command.CommitReservationHandler;
 import com.chamrong.iecommerce.inventory.application.command.ReceiveStockHandler;
 import com.chamrong.iecommerce.inventory.application.command.ReleaseReservationHandler;
 import com.chamrong.iecommerce.inventory.application.command.ReserveStockHandler;
-import com.chamrong.iecommerce.inventory.application.dto.InventoryCursorResponse;
 import com.chamrong.iecommerce.inventory.application.dto.LedgerEntryResponse;
 import com.chamrong.iecommerce.inventory.application.dto.OnHandResponse;
 import com.chamrong.iecommerce.inventory.application.dto.ReservationResponse;
@@ -74,7 +74,7 @@ public class InventoryController {
 
   @Operation(summary = "Get cursor-paginated ledger history for a product")
   @GetMapping("/products/{productId}/ledger")
-  public InventoryCursorResponse<LedgerEntryResponse> getLedger(
+  public CursorPageResponse<LedgerEntryResponse> getLedger(
       @PathVariable Long productId,
       @Parameter(description = "Optional warehouse filter") @RequestParam(required = false)
           Long warehouseId,
@@ -91,7 +91,7 @@ public class InventoryController {
 
   @Operation(summary = "Get cursor-paginated reservations for a product")
   @GetMapping("/products/{productId}/reservations")
-  public InventoryCursorResponse<ReservationResponse> getReservations(
+  public CursorPageResponse<ReservationResponse> getReservations(
       @PathVariable Long productId,
       @Parameter(description = "Optional status filter") @RequestParam(required = false)
           ReservationStatus status,

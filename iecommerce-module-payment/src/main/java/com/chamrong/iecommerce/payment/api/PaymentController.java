@@ -1,6 +1,7 @@
 package com.chamrong.iecommerce.payment.api;
 
 import com.chamrong.iecommerce.common.Money;
+import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
 import com.chamrong.iecommerce.payment.application.command.CreatePaymentIntentHandler;
 import com.chamrong.iecommerce.payment.domain.PaymentIntent;
 import com.chamrong.iecommerce.payment.domain.ProviderType;
@@ -47,28 +48,16 @@ public class PaymentController {
       summary = "Get payment history",
       description = "Retrieves a page of payment intents using keyset pagination.")
   @GetMapping("/history")
-  public ResponseEntity<PaymentPageDto> getHistory(
+  public ResponseEntity<CursorPageResponse<PaymentIntentDto>> getHistory(
       @RequestHeader("X-Tenant-Id") String tenantId,
-      @RequestParam(required = false) java.time.Instant cursorTime,
-      @RequestParam(required = false) java.util.UUID cursorId,
+      @RequestParam(required = false) String cursor,
       @RequestParam(defaultValue = "20") int limit) {
 
-    var intents =
-        listHandler.handle(
-            new com.chamrong.iecommerce.payment.application.query.ListPaymentIntentsHandler.Query(
-                tenantId, cursorTime, cursorId, limit));
-
-    String nextCursorTime = null;
-    String nextCursorId = null;
-    if (!intents.isEmpty()) {
-      var last = intents.get(intents.size() - 1);
-      nextCursorTime = last.getCreatedAt().toString();
-      nextCursorId = last.getIntentId().toString();
-    }
-
-    return ResponseEntity.ok(
-        new PaymentPageDto(
-            intents.stream().map(this::toDto).toList(), nextCursorTime, nextCursorId));
+    var page = listHandler.handle(tenantId, cursor, limit);
+    List<PaymentIntentDto> data = page.getData().stream().map(this::toDto).toList();
+    CursorPageResponse<PaymentIntentDto> response =
+        CursorPageResponse.of(data, page.getNextCursor(), page.isHasNext(), page.getLimit());
+    return ResponseEntity.ok(response);
   }
 
   public record CreateIntentRequest(
@@ -104,9 +93,6 @@ public class PaymentController {
           String clientSecret,
       @io.swagger.v3.oas.annotations.media.Schema(description = "Creation timestamp")
           String createdAt) {}
-
-  public record PaymentPageDto(
-      List<PaymentIntentDto> items, String nextCursorTime, String nextCursorId) {}
 
   private PaymentIntentDto toDto(PaymentIntent p) {
     return new PaymentIntentDto(

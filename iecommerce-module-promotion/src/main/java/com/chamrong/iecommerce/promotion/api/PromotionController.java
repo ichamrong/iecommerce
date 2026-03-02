@@ -1,11 +1,13 @@
 package com.chamrong.iecommerce.promotion.api;
 
-import com.chamrong.iecommerce.common.dto.CursorPage;
+import com.chamrong.iecommerce.common.pagination.CursorPageRequest;
+import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
 import com.chamrong.iecommerce.promotion.application.dto.PricingResponse;
 import com.chamrong.iecommerce.promotion.application.dto.PromotionRequest;
 import com.chamrong.iecommerce.promotion.application.dto.PromotionResponse;
 import com.chamrong.iecommerce.promotion.application.dto.RedemptionRequest;
 import com.chamrong.iecommerce.promotion.application.port.ApplyPromotionUseCase;
+import com.chamrong.iecommerce.promotion.application.query.PromotionQueryService;
 import com.chamrong.iecommerce.promotion.application.service.PromotionUseCaseService;
 import com.chamrong.iecommerce.promotion.domain.model.PromotionStatus;
 import com.chamrong.iecommerce.promotion.domain.rule.PromotionContext;
@@ -36,22 +38,27 @@ import org.springframework.web.bind.annotation.RestController;
 public class PromotionController {
 
   private final PromotionUseCaseService promotionService;
+  private final PromotionQueryService promotionQueryService;
   private final ApplyPromotionUseCase redemptionService;
 
   public PromotionController(
-      PromotionUseCaseService promotionService, ApplyPromotionUseCase redemptionService) {
+      PromotionUseCaseService promotionService,
+      PromotionQueryService promotionQueryService,
+      ApplyPromotionUseCase redemptionService) {
     this.promotionService = promotionService;
+    this.promotionQueryService = promotionQueryService;
     this.redemptionService = redemptionService;
   }
 
   @Operation(summary = "List all promotions with cursor pagination")
   @GetMapping
-  public CursorPage<PromotionResponse> listAll(
+  public CursorPageResponse<PromotionResponse> listAll(
       @RequestHeader("X-Tenant-ID") String tenantId,
       @RequestParam(required = false) PromotionStatus status,
-      @RequestParam(required = false) Long lastId,
+      @RequestParam(required = false, name = "cursor") String cursor,
       @RequestParam(defaultValue = "20") int limit) {
-    return promotionService.listPromotions(tenantId, status, lastId, limit);
+    CursorPageRequest pageRequest = CursorPageRequest.of(cursor, limit);
+    return promotionQueryService.listPromotions(tenantId, status, pageRequest);
   }
 
   @Operation(summary = "Get promotion by ID")

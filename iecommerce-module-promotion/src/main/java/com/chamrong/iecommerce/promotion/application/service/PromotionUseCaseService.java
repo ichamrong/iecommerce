@@ -1,7 +1,8 @@
 package com.chamrong.iecommerce.promotion.application.service;
 
 import com.chamrong.iecommerce.common.Money;
-import com.chamrong.iecommerce.common.dto.CursorPage;
+import com.chamrong.iecommerce.common.pagination.CursorPageRequest;
+import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
 import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.promotion.PromotionApi;
 import com.chamrong.iecommerce.promotion.application.dto.PromotionRequest;
@@ -13,9 +14,7 @@ import com.chamrong.iecommerce.promotion.domain.model.PromotionStatus;
 import com.chamrong.iecommerce.promotion.domain.ports.PromotionRepository;
 import com.chamrong.iecommerce.promotion.domain.rule.PromotionContext;
 import com.chamrong.iecommerce.promotion.domain.rule.engine.PromotionEngine;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -113,12 +112,10 @@ public class PromotionUseCaseService implements ValidatePromotionUseCase, Promot
     return promotionRepository.findById(id).map(this::mapToResponse);
   }
 
-  public CursorPage<PromotionResponse> listPromotions(
-      String tenantId, PromotionStatus status, Long lastId, int limit) {
-    CursorPage<Promotion> page = promotionRepository.findAll(tenantId, status, lastId, limit);
-    List<PromotionResponse> data =
-        page.getData().stream().map(this::mapToResponse).collect(Collectors.toList());
-    return new CursorPage<>(data, page.getNextCursor(), page.isHasMore());
+  public CursorPageResponse<PromotionResponse> listPromotions(
+      String tenantId, PromotionStatus status, CursorPageRequest pageRequest) {
+    throw new UnsupportedOperationException(
+        "Use PromotionQueryService for listing promotions with cursor pagination");
   }
 
   public Optional<PromotionResponse> getPromotion(String tenantId, Long id) {

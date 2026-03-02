@@ -1,6 +1,7 @@
 package com.chamrong.iecommerce.review.domain;
 
 import com.chamrong.iecommerce.common.BaseTenantEntity;
+import com.chamrong.iecommerce.review.domain.exception.ReviewDomainException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -68,10 +69,49 @@ public class Review extends BaseTenantEntity {
   // ── Domain behaviour ───────────────────────────────────────────────────────
 
   public void approve() {
+    assertNotDeleted("approve");
     this.status = ReviewStatus.APPROVED;
   }
 
   public void reject() {
+    assertNotDeleted("reject");
     this.status = ReviewStatus.REJECTED;
+  }
+
+  public void hide() {
+    assertNotDeleted("hide");
+    this.status = ReviewStatus.HIDDEN;
+  }
+
+  public void softDelete() {
+    if (this.status == ReviewStatus.DELETED) {
+      return;
+    }
+    this.status = ReviewStatus.DELETED;
+  }
+
+  public void flagByOwner(String reason) {
+    assertNotDeleted("flag");
+    if (reason == null || reason.isBlank()) {
+      throw new ReviewDomainException("Flag reason must not be blank");
+    }
+    this.flaggedByOwner = true;
+    this.flagReason = reason;
+    this.status = ReviewStatus.PENDING;
+  }
+
+  public void replyAsOwner(String reply) {
+    assertNotDeleted("reply to");
+    if (reply == null || reply.isBlank()) {
+      throw new ReviewDomainException("Reply must not be blank");
+    }
+    this.ownerReply = reply;
+  }
+
+  private void assertNotDeleted(String action) {
+    if (this.status == ReviewStatus.DELETED) {
+      throw new ReviewDomainException(
+          "Cannot " + action + " a deleted review (id=" + getId() + ")");
+    }
   }
 }

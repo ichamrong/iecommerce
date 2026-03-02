@@ -1,3 +1,6 @@
-/** Package com.chamrong.iecommerce.review.infrastructure. */
-@org.springframework.lang.NonNullApi
+@NonNullApi
+@NonNullFields
 package com.chamrong.iecommerce.review.infrastructure;
+
+import org.springframework.lang.NonNullApi;
+import org.springframework.lang.NonNullFields;

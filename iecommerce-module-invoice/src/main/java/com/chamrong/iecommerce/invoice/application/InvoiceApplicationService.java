@@ -1,13 +1,17 @@
 package com.chamrong.iecommerce.invoice.application;
 
 import com.chamrong.iecommerce.common.Money;
+import com.chamrong.iecommerce.common.pagination.CursorCodec;
+import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
+import com.chamrong.iecommerce.common.pagination.CursorPayload;
+import com.chamrong.iecommerce.common.pagination.FilterHasher;
+import com.chamrong.iecommerce.common.pagination.InvalidCursorException;
 import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.invoice.application.command.CreateInvoiceDraftCommand;
 import com.chamrong.iecommerce.invoice.application.command.IssueInvoiceCommand;
 import com.chamrong.iecommerce.invoice.application.command.MarkInvoicePaidCommand;
 import com.chamrong.iecommerce.invoice.application.command.VoidInvoiceCommand;
 import com.chamrong.iecommerce.invoice.application.dto.AuditEntryResponse;
-import com.chamrong.iecommerce.invoice.application.dto.CursorPageResponse;
 import com.chamrong.iecommerce.invoice.application.dto.InvoiceDetailResponse;
 import com.chamrong.iecommerce.invoice.application.dto.SignatureVerificationResponse;
 import com.chamrong.iecommerce.invoice.domain.Invoice;
@@ -35,7 +39,9 @@ import com.chamrong.iecommerce.invoice.infrastructure.security.InvoiceCanonicali
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -61,6 +67,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class InvoiceApplicationService {
 
   private static final int MAX_PAGE_SIZE = 100;
+
+  private static final String ENDPOINT_LIST_INVOICES = "invoice:list";
+  private static final String ENDPOINT_LIST_AUDIT = "invoice:auditLog";
 
   private final InvoiceRepositoryPort invoiceRepository;
   private final InvoiceSignatureRepositoryPort signatureRepository;
@@ -287,12 +296,22 @@ public class InvoiceApplicationService {
     // Fetch one extra to detect next page
     int fetchLimit = effectiveLimit + 1;
 
+    Map<String, Object> filterMap = new LinkedHashMap<>();
+    filterMap.put("tenantId", tenantId);
+    filterMap.put("status", statusFilter != null ? statusFilter.name() : null);
+    String filterHash = FilterHasher.computeHash(ENDPOINT_LIST_INVOICES, filterMap);
+
     Instant afterIssuedAt = null;
     Long afterId = null;
     if (cursor != null && !cursor.isBlank()) {
-      CursorDecoder decoded = CursorDecoder.decode(cursor);
-      afterIssuedAt = decoded.issuedAt();
-      afterId = decoded.id();
+      CursorPayload payload = CursorCodec.decodeAndValidateFilter(cursor, filterHash);
+      afterIssuedAt = payload.getCreatedAt();
+      try {
+        afterId = Long.valueOf(payload.getId());
+      } catch (NumberFormatException e) {
+        throw new InvalidCursorException(
+            InvalidCursorException.INVALID_CURSOR, "Invalid cursor id");
+      }
     }
 
     List<Invoice> invoices =
@@ -312,13 +331,14 @@ public class InvoiceApplicationService {
                 })
             .collect(Collectors.toList());
 
-    if (!hasNext) {
-      return CursorPageResponse.lastPage(data);
+    String nextCursor = null;
+    if (hasNext && !page.isEmpty()) {
+      Invoice last = page.get(page.size() - 1);
+      nextCursor =
+          CursorCodec.encode(
+              new CursorPayload(1, last.getIssueDate(), String.valueOf(last.getId()), filterHash));
     }
-
-    Invoice last = page.get(page.size() - 1);
-    String nextCursor = CursorEncoder.encode(last.getIssueDate(), last.getId());
-    return CursorPageResponse.withNext(data, nextCursor);
+    return CursorPageResponse.of(data, nextCursor, hasNext, effectiveLimit);
   }
 
   /**
@@ -338,12 +358,22 @@ public class InvoiceApplicationService {
     int effectiveLimit = Math.min(Math.max(1, limit), MAX_PAGE_SIZE);
     int fetchLimit = effectiveLimit + 1;
 
+    Map<String, Object> filterMap = new LinkedHashMap<>();
+    filterMap.put("tenantId", tenantId);
+    filterMap.put("invoiceId", invoiceId);
+    String filterHash = FilterHasher.computeHash(ENDPOINT_LIST_AUDIT, filterMap);
+
     Instant afterOccurredAt = null;
     Long afterId = null;
     if (cursor != null && !cursor.isBlank()) {
-      CursorDecoder decoded = CursorDecoder.decode(cursor);
-      afterOccurredAt = decoded.issuedAt();
-      afterId = decoded.id();
+      CursorPayload payload = CursorCodec.decodeAndValidateFilter(cursor, filterHash);
+      afterOccurredAt = payload.getCreatedAt();
+      try {
+        afterId = Long.valueOf(payload.getId());
+      } catch (NumberFormatException e) {
+        throw new InvalidCursorException(
+            InvalidCursorException.INVALID_CURSOR, "Invalid cursor id");
+      }
     }
 
     List<InvoiceAuditEntry> entries =
@@ -365,13 +395,14 @@ public class InvoiceApplicationService {
                         e.getOccurredAt()))
             .collect(Collectors.toList());
 
-    if (!hasNext) {
-      return CursorPageResponse.lastPage(data);
+    String nextCursor = null;
+    if (hasNext && !page.isEmpty()) {
+      InvoiceAuditEntry last = page.get(page.size() - 1);
+      nextCursor =
+          CursorCodec.encode(
+              new CursorPayload(1, last.getOccurredAt(), String.valueOf(last.getId()), filterHash));
     }
-
-    InvoiceAuditEntry last = page.get(page.size() - 1);
-    String nextCursor = CursorEncoder.encode(last.getOccurredAt(), last.getId());
-    return CursorPageResponse.withNext(data, nextCursor);
+    return CursorPageResponse.of(data, nextCursor, hasNext, effectiveLimit);
   }
 
   /**

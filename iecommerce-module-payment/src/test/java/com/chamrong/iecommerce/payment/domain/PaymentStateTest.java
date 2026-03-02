@@ -38,18 +38,19 @@ class PaymentStateTest {
     payment.markSucceeded("txn_123");
     payment.markRefunded();
     assertEquals(PaymentStatus.REFUNDED, payment.getStatus());
+
+    // Idempotent on repeated refund calls
+    payment.markRefunded();
+    assertEquals(PaymentStatus.REFUNDED, payment.getStatus());
   }
 
   @Test
   void testRefundNonSucceededPaymentThrowsException() {
     // Attempting to refund a PENDING payment
-    IllegalStateException exception =
-        assertThrows(IllegalStateException.class, () -> payment.markRefunded());
-    assertEquals("Only succeeded payments can be refunded", exception.getMessage());
+    assertThrows(PaymentException.class, () -> payment.markRefunded());
 
     // Attempting to refund a FAILED payment
     payment.markFailed();
-    exception = assertThrows(IllegalStateException.class, () -> payment.markRefunded());
-    assertEquals("Only succeeded payments can be refunded", exception.getMessage());
+    assertThrows(PaymentException.class, () -> payment.markRefunded());
   }
 }

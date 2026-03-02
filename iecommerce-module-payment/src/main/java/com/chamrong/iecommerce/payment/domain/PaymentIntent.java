@@ -63,35 +63,23 @@ public class PaymentIntent {
 
   public void start(
       String externalId, String checkoutUrl, String clientSecret, String qrCode, String deepLink) {
-    if (this.status != PaymentStatus.CREATED) {
-      throw new IllegalStateException("Cannot start payment in status: " + status);
-    }
+    this.status = PaymentStateMachine.onCreatedToRequiresAction(this.status);
     this.externalId = externalId;
     this.checkoutUrl = checkoutUrl;
     this.clientSecret = clientSecret;
     this.qrCode = qrCode;
     this.deepLink = deepLink;
-    this.status = PaymentStatus.REQUIRES_ACTION;
     this.updatedAt = Instant.now();
   }
 
   public void succeed(String externalId) {
-    if (this.status == PaymentStatus.SUCCEEDED) return;
-    if (this.status.isTerminal()) {
-      throw new PaymentException("Cannot transition to SUCCEEDED from terminal state: " + status);
-    }
-    this.status = PaymentStatus.SUCCEEDED;
+    this.status = PaymentStateMachine.onAuthorizedOrCaptured(this.status);
     this.externalId = externalId;
     this.updatedAt = Instant.now();
   }
 
   public void fail(String code, String message) {
-    if (this.status == PaymentStatus.SUCCEEDED) {
-      throw new PaymentException("Cannot fail a succeeded payment");
-    }
-    if (this.status.isTerminal()) return;
-
-    this.status = PaymentStatus.FAILED;
+    this.status = PaymentStateMachine.onFailure(this.status);
     this.failureCode = code;
     this.failureMessage = message;
     this.updatedAt = Instant.now();

@@ -1,5 +1,7 @@
 package com.chamrong.iecommerce.order.api;
 
+import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import com.chamrong.iecommerce.order.application.command.*;
 import com.chamrong.iecommerce.order.application.dto.*;
 import com.chamrong.iecommerce.order.application.query.OrderQueryHandler;
@@ -42,17 +44,17 @@ public class OrderController {
 
   @Operation(summary = "Get order summary list (Keyset Paginated)")
   @GetMapping
-  public OrderCursorResponse<OrderSummaryResponse> listOrders(
-      @RequestParam String tenantId,
+  public CursorPageResponse<OrderSummaryResponse> listOrders(
       @RequestParam Long customerId,
       @RequestParam(required = false) String cursor,
       @RequestParam(defaultValue = "20") int limit) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
     return queryHandler.listByCustomer(tenantId, customerId, cursor, limit);
   }
 
   @Operation(summary = "Get order audit history (Keyset Paginated)")
   @GetMapping("/{id}/audit")
-  public OrderCursorResponse<AuditLogResponse> getAuditLog(
+  public CursorPageResponse<AuditLogResponse> getAuditLog(
       @PathVariable Long id,
       @RequestParam(required = false) String cursor,
       @RequestParam(defaultValue = "20") int limit) {

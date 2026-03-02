@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="report-export-job-table" author="iecommerce">
+        <comment>Export job table for reporting module</comment>
+        <createTable tableName="report_export_job">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="report_type" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="format" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="filters_json" type="TEXT"/>
+            <column name="filters_hash" type="VARCHAR(128)"/>
+            <column name="status" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(64)"/>
+            <column name="file_ref" type="VARCHAR(512)"/>
+            <column name="row_count" type="BIGINT"/>
+            <column name="content_sha256" type="VARCHAR(128)"/>
+            <column name="signature" type="VARCHAR(512)"/>
+            <column name="signature_alg" type="VARCHAR(64)"/>
+            <column name="key_id" type="VARCHAR(64)"/>
+            <column name="completed_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="error_code" type="VARCHAR(64)"/>
+            <column name="idempotency_key" type="VARCHAR(128)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint
+            tableName="report_export_job"
+            columnNames="tenant_id, idempotency_key"
+            constraintName="uk_report_export_job_tenant_id_idem_key"/>
+
+        <createIndex tableName="report_export_job" indexName="idx_report_export_job_keyset">
+            <column name="tenant_id"/>
+            <column name="created_at" descending="true"/>
+            <column name="id" descending="true"/>
+        </createIndex>
+
+        <createIndex tableName="report_export_job" indexName="idx_report_export_job_status_created">
+            <column name="tenant_id"/>
+            <column name="status"/>
+            <column name="created_at" descending="true"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+
