@@ -23,4 +23,3 @@ public record UpdatePlanRequest(
     int maxStaffProfiles,
     boolean customDomainAllowed,
     boolean active) {}
-

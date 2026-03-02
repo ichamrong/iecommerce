@@ -13,8 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -38,7 +38,9 @@ public class SubscriptionController {
 
   // ── Admin Plan Management ───────────────────────────────────────────────────
 
-  @Operation(summary = "List all subscription plans (including inactive)", description = "Admin use.")
+  @Operation(
+      summary = "List all subscription plans (including inactive)",
+      description = "Admin use.")
   @GetMapping("/admin/plans")
   @PreAuthorize("hasAuthority('platform:admin')")
   public List<SubscriptionPlanResponse> getAllPlans() {

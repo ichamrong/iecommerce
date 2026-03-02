@@ -58,6 +58,7 @@ class StaffQueryHandlerTenantAccessTest {
   @Test
   void allowsAccessWhenTenantAssigned() {
     StaffProfile profile = new StaffProfile("user1", "Alice", StaffRole.SUPPORT);
+    profile.setId(1L);
     profile.setStatus(StaffStatus.ACTIVE);
     profile.getAssignedTenants().add("tenant-1");
 
