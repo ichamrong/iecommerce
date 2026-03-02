@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <!-- Chat keyset indexes for cursor pagination + participant uniqueness -->
+
+  <changeSet id="cs31-1-chat-conversation-keyset" author="chamrong">
+    <sql splitStatements="false">
+      CREATE INDEX IF NOT EXISTS idx_chat_conversation_cursor
+        ON chat_conversation (tenant_id, created_at DESC, id DESC)
+        WHERE deleted = FALSE;
+    </sql>
+    <rollback><sql>DROP INDEX IF EXISTS idx_chat_conversation_cursor;</sql></rollback>
+  </changeSet>
+
+  <changeSet id="cs31-2-chat-message-keyset" author="chamrong">
+    <sql splitStatements="false">
+      CREATE INDEX IF NOT EXISTS idx_chat_message_cursor
+        ON chat_message (tenant_id, conversation_id, created_at DESC, id DESC)
+        WHERE deleted = FALSE;
+    </sql>
+    <rollback><sql>DROP INDEX IF EXISTS idx_chat_message_cursor;</sql></rollback>
+  </changeSet>
+
+  <changeSet id="cs31-3-chat-participant-unique" author="chamrong">
+    <sql splitStatements="false">
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_chat_conversation_participant
+        ON chat_conversation_participants (conversation_id, participant_id);
+    </sql>
+    <rollback><sql>DROP INDEX IF EXISTS uq_chat_conversation_participant;</sql></rollback>
+  </changeSet>
+
+</databaseChangeLog>

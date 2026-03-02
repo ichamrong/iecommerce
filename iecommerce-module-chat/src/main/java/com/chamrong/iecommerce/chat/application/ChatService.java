@@ -5,9 +5,10 @@ import com.chamrong.iecommerce.chat.application.dto.ConversationResponse;
 import com.chamrong.iecommerce.chat.application.dto.SendMessageRequest;
 import com.chamrong.iecommerce.chat.application.dto.StartConversationRequest;
 import com.chamrong.iecommerce.chat.domain.ChatMessage;
-import com.chamrong.iecommerce.chat.domain.ChatMessageRepository;
 import com.chamrong.iecommerce.chat.domain.Conversation;
-import com.chamrong.iecommerce.chat.domain.ConversationRepository;
+import com.chamrong.iecommerce.chat.domain.policy.ContentPolicy;
+import com.chamrong.iecommerce.chat.domain.ports.ConversationRepositoryPort;
+import com.chamrong.iecommerce.chat.domain.ports.MessageRepositoryPort;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.HashSet;
 import java.util.List;
@@ -19,8 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ChatService {
 
-  private final ConversationRepository conversationRepository;
-  private final ChatMessageRepository chatMessageRepository;
+  private final ConversationRepositoryPort conversationRepository;
+  private final MessageRepositoryPort messageRepository;
 
   // ── Conversations ──────────────────────────────────────────────────────────
 
@@ -33,8 +34,8 @@ public class ChatService {
   }
 
   @Transactional(readOnly = true)
-  public List<ConversationResponse> getMyConversations(Long userId) {
-    return conversationRepository.findByParticipantIdsContaining(userId).stream()
+  public List<ConversationResponse> getMyConversations(String tenantId, Long userId) {
+    return conversationRepository.findByTenantIdAndParticipantId(tenantId, userId).stream()
         .map(this::toConvResponse)
         .toList();
   }
@@ -42,16 +43,18 @@ public class ChatService {
   // ── Messages ───────────────────────────────────────────────────────────────
 
   @Transactional
-  public ChatMessageResponse sendMessage(Long conversationId, SendMessageRequest req) {
+  public ChatMessageResponse sendMessage(String tenantId, Long conversationId, SendMessageRequest req) {
     Conversation conv =
         conversationRepository
             .findById(conversationId)
             .orElseThrow(
                 () -> new EntityNotFoundException("Conversation not found: " + conversationId));
+    com.chamrong.iecommerce.common.security.TenantGuard.requireSameTenant(conv.getTenantId(), tenantId);
 
     if (!conv.hasParticipant(req.senderId())) {
       throw new IllegalStateException("Sender is not a participant in this conversation");
     }
+    ContentPolicy.validateMessageLength(req.content());
 
     ChatMessage msg = new ChatMessage();
     msg.setTenantId(conv.getTenantId());
@@ -62,14 +65,7 @@ public class ChatService {
     conv.updateLastMessage();
     conversationRepository.save(conv);
 
-    return toMsgResponse(chatMessageRepository.save(msg));
-  }
-
-  @Transactional(readOnly = true)
-  public List<ChatMessageResponse> getMessages(Long conversationId) {
-    return chatMessageRepository.findByConversationIdOrderByTimestampAsc(conversationId).stream()
-        .map(this::toMsgResponse)
-        .toList();
+    return toMsgResponse(messageRepository.save(msg));
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────

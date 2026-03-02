@@ -5,9 +5,12 @@ import com.chamrong.iecommerce.chat.application.dto.ChatMessageResponse;
 import com.chamrong.iecommerce.chat.application.dto.ConversationResponse;
 import com.chamrong.iecommerce.chat.application.dto.SendMessageRequest;
 import com.chamrong.iecommerce.chat.application.dto.StartConversationRequest;
+import com.chamrong.iecommerce.chat.application.query.ConversationQueryService;
+import com.chamrong.iecommerce.chat.application.query.MessageQueryService;
+import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
+import com.chamrong.iecommerce.common.security.TenantGuard;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +36,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class ChatController {
 
   private final ChatService chatService;
+  private final ConversationQueryService conversationQueryService;
+  private final MessageQueryService messageQueryService;
 
   @Operation(summary = "Start a new conversation")
   @PostMapping("/conversations")
@@ -44,25 +49,47 @@ public class ChatController {
 
   @Operation(
       summary = "List my conversations",
-      description = "Returns all conversations where the given user is a participant.")
+      description = "Cursor-paginated. Returns conversations where the user is a participant.")
   @GetMapping("/conversations")
-  public List<ConversationResponse> myConversations(@RequestParam Long userId) {
-    return chatService.getMyConversations(userId);
+  public CursorPageResponse<ConversationResponse> myConversations(
+      @RequestParam Long userId,
+      @RequestParam(required = false) String cursor,
+      @RequestParam(defaultValue = "20") int limit) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    return conversationQueryService.findPage(tenantId, userId, cursor, limit);
   }
 
-  @Operation(summary = "Get messages in a conversation")
+  @Operation(summary = "Get a single conversation")
+  @GetMapping("/conversations/{id}")
+  public ResponseEntity<ConversationResponse> getConversation(
+      @PathVariable Long id, @RequestParam Long actorId) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    return conversationQueryService
+        .findById(tenantId, id, actorId)
+        .map(ResponseEntity::ok)
+        .orElse(ResponseEntity.notFound().build());
+  }
+
+  @Operation(summary = "Get messages in a conversation (cursor-paginated)")
   @GetMapping("/conversations/{conversationId}/messages")
-  public List<ChatMessageResponse> getMessages(@PathVariable Long conversationId) {
-    return chatService.getMessages(conversationId);
+  public CursorPageResponse<ChatMessageResponse> getMessages(
+      @PathVariable Long conversationId,
+      @RequestParam Long actorId,
+      @RequestParam(required = false) String cursor,
+      @RequestParam(defaultValue = "50") int limit) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    return messageQueryService.findPage(tenantId, conversationId, actorId, cursor, limit);
   }
 
   @Operation(
       summary = "Send a message",
-      description = "Appends a message to the conversation. The sender must be a participant.")
+      description = "Appends a message. The sender must be a participant.")
   @PostMapping("/conversations/{conversationId}/messages")
   public ResponseEntity<ChatMessageResponse> send(
-      @PathVariable Long conversationId, @RequestBody SendMessageRequest req) {
+      @PathVariable Long conversationId,
+      @RequestParam String tenantId,
+      @RequestBody SendMessageRequest req) {
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(chatService.sendMessage(conversationId, req));
+        .body(chatService.sendMessage(tenantId, conversationId, req));
   }
 }
