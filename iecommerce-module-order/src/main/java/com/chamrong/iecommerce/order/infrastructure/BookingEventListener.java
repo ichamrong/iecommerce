@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
  * side (payment, invoice) can be handled by the Order module.
  */
 @Slf4j
-@Component
+@Component("orderBookingEventListener")
 @RequiredArgsConstructor
 public class BookingEventListener {
 

@@ -151,7 +151,8 @@ public class AssetTransferService {
   @Transactional
   @CacheEvict(
       value = {"assets", "asset-downloads"},
-      key = "#assetId")
+      key = "#assetId",
+      cacheManager = "redisCacheManager")
   public AssetResponse renameAsset(long assetId, String newName) {
     return AssetMapper.toResponse(internalRename(assetId, newName));
   }

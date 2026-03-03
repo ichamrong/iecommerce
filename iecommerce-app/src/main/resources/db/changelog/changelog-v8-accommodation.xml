@@ -39,8 +39,9 @@
             <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
+            <!-- No FK to catalog_products(id): parent is partitioned with composite PK; see v2 catalog changelog. -->
             <column name="product_id" type="BIGINT">
-                <constraints nullable="false" foreignKeyName="fk_product_image_product" referencedTableName="catalog_products" referencedColumnNames="id"/>
+                <constraints nullable="false"/>
             </column>
             <column name="asset_id" type="BIGINT">
                 <constraints nullable="false"/>

@@ -76,7 +76,7 @@
                 deleted                 BOOLEAN       NOT NULL DEFAULT FALSE,
                 deleted_at              TIMESTAMPTZ,
                 PRIMARY KEY (id, deleted, created_at),
-                UNIQUE (tenant_id, slug)
+                UNIQUE (tenant_id, slug, deleted, created_at)
             ) PARTITION BY LIST (deleted);
 
             -- L1 partitions: active vs soft-deleted
@@ -139,13 +139,7 @@
             <column name="meta_title" type="VARCHAR(255)"/>
             <column name="meta_description" type="VARCHAR(512)"/>
         </createTable>
-        <addForeignKeyConstraint
-            baseTableName="catalog_product_translations"
-            baseColumnNames="product_id"
-            referencedTableName="catalog_products"
-            referencedColumnNames="id"
-            constraintName="fk_product_translation_product"
-            onDelete="CASCADE"/>
+        <!-- No FK to catalog_products(id): parent has composite PK (id, deleted, created_at); PG requires FK to reference a unique key and we cannot add UNIQUE(id) on a partitioned table. -->
         <addUniqueConstraint
             tableName="catalog_product_translations"
             columnNames="product_id, locale"
@@ -197,13 +191,7 @@
             </column>
             <column name="deleted_at" type="TIMESTAMP WITH TIME ZONE"/>
         </createTable>
-        <addForeignKeyConstraint
-            baseTableName="catalog_product_variants"
-            baseColumnNames="product_id"
-            referencedTableName="catalog_products"
-            referencedColumnNames="id"
-            constraintName="fk_variant_product"
-            onDelete="CASCADE"/>
+        <!-- No FK to catalog_products(id): parent has composite PK; see changeSet 26. -->
         <addUniqueConstraint
             tableName="catalog_product_variants"
             columnNames="sku"
@@ -265,13 +253,7 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addForeignKeyConstraint
-            baseTableName="catalog_product_attributes"
-            baseColumnNames="product_id"
-            referencedTableName="catalog_products"
-            referencedColumnNames="id"
-            constraintName="fk_attribute_product"
-            onDelete="CASCADE"/>
+        <!-- No FK to catalog_products(id): parent has composite PK; see changeSet 26. -->
     </changeSet>
 
     <!-- 29: catalog_product_relationships -->
@@ -293,20 +275,7 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addForeignKeyConstraint
-            baseTableName="catalog_product_relationships"
-            baseColumnNames="product_id"
-            referencedTableName="catalog_products"
-            referencedColumnNames="id"
-            constraintName="fk_relationship_source"
-            onDelete="CASCADE"/>
-        <addForeignKeyConstraint
-            baseTableName="catalog_product_relationships"
-            baseColumnNames="related_product_id"
-            referencedTableName="catalog_products"
-            referencedColumnNames="id"
-            constraintName="fk_relationship_target"
-            onDelete="CASCADE"/>
+        <!-- No FKs to catalog_products(id): parent has composite PK; see changeSet 26. -->
         <addUniqueConstraint
             tableName="catalog_product_relationships"
             columnNames="product_id, related_product_id, type"
@@ -410,13 +379,7 @@
             referencedColumnNames="id"
             constraintName="fk_cp_collection"
             onDelete="CASCADE"/>
-        <addForeignKeyConstraint
-            baseTableName="catalog_collection_products"
-            baseColumnNames="product_id"
-            referencedTableName="catalog_products"
-            referencedColumnNames="id"
-            constraintName="fk_cp_product"
-            onDelete="CASCADE"/>
+        <!-- No FK to catalog_products(id): parent has composite PK; see changeSet 26. -->
 
         <!-- Collection translations -->
         <createTable tableName="catalog_collection_translations">
@@ -562,13 +525,7 @@
             </column>
         </createTable>
         <addPrimaryKey tableName="catalog_product_facet_values" columnNames="product_id, facet_value_id"/>
-        <addForeignKeyConstraint
-            baseTableName="catalog_product_facet_values"
-            baseColumnNames="product_id"
-            referencedTableName="catalog_products"
-            referencedColumnNames="id"
-            constraintName="fk_pfv_product"
-            onDelete="CASCADE"/>
+        <!-- No FK to catalog_products(id): parent has composite PK; see changeSet 26. -->
         <addForeignKeyConstraint
             baseTableName="catalog_product_facet_values"
             baseColumnNames="facet_value_id"

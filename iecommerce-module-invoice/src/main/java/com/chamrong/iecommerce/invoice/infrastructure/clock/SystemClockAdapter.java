@@ -5,7 +5,7 @@ import java.time.Instant;
 import org.springframework.stereotype.Component;
 
 /** System clock adapter — returns the real UTC clock. Easily replaced in tests. */
-@Component
+@Component("invoiceSystemClockAdapter")
 public class SystemClockAdapter implements ClockPort {
 
   @Override

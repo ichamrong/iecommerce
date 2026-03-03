@@ -29,7 +29,7 @@ public class ListSocialProvidersHandler {
    *
    * @return cached list of providers; never null, may be empty if no IdPs are configured
    */
-  @Cacheable("social_providers")
+  @Cacheable(value = "social_providers", cacheManager = "authCacheManager")
   public List<SocialProvider> handle() {
     log.debug("Fetching social providers from Keycloak (cache miss)");
     final List<SocialProvider> providers = identityService.listSocialProviders();

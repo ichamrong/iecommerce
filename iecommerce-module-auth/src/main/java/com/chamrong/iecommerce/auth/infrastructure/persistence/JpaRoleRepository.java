@@ -12,10 +12,10 @@ import org.springframework.stereotype.Repository;
 public interface JpaRoleRepository extends JpaRepository<Role, Long>, RoleRepositoryPort {
 
   @Override
-  @Cacheable(value = "roles", key = "#name")
+  @Cacheable(value = "roles", key = "#name", cacheManager = "authCacheManager")
   Optional<Role> findByName(String name);
 
   @Override
-  @CacheEvict(value = "roles", key = "#role.name")
+  @CacheEvict(value = "roles", key = "#role.name", cacheManager = "authCacheManager")
   Role save(Role role);
 }

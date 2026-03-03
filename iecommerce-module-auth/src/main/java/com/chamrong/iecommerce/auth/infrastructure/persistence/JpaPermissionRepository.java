@@ -14,10 +14,10 @@ public interface JpaPermissionRepository
     extends JpaRepository<Permission, Long>, PermissionRepositoryPort {
 
   @Override
-  @Cacheable(value = "permissions", key = "#name")
+  @Cacheable(value = "permissions", key = "#name", cacheManager = "authCacheManager")
   Optional<Permission> findByName(String name);
 
   @Override
-  @CacheEvict(value = "permissions", key = "#permission.name")
+  @CacheEvict(value = "permissions", key = "#permission.name", cacheManager = "authCacheManager")
   Permission save(Permission permission);
 }

@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Configuration;
 @EnableCaching
 public class CacheConfig {
 
-  @Bean
+  @Bean("authCacheManager")
   public CacheManager cacheManager() {
     final SimpleCacheManager manager = new SimpleCacheManager();
     manager.setCaches(
@@ -37,7 +37,8 @@ public class CacheConfig {
             build("permissions", 60, TimeUnit.MINUTES, 5_000),
             build("tenants", 30, TimeUnit.MINUTES, 1_000),
             build("user_profiles", 5, TimeUnit.MINUTES, 10_000),
-            build("social_providers", 60, TimeUnit.MINUTES, 1)));
+            build("social_providers", 60, TimeUnit.MINUTES, 1),
+            build("identity_ids", 10, TimeUnit.MINUTES, 5_000)));
     return manager;
   }
 

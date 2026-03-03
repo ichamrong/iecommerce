@@ -38,6 +38,11 @@
     </changeSet>
 
     <changeSet id="21-review-notification-updates" author="chamrong">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <not>
+                <columnExists tableName="product_review" columnName="status"/>
+            </not>
+        </preConditions>
         <addColumn tableName="product_review">
             <column name="status" type="VARCHAR(20)" defaultValue="PENDING">
                 <constraints nullable="false"/>
@@ -49,6 +54,11 @@
     </changeSet>
 
     <changeSet id="22-payment-updates" author="chamrong">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <not>
+                <columnExists tableName="payment_transaction" columnName="status"/>
+            </not>
+        </preConditions>
         <addColumn tableName="payment_transaction">
             <column name="status" type="VARCHAR(50)" defaultValue="PENDING">
                 <constraints nullable="false"/>

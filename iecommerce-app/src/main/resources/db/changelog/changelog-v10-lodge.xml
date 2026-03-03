@@ -6,7 +6,7 @@
     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <changeSet id="30-booking-lodge-extensions" author="chamrong">
-        <addColumn tableName="booking_reservation">
+        <addColumn tableName="booking">
             <column name="lodge_version_id" type="BIGINT"/>
             <column name="applied_discount_rule_ids" type="VARCHAR(255)"/>
             <column name="guest_first_name" type="VARCHAR(255)"/>

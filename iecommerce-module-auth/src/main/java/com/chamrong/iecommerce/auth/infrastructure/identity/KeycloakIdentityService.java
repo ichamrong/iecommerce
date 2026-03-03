@@ -88,7 +88,7 @@ public class KeycloakIdentityService implements IdentityService {
   // ─── Lookup ───────────────────────────────────────────────────────────────
 
   @Override
-  @Cacheable(value = "identity_ids", key = "#username")
+  @Cacheable(value = "identity_ids", key = "#username", cacheManager = "authCacheManager")
   public String lookupId(String username) {
     var users = keycloak.realm(properties.getRealm()).users().search(username, true);
     if (users.isEmpty()) {

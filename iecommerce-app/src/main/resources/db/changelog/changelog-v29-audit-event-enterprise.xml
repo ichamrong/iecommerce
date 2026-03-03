@@ -6,12 +6,12 @@
     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
 
     <changeSet id="audit-event-table" author="iecommerce">
-        <comment>Bank-grade audit_event table: append-only, tenant-scoped, hash chain for tamper-evidence.</comment>
         <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists tableName="audit_event"/>
             </not>
         </preConditions>
+        <comment>Bank-grade audit_event table: append-only, tenant-scoped, hash chain for tamper-evidence.</comment>
         <createTable tableName="audit_event">
             <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>
@@ -56,13 +56,13 @@
     </changeSet>
 
     <changeSet id="audit-event-keyset-index" author="iecommerce">
-        <comment>Keyset pagination: (tenant_id, created_at DESC, id DESC)</comment>
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="audit_event"/>
             <not>
                 <indexExists tableName="audit_event" indexName="idx_audit_event_keyset"/>
             </not>
         </preConditions>
+        <comment>Keyset pagination: (tenant_id, created_at DESC, id DESC)</comment>
         <createIndex tableName="audit_event" indexName="idx_audit_event_keyset">
             <column name="tenant_id"/>
             <column name="created_at" descending="true"/>

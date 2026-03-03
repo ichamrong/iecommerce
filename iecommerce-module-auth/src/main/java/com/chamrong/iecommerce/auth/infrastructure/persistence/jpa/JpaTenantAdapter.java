@@ -19,25 +19,28 @@ public class JpaTenantAdapter implements TenantRepositoryPort {
   }
 
   @Override
-  @Cacheable(value = "tenants", key = "#code")
+  @Cacheable(value = "tenants", key = "#code", cacheManager = "authCacheManager")
   public java.util.Optional<Tenant> findByCode(String code) {
     return repository.findByCode(code).map(mapper::toDomain);
   }
 
   @Override
-  @Cacheable(value = "tenants", key = "'exists:' + #code")
+  @Cacheable(value = "tenants", key = "'exists:' + #code", cacheManager = "authCacheManager")
   public boolean existsByCode(String code) {
     return repository.existsByCode(code);
   }
 
   @Override
-  @CacheEvict(value = "tenants", key = "#tenant.code")
+  @CacheEvict(value = "tenants", key = "#tenant.code", cacheManager = "authCacheManager")
   public Tenant save(Tenant tenant) {
     var entity = mapper.toEntity(tenant);
     var saved = repository.save(entity);
     return mapper.toDomain(saved);
   }
 
-  @CacheEvict(value = "tenants", key = "'exists:' + #tenant.code")
+  @CacheEvict(
+      value = "tenants",
+      key = "'exists:' + #tenant.code",
+      cacheManager = "authCacheManager")
   public void evictExistsCache(Tenant tenant) {}
 }

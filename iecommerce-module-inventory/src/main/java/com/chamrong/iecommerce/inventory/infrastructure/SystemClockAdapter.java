@@ -5,7 +5,7 @@ import java.time.Instant;
 import org.springframework.stereotype.Component;
 
 /** Default implementation of {@link ClockPort} — delegates to system clock. */
-@Component
+@Component("inventorySystemClockAdapter")
 public class SystemClockAdapter implements ClockPort {
 
   @Override

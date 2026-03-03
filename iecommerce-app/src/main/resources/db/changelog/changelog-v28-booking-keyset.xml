@@ -6,12 +6,12 @@
     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
 
     <changeSet id="keyset-index-booking" author="iecommerce">
-        <comment>Keyset pagination for booking list: (tenant_id, created_at DESC, id DESC)</comment>
         <preConditions onFail="MARK_RAN">
             <not>
                 <indexExists tableName="booking" indexName="idx_booking_keyset"/>
             </not>
         </preConditions>
+        <comment>Keyset pagination for booking list: (tenant_id, created_at DESC, id DESC)</comment>
         <createIndex tableName="booking" indexName="idx_booking_keyset">
             <column name="tenant_id"/>
             <column name="created_at" descending="true"/>

@@ -1,7 +1,10 @@
 package com.chamrong.iecommerce.order.infrastructure.messaging;
 
+import com.chamrong.iecommerce.common.event.InventoryOperationFailedEvent;
+import com.chamrong.iecommerce.common.event.PaymentFailedEvent;
 import com.chamrong.iecommerce.common.event.PaymentSucceededEvent;
 import com.chamrong.iecommerce.common.event.StockReservedEvent;
+import com.chamrong.iecommerce.order.application.OrderService;
 import com.chamrong.iecommerce.order.domain.OrderAuditActions;
 import com.chamrong.iecommerce.order.domain.OrderState;
 import com.chamrong.iecommerce.order.domain.ports.OrderAuditPort;
@@ -23,6 +26,7 @@ public class OrderSagaListener {
   private final OrderRepositoryPort orderRepository;
   private final OrderAuditPort auditPort;
   private final OrderSagaStatePort sagaStatePort;
+  private final OrderService orderService;
 
   /** Step 2: Inventory reserved successfully. Pass control to Payment. */
   @EventListener
@@ -76,5 +80,27 @@ public class OrderSagaListener {
 
               sagaStatePort.upsert(order.getId(), SagaStep.COMPLETE, "DONE");
             });
+  }
+
+  /** Saga compensation: inventory failure — cancel the order. */
+  @EventListener
+  @Transactional
+  public void handleInventoryFailure(InventoryOperationFailedEvent event) {
+    log.error(
+        "Saga [Order]: Inventory failure for order {}: {}. Cancelling order.",
+        event.orderId(),
+        event.reason());
+    orderService.cancel(event.orderId());
+  }
+
+  /** Saga compensation: payment failure — cancel the order. */
+  @EventListener
+  @Transactional
+  public void handlePaymentFailed(PaymentFailedEvent event) {
+    log.warn(
+        "Saga [Order]: Payment failed for order {}: {}. Cancelling order.",
+        event.orderId(),
+        event.reason());
+    orderService.cancel(event.orderId());
   }
 }

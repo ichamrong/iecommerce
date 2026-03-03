@@ -76,7 +76,7 @@
         <!-- Keyset cursor: (created_at DESC, id DESC) hits index directly -->
         <createIndex tableName="ecommerce_order" indexName="idx_order_customer_cursor">
             <column name="tenant_id"/>
-            <column name="customerId"/>
+            <column name="customer_id"/>
             <column name="created_at" descending="true"/>
             <column name="id" descending="true"/>
         </createIndex>

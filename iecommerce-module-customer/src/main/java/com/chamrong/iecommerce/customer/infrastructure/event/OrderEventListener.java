@@ -6,7 +6,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Component
+@Component("customerOrderEventListener")
 public class OrderEventListener {
 
   private final CustomerRepositoryPort customerRepository;

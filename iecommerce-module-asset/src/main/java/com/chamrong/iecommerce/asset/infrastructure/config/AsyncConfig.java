@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @Slf4j
-@Configuration
+@Configuration("assetAsyncConfig")
 @EnableAsync
 public class AsyncConfig {
 

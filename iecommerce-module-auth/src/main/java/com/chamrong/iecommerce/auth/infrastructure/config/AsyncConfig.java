@@ -26,7 +26,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
  * </ul>
  */
 @EnableAsync
-@Configuration
+@Configuration("authAsyncConfig")
 public class AsyncConfig {
 
   /**

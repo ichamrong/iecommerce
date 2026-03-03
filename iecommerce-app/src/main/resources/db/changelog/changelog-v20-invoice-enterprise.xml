@@ -24,7 +24,6 @@
         <!-- ── 1. Extend the invoice table ────────────────────────────────── -->
         <addColumn tableName="invoice">
             <column name="customer_id" type="BIGINT"/>
-            <column name="currency" type="VARCHAR(3)"/>
             <column name="subtotal" type="DECIMAL(19,4)" defaultValueNumeric="0"/>
             <column name="tax_amount" type="DECIMAL(19,4)" defaultValueNumeric="0"/>
             <column name="total" type="DECIMAL(19,4)" defaultValueNumeric="0"/>

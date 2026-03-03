@@ -5,7 +5,7 @@ import java.time.Instant;
 import org.springframework.stereotype.Component;
 
 /** Standard system clock implementation for production. */
-@Component
+@Component("orderSystemClockAdapter")
 public class SystemClockAdapter implements ClockPort {
 
   @Override
