@@ -6,7 +6,9 @@ import com.chamrong.iecommerce.booking.application.dto.AvailabilityRuleResponse;
 import com.chamrong.iecommerce.booking.application.dto.AvailableSlot;
 import com.chamrong.iecommerce.booking.application.dto.BookingResponse;
 import com.chamrong.iecommerce.booking.application.dto.CreateBookingRequest;
+import com.chamrong.iecommerce.common.security.CapabilityGate;
 import com.chamrong.iecommerce.common.security.TenantGuard;
+import com.chamrong.iecommerce.setting.domain.ModuleCodes;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
@@ -41,6 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class BookingController {
 
   private final BookingService bookingService;
+  private final CapabilityGate capabilityGate;
 
   // ── Booking CRUD & lifecycle ───────────────────────────────────────────────
 
@@ -50,8 +53,9 @@ public class BookingController {
           "Reserves a resource slot. Automatically blocks the time window and checks for"
               + " conflicts.")
   @PostMapping
-  public ResponseEntity<BookingResponse> create(
-      @RequestParam String tenantId, @RequestBody CreateBookingRequest req) {
+  public ResponseEntity<BookingResponse> create(@RequestBody CreateBookingRequest req) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.BOOKING);
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(bookingService.createBooking(tenantId, req));
   }
@@ -59,6 +63,8 @@ public class BookingController {
   @Operation(summary = "Get booking by ID")
   @GetMapping("/{id}")
   public ResponseEntity<BookingResponse> getById(@PathVariable Long id) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.BOOKING);
     return bookingService
         .findById(id)
         .map(ResponseEntity::ok)
@@ -69,6 +75,7 @@ public class BookingController {
   @GetMapping("/customers/{customerId}")
   public List<BookingResponse> getByCustomer(@PathVariable Long customerId) {
     String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.BOOKING);
     return bookingService.getCustomerBookings(tenantId, customerId);
   }
 
@@ -77,6 +84,7 @@ public class BookingController {
   @PreAuthorize("hasAuthority('bookings:manage')")
   public List<BookingResponse> getAcceptedByResource(@PathVariable Long resourceProductId) {
     String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.BOOKING);
     return bookingService.getResourceAcceptedBookings(tenantId, resourceProductId);
   }
 
@@ -88,6 +96,8 @@ public class BookingController {
   @PostMapping("/{id}/accept")
   @PreAuthorize("hasAuthority('bookings:manage')")
   public BookingResponse accept(@PathVariable Long id) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.BOOKING);
     return bookingService.accept(id);
   }
 
@@ -97,6 +107,8 @@ public class BookingController {
   @PostMapping("/{id}/reject")
   @PreAuthorize("hasAuthority('bookings:manage')")
   public BookingResponse reject(@PathVariable Long id, @RequestParam String reason) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.BOOKING);
     return bookingService.reject(id, reason);
   }
 
@@ -106,6 +118,8 @@ public class BookingController {
   @PostMapping("/{id}/checkin")
   @PreAuthorize("hasAuthority('bookings:manage')")
   public BookingResponse checkIn(@PathVariable Long id) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.BOOKING);
     return bookingService.checkIn(id);
   }
 
@@ -115,6 +129,8 @@ public class BookingController {
   @PostMapping("/{id}/checkout")
   @PreAuthorize("hasAuthority('bookings:manage')")
   public BookingResponse checkOut(@PathVariable Long id) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.BOOKING);
     return bookingService.checkOut(id);
   }
 
@@ -124,6 +140,8 @@ public class BookingController {
   @PostMapping("/{id}/cancel")
   public BookingResponse cancel(
       @PathVariable Long id, @RequestParam(required = false) String reason) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.BOOKING);
     return bookingService.cancel(id, reason);
   }
 
@@ -139,6 +157,7 @@ public class BookingController {
       @RequestParam(required = false) Long staffId,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
     String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.BOOKING);
     return bookingService.getAvailableSlots(tenantId, resourceProductId, staffId, date);
   }
 
@@ -150,7 +169,9 @@ public class BookingController {
   @PostMapping("/availability-rules")
   @PreAuthorize("hasAuthority('bookings:manage')")
   public ResponseEntity<AvailabilityRuleResponse> addRule(
-      @RequestParam String tenantId, @RequestBody AvailabilityRuleRequest req) {
+      @RequestBody AvailabilityRuleRequest req) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.BOOKING);
     return ResponseEntity.status(HttpStatus.CREATED).body(bookingService.addRule(tenantId, req));
   }
 
@@ -158,14 +179,18 @@ public class BookingController {
   @GetMapping("/availability-rules/{resourceProductId}")
   @PreAuthorize("hasAuthority('bookings:manage')")
   public List<AvailabilityRuleResponse> getRules(@PathVariable Long resourceProductId) {
-    return bookingService.getRules(resourceProductId);
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.BOOKING);
+    return bookingService.getRules(tenantId, resourceProductId);
   }
 
   @Operation(summary = "Delete an availability rule")
   @DeleteMapping("/availability-rules/{ruleId}")
   @PreAuthorize("hasAuthority('bookings:manage')")
   public ResponseEntity<Void> deleteRule(@PathVariable Long ruleId) {
-    bookingService.deleteRule(ruleId);
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.BOOKING);
+    bookingService.deleteRule(tenantId, ruleId);
     return ResponseEntity.noContent().build();
   }
 }

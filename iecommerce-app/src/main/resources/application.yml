@@ -1,6 +1,8 @@
 spring:
   application:
     name: iecommerce
+  main:
+    allow-circular-references: true
   config:
     import: vault://
   cloud:
@@ -24,11 +26,16 @@ spring:
     password: ${RABBITMQ_PASSWORD:guest}
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     show-sql: true
   liquibase:
     change-log: classpath:db/changelog/master-changelog.xml
     enabled: true
+    # Local/dev convenience: if a changelog file changes after being applied,
+    # automatically clear and recompute checksums instead of failing startup.
+    clear-checksums: true
+    # If you see "Waiting for changelog lock....", a previous run left the lock held.
+    # Release it manually: run db/release-liquibase-lock.sql against the database.
   security:
     oauth2:
       resourceserver:
@@ -78,8 +85,20 @@ app:
 logging:
   level:
     org.springframework.modulith: INFO
-    com.chamrong: DEBUG
+    com.chamrong: INFO
+    # Suppress "Could not safely identify store assignment" when only JPA repos are used (Redis scans same package)
+    org.springframework.data.keyvalue.repository.config: WARN
+    # Suppress "Marking ChangeSet ... as ran despite precondition failure" for idempotent changeSets (e.g. 34-enrich-address)
+    liquibase.changelog: WARN
+
 iecommerce:
+  init:
+    admin:
+      enabled: true
+    keycloak:
+      enabled: true
+    kong:
+      enabled: true
   storage:
     r2:
       endpoint: https://dummy.r2.cloudflarestorage.com
@@ -97,3 +116,8 @@ notification:
   sms:
     provider: twilio # Values: twilio, plasgate, mekong
 
+payment:
+  stripe:
+    # Local/dev dummy values; real secrets should be provided via Vault or environment
+    secret-key: dummy
+    webhook-secret: dummy

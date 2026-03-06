@@ -4,8 +4,6 @@ import com.chamrong.iecommerce.common.BaseTenantEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
@@ -22,51 +20,41 @@ import java.util.List;
     })
 public class CustomerEntity extends BaseTenantEntity {
 
-  @Column(name = "first_name")
   private String firstName;
 
-  @Column(name = "last_name")
   private String lastName;
 
   @Column(nullable = false)
   private String email;
 
-  @Column(name = "phone_number")
   private String phoneNumber;
 
-  @Column(name = "auth_user_id")
   private Long authUserId;
 
-  @Column(name = "token_version", nullable = false)
+  @Column(nullable = false)
   private long tokenVersion = 1L;
 
   @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "customer_id")
   private List<AddressEntity> addresses = new ArrayList<>();
 
-  @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private String status = "ACTIVE";
 
-  @Enumerated(EnumType.STRING)
-  @Column(name = "loyalty_tier", nullable = false)
+  @Column(nullable = false)
   private String loyaltyTier = "BRONZE";
 
-  @Column(name = "loyalty_points", nullable = false)
+  @Column(nullable = false)
   private int loyaltyPoints = 0;
 
-  @Column(name = "date_of_birth")
   private LocalDate dateOfBirth;
 
   private String gender;
 
-  @Column(name = "normalized_email")
   private String normalizedEmail;
 
-  @Column(name = "normalized_phone")
   private String normalizedPhone;
 
-  @Column(name = "normalized_name")
   private String normalizedName;
 
   public String getFirstName() {

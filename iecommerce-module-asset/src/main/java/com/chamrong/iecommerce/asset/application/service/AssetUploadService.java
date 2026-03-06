@@ -37,7 +37,7 @@ public class AssetUploadService {
   private final FileScanner fileScanner;
   private final CompositeMetadataExtractor metadataExtractor;
 
-  private static final long DEFAULT_QUOTA = 5L * 1024 * 1024 * 1024; // 5GB
+  private final AssetQuotaService assetQuotaService;
 
   /**
    * Uploads an asset file to storage.
@@ -93,12 +93,13 @@ public class AssetUploadService {
 
   private void checkQuota(String tenantId, long uploadSize) {
     long currentUsage = assetRepository.sumFileSizeByTenantIdAndDeletedAtIsNull(tenantId);
-    if (currentUsage + uploadSize > DEFAULT_QUOTA) {
+    long quotaBytes = assetQuotaService.getQuotaForTenant(tenantId);
+    if (quotaBytes >= 0 && currentUsage + uploadSize > quotaBytes) {
       throw new AssetException(
           AssetErrorCode.STORAGE_QUOTA_EXCEEDED,
           String.format(
               "Storage quota exceeded. Used: %d, Requested: %d, Limit: %d",
-              currentUsage, uploadSize, DEFAULT_QUOTA));
+              currentUsage, uploadSize, quotaBytes));
     }
   }
 

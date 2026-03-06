@@ -2,17 +2,19 @@ package com.chamrong.iecommerce.payment.infrastructure.persistence.jpa;
 
 import com.chamrong.iecommerce.payment.domain.FinancialLedgerEntry;
 import com.chamrong.iecommerce.payment.domain.ports.FinancialLedgerPort;
+import com.chamrong.iecommerce.payment.infrastructure.persistence.jpa.entity.FinancialLedgerEntity;
+import com.chamrong.iecommerce.payment.infrastructure.persistence.jpa.entity.FinancialLedgerEntity.LedgerCategory;
+import com.chamrong.iecommerce.payment.infrastructure.persistence.jpa.entity.FinancialLedgerEntity.LedgerType;
+import com.chamrong.iecommerce.payment.infrastructure.persistence.jpa.repository.SpringDataFinancialLedgerRepository;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class JpaFinancialLedgerAdapter implements FinancialLedgerPort {
 
-  private final LedgerSpringRepository repository;
+  private final SpringDataFinancialLedgerRepository repository;
 
   @Override
   public void record(FinancialLedgerEntry entry) {
@@ -25,27 +27,16 @@ public class JpaFinancialLedgerAdapter implements FinancialLedgerPort {
   }
 
   private FinancialLedgerEntity toEntity(FinancialLedgerEntry entry) {
-    var entity = new FinancialLedgerEntity();
-    entity.setId(entry.getEntryId());
-    entity.setTenantId(entry.getTenantId());
-    entity.setOrderId(entry.getOrderId());
-    // NOTE: This assumes paymentIntentId in domain (UUID) maps to paymentId long in Entity if they
-    // are different concepts,
-    // or we should update the entity to use UUID. For now, since it was failing, we fix the setter
-    // name.
-    // However, entry.getPaymentIntentId() is UUID and entity.setPaymentIntentId wants Long?
-    // Let's check FinancialLedgerEntity again.
-
-    // entity.setPaymentIntentId(entry.getPaymentIntentId()); // ERROR: UUID vs Long
-
-    entity.setEntryType(FinancialLedgerEntity.EntryType.valueOf(entry.getType().name()));
-    entity.setAmount(entry.getAmount().getAmount());
-    entity.setCurrency(entry.getAmount().getCurrency());
-    entity.setStatus(FinancialLedgerEntity.LedgerStatus.SETTLED); // Default for recorded entries
-    entity.setDescription(entry.getDescription());
-    entity.setCreatedAt(entry.getCreatedAt());
-    return entity;
+    LedgerType ledgerType =
+        switch (entry.getType()) {
+          case CREDIT -> LedgerType.PAYOUT;
+          case DEBIT -> LedgerType.REFUND;
+        };
+    return FinancialLedgerEntity.of(
+        entry.getTenantId(),
+        entry.getOrderId(),
+        ledgerType,
+        LedgerCategory.SERVICE,
+        entry.getAmount());
   }
-
-  interface LedgerSpringRepository extends JpaRepository<FinancialLedgerEntity, UUID> {}
 }

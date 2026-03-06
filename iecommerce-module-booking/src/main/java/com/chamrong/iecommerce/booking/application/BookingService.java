@@ -16,15 +16,19 @@ import com.chamrong.iecommerce.booking.domain.BookingRepository;
 import com.chamrong.iecommerce.booking.domain.BookingStatus;
 import com.chamrong.iecommerce.common.Money;
 import com.chamrong.iecommerce.common.security.TenantGuard;
+import com.chamrong.iecommerce.setting.application.SettingService;
+import com.chamrong.iecommerce.setting.domain.SettingKeys;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -39,6 +43,7 @@ public class BookingService implements BookingApi {
   private final BookingRepository bookingRepository;
   private final AvailabilityRuleRepository availabilityRuleRepository;
   private final ApplicationEventPublisher eventPublisher;
+  private final SettingService settingService;
 
   // ── Commands ───────────────────────────────────────────────────────────────
 
@@ -216,7 +221,9 @@ public class BookingService implements BookingApi {
   @Transactional(readOnly = true)
   public List<AvailableSlot> getAvailableSlots(
       String tenantId, Long resourceProductId, Long staffId, LocalDate date) {
-    DayOfWeek dow = date.getDayOfWeek();
+    ZoneId tenantZone = resolveTenantZone(tenantId);
+    LocalDate tenantDate = date;
+    DayOfWeek dow = tenantDate.getDayOfWeek();
 
     List<AvailabilityRule> rules;
     if (staffId != null) {
@@ -231,10 +238,12 @@ public class BookingService implements BookingApi {
       LocalTime cursor = rule.getOpenTime();
       while (cursor.plusMinutes(rule.getSlotDurationMinutes()).compareTo(rule.getCloseTime())
           <= 0) {
-        Instant slotStart = date.atTime(cursor).toInstant(ZoneOffset.UTC);
+        Instant slotStart = tenantDate.atTime(cursor).atZone(tenantZone).toInstant();
         Instant slotEnd =
-            date.atTime(cursor.plusMinutes(rule.getSlotDurationMinutes()))
-                .toInstant(ZoneOffset.UTC);
+            tenantDate
+                .atTime(cursor.plusMinutes(rule.getSlotDurationMinutes()))
+                .atZone(tenantZone)
+                .toInstant();
 
         boolean hasConflict =
             !bookingRepository
@@ -272,15 +281,22 @@ public class BookingService implements BookingApi {
   }
 
   @Transactional(readOnly = true)
-  public List<AvailabilityRuleResponse> getRules(Long resourceProductId) {
+  public List<AvailabilityRuleResponse> getRules(String tenantId, Long resourceProductId) {
     return availabilityRuleRepository.findByResourceProductId(resourceProductId).stream()
+        .filter(rule -> tenantId.equals(rule.getTenantId()))
         .map(this::toRuleResponse)
-        .toList();
+        .collect(Collectors.toList());
   }
 
   @Transactional
-  public void deleteRule(Long ruleId) {
-    availabilityRuleRepository.deleteById(ruleId);
+  public void deleteRule(String tenantId, Long ruleId) {
+    AvailabilityRule rule =
+        availabilityRuleRepository
+            .findById(ruleId)
+            .orElseThrow(
+                () -> new EntityNotFoundException("Availability rule not found: " + ruleId));
+    TenantGuard.requireSameTenant(rule.getTenantId(), tenantId);
+    availabilityRuleRepository.delete(rule);
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
@@ -295,9 +311,20 @@ public class BookingService implements BookingApi {
     return booking;
   }
 
+  private ZoneId resolveTenantZone(String tenantId) {
+    String configured =
+        settingService.getTenantValue(tenantId, SettingKeys.TENANT_TIME_ZONE).orElse("UTC");
+    try {
+      return ZoneId.of(configured);
+    } catch (Exception e) {
+      return ZoneOffset.UTC;
+    }
+  }
+
   private BookingResponse toResponse(Booking b) {
     return new BookingResponse(
         b.getId(),
+        generateCode(b),
         b.getResourceProductId(),
         b.getResourceVariantId(),
         b.getAssignedStaffId(),
@@ -310,6 +337,12 @@ public class BookingService implements BookingApi {
         b.getCustomerNotes(),
         b.getCreatedAt(),
         b.getUpdatedAt());
+  }
+
+  private String generateCode(Booking b) {
+    String tenant = b.getTenantId() != null ? b.getTenantId() : "TENANT";
+    String idPart = b.getId() != null ? String.valueOf(b.getId()) : "NEW";
+    return tenant + "-" + idPart;
   }
 
   private AvailabilityRuleResponse toRuleResponse(AvailabilityRule r) {

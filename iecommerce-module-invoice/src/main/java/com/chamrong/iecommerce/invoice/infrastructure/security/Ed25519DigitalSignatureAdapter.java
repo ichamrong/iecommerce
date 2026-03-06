@@ -14,7 +14,6 @@ import org.bouncycastle.crypto.signers.Ed25519Signer;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 
 /**
@@ -139,7 +138,6 @@ public class Ed25519DigitalSignatureAdapter implements DigitalSignaturePort {
 
   // ── Configuration properties ──────────────────────────────────────────────
 
-  @Configuration
   @ConfigurationProperties(prefix = "invoice.signing")
   public static class SigningProperties {
 

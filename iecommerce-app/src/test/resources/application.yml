@@ -4,3 +4,5 @@ spring:
   cloud:
     vault:
       enabled: false
+  liquibase:
+    change-log: classpath:db/changelog/master-changelog.xml

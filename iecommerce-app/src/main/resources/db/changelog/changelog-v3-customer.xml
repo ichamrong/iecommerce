@@ -7,9 +7,9 @@
 
     <changeSet id="33-enrich-customer" author="chamrong">
         <preConditions onFail="MARK_RAN">
-            <not>
-                <columnExists tableName="customer" columnName="status"/>
-            </not>
+            <sqlCheck expectedResult="1">
+                SELECT CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'customer' AND column_name = 'status') THEN 0 ELSE 1 END
+            </sqlCheck>
         </preConditions>
         <addColumn tableName="customer">
             <column name="status" type="VARCHAR(20)" defaultValue="ACTIVE">
@@ -26,11 +26,79 @@
         </addColumn>
     </changeSet>
 
-    <changeSet id="34-enrich-address" author="chamrong">
+    <changeSet id="35-customer-token-version" author="chamrong">
         <preConditions onFail="MARK_RAN">
             <not>
-                <columnExists tableName="customer_address" columnName="is_default_billing"/>
+                <columnExists tableName="customer" columnName="token_version"/>
             </not>
+        </preConditions>
+        <addColumn tableName="customer">
+            <column name="token_version" type="BIGINT" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="36-customer-normalized-fields" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="customer" columnName="normalized_email"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="customer">
+            <column name="normalized_email" type="VARCHAR(255)"/>
+            <column name="normalized_phone" type="VARCHAR(50)"/>
+            <column name="normalized_name" type="VARCHAR(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="37-customer-outbox-event" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="customer_outbox_event"/>
+            </not>
+        </preConditions>
+        <createTable tableName="customer_outbox_event">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="payload" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="processed_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="retry_count" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="customer_outbox_event" indexName="idx_customer_outbox_status_created">
+            <column name="status"/>
+            <column name="created_at"/>
+        </createIndex>
+
+        <createIndex tableName="customer_outbox_event" indexName="idx_customer_outbox_tenant_status">
+            <column name="tenant_id"/>
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="34-enrich-address" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'customer_address' AND column_name = 'is_default_billing') THEN 0 ELSE 1 END
+            </sqlCheck>
         </preConditions>
         <addColumn tableName="customer_address">
             <column name="is_default_billing" type="BOOLEAN" defaultValue="FALSE"/>

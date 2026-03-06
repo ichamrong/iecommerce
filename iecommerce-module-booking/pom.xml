@@ -16,7 +16,13 @@
 			<artifactId>iecommerce-common</artifactId>
 		</dependency>
 
-	<dependency>
+		<!-- Access to SettingService, SettingKeys, QuotaEnforcer, etc. -->
+		<dependency>
+			<groupId>com.chamrong</groupId>
+			<artifactId>iecommerce-module-setting</artifactId>
+		</dependency>
+
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>

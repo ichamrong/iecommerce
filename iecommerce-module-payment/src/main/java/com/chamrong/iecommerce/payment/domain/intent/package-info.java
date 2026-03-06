@@ -4,4 +4,4 @@
  * <p>Contains: aggregate root, repository port, provider port, and value objects. Must NOT depend
  * on Spring, JPA, or any infrastructure class.
  */
-package com.chamrong.iecommerce.payment.domain.paymentintent;
+package com.chamrong.iecommerce.payment.domain.intent;

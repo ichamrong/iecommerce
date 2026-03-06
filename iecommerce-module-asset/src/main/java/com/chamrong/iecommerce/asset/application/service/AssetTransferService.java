@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.lang.Nullable;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,7 +47,7 @@ public class AssetTransferService {
     if (parentId != null) {
       Asset parent =
           assetRepository
-              .findByIdAndDeletedAtIsNull(parentId)
+              .findByTenantIdAndIdAndDeletedAtIsNull(tenantId, parentId)
               .orElseThrow(
                   () ->
                       new AssetException(
@@ -236,8 +235,9 @@ public class AssetTransferService {
   }
 
   private Asset findAssetById(long id) {
+    String tenantId = TenantContext.requireTenantId();
     return assetRepository
-        .findByIdAndDeletedAtIsNull(id)
+        .findByTenantIdAndIdAndDeletedAtIsNull(tenantId, id)
         .orElseThrow(() -> new AssetException(AssetErrorCode.ASSET_NOT_FOUND));
   }
 
@@ -245,9 +245,10 @@ public class AssetTransferService {
     if (targetFolderId == null) {
       return null;
     }
+    String tenantId = TenantContext.requireTenantId();
     Asset targetFolder =
         assetRepository
-            .findByIdAndDeletedAtIsNull(targetFolderId)
+            .findByTenantIdAndIdAndDeletedAtIsNull(tenantId, targetFolderId)
             .orElseThrow(
                 () -> new AssetException(AssetErrorCode.ASSET_NOT_FOUND, MSG_FOLDER_NOT_FOUND));
     validateTenant(targetFolder);
@@ -274,7 +275,7 @@ public class AssetTransferService {
   private void validateTenant(Asset asset) {
     String currentTenant = TenantContext.requireTenantId();
     if (!currentTenant.equals(asset.getTenantId())) {
-      throw new AccessDeniedException("Unauthorized access to asset of another tenant");
+      throw new AssetException(AssetErrorCode.ASSET_NOT_FOUND, "Asset not found");
     }
   }
 

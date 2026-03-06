@@ -9,6 +9,7 @@ import com.chamrong.iecommerce.common.Money;
  * @param description marketing description of the plan
  * @param price recurring price for the plan
  * @param maxProducts allowed number of products
+ * @param maxVariants allowed number of product variants
  * @param maxOrdersPerMonth allowed number of orders per month
  * @param maxStaffProfiles allowed number of staff profiles
  * @param customDomainAllowed whether custom domains are supported
@@ -19,6 +20,7 @@ public record UpdatePlanRequest(
     String description,
     Money price,
     int maxProducts,
+    int maxVariants,
     int maxOrdersPerMonth,
     int maxStaffProfiles,
     boolean customDomainAllowed,

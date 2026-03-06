@@ -5,6 +5,7 @@ import java.time.Instant;
 
 public record BookingResponse(
     Long id,
+    String code,
     Long resourceProductId,
     Long resourceVariantId,
     Long assignedStaffId,

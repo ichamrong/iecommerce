@@ -29,5 +29,5 @@
 
     <!-- Silence overly verbose modulith and component scanning logs -->
     <logger name="org.springframework.modulith" level="INFO"/>
-    <logger name="com.chamrong" level="DEBUG"/>
+    <logger name="com.chamrong" level="INFO"/>
 </configuration>

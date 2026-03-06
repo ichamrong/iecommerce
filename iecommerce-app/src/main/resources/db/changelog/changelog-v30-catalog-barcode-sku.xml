@@ -25,13 +25,14 @@
   <changeSet id="cs30-2-catalog-products-barcode-unique" author="chamrong">
     <sql splitStatements="false">
       CREATE UNIQUE INDEX IF NOT EXISTS idx_products_tenant_barcode
-        ON catalog_products (tenant_id, barcode)
-        WHERE deleted = FALSE AND barcode IS NOT NULL;
+        ON catalog_products (tenant_id, barcode, deleted, created_at)
+        WHERE barcode IS NOT NULL;
     </sql>
     <rollback>
       <sql>DROP INDEX IF EXISTS idx_products_tenant_barcode;</sql>
     </rollback>
   </changeSet>
+
 
   <!-- Fast lookup by variant SKU (tenant scoped via product.tenant_id) -->
   <changeSet id="cs30-3-catalog-variants-tenant-sku-lookup" author="chamrong">

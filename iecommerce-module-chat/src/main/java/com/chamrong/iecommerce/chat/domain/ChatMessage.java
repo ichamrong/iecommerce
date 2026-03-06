@@ -22,7 +22,7 @@ public class ChatMessage extends BaseTenantEntity {
   @Column(nullable = false)
   private Instant timestamp = Instant.now();
 
-  @Column(nullable = false)
+  @Column(name = "is_read", nullable = false)
   private boolean read = false;
 
   public ChatMessage() {}

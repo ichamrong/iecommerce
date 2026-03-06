@@ -26,7 +26,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -105,13 +104,10 @@ public class AssetRetrievalService {
   @Transactional(readOnly = true)
   @org.springframework.cache.annotation.Cacheable(value = "assets", key = "#id")
   public Optional<AssetResponse> findById(long id) {
+    String tenantId = TenantContext.requireTenantId();
     return assetRepository
-        .findByIdAndDeletedAtIsNull(id)
-        .map(
-            a -> {
-              validateTenant(a);
-              return AssetMapper.toResponse(a);
-            });
+        .findByTenantIdAndIdAndDeletedAtIsNull(tenantId, id)
+        .map(AssetMapper::toResponse);
   }
 
   /**
@@ -130,9 +126,10 @@ public class AssetRetrievalService {
 
   @Transactional(readOnly = true)
   public String getDownloadUrl(long id, String requestedBy, String ipAddress) {
+    String tenantId = TenantContext.requireTenantId();
     Asset asset =
         assetRepository
-            .findByIdAndDeletedAtIsNull(id)
+            .findByTenantIdAndIdAndDeletedAtIsNull(tenantId, id)
             .orElseThrow(
                 () -> new AssetException(AssetErrorCode.ASSET_NOT_FOUND, "Asset not found: " + id));
 
@@ -155,7 +152,6 @@ public class AssetRetrievalService {
 
   public InputStream download(long id) {
     Asset asset = findAssetById(id);
-    validateTenant(asset);
     return storageService.download(asset.getSource());
   }
 
@@ -219,15 +215,16 @@ public class AssetRetrievalService {
   }
 
   private Asset findAssetById(long id) {
+    String tenantId = TenantContext.requireTenantId();
     return assetRepository
-        .findByIdAndDeletedAtIsNull(id)
+        .findByTenantIdAndIdAndDeletedAtIsNull(tenantId, id)
         .orElseThrow(() -> new AssetException(AssetErrorCode.ASSET_NOT_FOUND));
   }
 
   private void validateTenant(Asset asset) {
     String currentTenant = TenantContext.requireTenantId();
     if (!currentTenant.equals(asset.getTenantId())) {
-      throw new AccessDeniedException("Unauthorized access to asset of another tenant");
+      throw new AssetException(AssetErrorCode.ASSET_NOT_FOUND, "Asset not found");
     }
   }
 }

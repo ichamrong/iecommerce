@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        v33 — Inventory Outbox Event Table
+        ====================================
+        Creates the missing `inventory_outbox_event` table that backs the
+        InventoryOutboxEvent entity used by the transactional outbox pattern
+        in the inventory module.
+
+        Table is modelled identically to order_outbox_event / promotion_outbox_event,
+        adding a retry_count column for exponential-backoff relay logic.
+    -->
+
+    <changeSet id="v33-01-inventory-outbox-event" author="antigravity">
+        <createTable tableName="inventory_outbox_event">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="payload" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <!-- PENDING | SENT | FAILED -->
+            <column name="status" type="VARCHAR(20)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Filled when status becomes SENT or FAILED -->
+            <column name="processed_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="retry_count" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Relay poll: fetch PENDING events ordered by created_at ASC -->
+        <createIndex indexName="idx_inv_outbox_status_created"
+                     tableName="inventory_outbox_event"
+                     unique="false">
+            <column name="status"/>
+            <column name="created_at"/>
+        </createIndex>
+
+        <!-- Per-tenant outbox visibility -->
+        <createIndex indexName="idx_inv_outbox_tenant_status"
+                     tableName="inventory_outbox_event"
+                     unique="false">
+            <column name="tenant_id"/>
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

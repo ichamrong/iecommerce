@@ -3,7 +3,10 @@ package com.chamrong.iecommerce.catalog.api;
 import com.chamrong.iecommerce.catalog.application.dto.ProductResponse;
 import com.chamrong.iecommerce.catalog.application.query.ProductQueryHandler;
 import com.chamrong.iecommerce.catalog.domain.ProductStatus;
+import com.chamrong.iecommerce.common.TenantContext;
 import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
+import com.chamrong.iecommerce.common.security.CapabilityGate;
+import com.chamrong.iecommerce.setting.domain.ModuleCodes;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class PublicProductController {
 
   private final ProductQueryHandler queryHandler;
+  private final CapabilityGate capabilityGate;
 
   @Operation(
       summary = "List active products",
@@ -33,6 +37,8 @@ public class PublicProductController {
       @RequestParam(required = false) String cursor,
       @RequestParam(defaultValue = "20") int limit,
       @RequestParam(defaultValue = "en") String locale) {
+    String tenantId = TenantContext.requireTenantId();
+    capabilityGate.requireModule(tenantId, ModuleCodes.CATALOG);
     return queryHandler.list(cursor, limit, ProductStatus.ACTIVE, null, null, locale);
   }
 
@@ -42,6 +48,8 @@ public class PublicProductController {
   @GetMapping("/{slug}")
   public ProductResponse getBySlug(
       @PathVariable String slug, @RequestParam(defaultValue = "en") String locale) {
+    String tenantId = TenantContext.requireTenantId();
+    capabilityGate.requireModule(tenantId, ModuleCodes.CATALOG);
     return queryHandler.getBySlug(slug, locale);
   }
 }

@@ -19,4 +19,10 @@ public final class SettingKeys {
   public static final String QUOTA_MAX_PRODUCTS = "quota.max_products";
   public static final String QUOTA_MAX_STAFF = "quota.max_staff";
   public static final String QUOTA_MAX_ASSETS = "quota.max_assets";
+  public static final String QUOTA_MAX_MEDIA_MB = "quota.max_media_mb";
+
+  // Tenant locale & time zone
+  public static final String TENANT_TIME_ZONE = "tenant.time_zone";
+  public static final String TENANT_DATE_FORMAT = "tenant.date_format";
+  public static final String TENANT_TIME_FORMAT = "tenant.time_format";
 }

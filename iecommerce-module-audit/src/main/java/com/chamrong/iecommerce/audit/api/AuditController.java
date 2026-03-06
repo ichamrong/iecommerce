@@ -14,6 +14,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -49,11 +50,21 @@ public class AuditController {
       @RequestParam(required = false) Instant to) {
     var query = new AuditQuery(userId, action, resourceType, resourceId, searchTerm, from, to);
     Map<String, Object> filters = new LinkedHashMap<>();
-    if (userId != null) filters.put("userId", userId);
-    if (action != null) filters.put("action", action);
-    if (resourceType != null) filters.put("resourceType", resourceType);
-    if (resourceId != null) filters.put("resourceId", resourceId);
-    if (searchTerm != null) filters.put("searchTerm", searchTerm);
+    if (StringUtils.hasText(userId)) {
+      filters.put("userId", userId);
+    }
+    if (StringUtils.hasText(action)) {
+      filters.put("action", action);
+    }
+    if (StringUtils.hasText(resourceType)) {
+      filters.put("resourceType", resourceType);
+    }
+    if (StringUtils.hasText(resourceId)) {
+      filters.put("resourceId", resourceId);
+    }
+    if (StringUtils.hasText(searchTerm)) {
+      filters.put("searchTerm", searchTerm);
+    }
     if (from != null) filters.put("from", from);
     if (to != null) filters.put("to", to);
     return auditService.findPageByQuery(

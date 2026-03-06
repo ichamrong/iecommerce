@@ -10,7 +10,6 @@ import com.chamrong.iecommerce.common.TenantContext;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,14 +44,13 @@ public class AssetDeletionService {
 
     List<Asset> assetsToUpdate = new java.util.ArrayList<>();
 
+    String tenantId = TenantContext.requireTenantId();
     for (Long id : ids) {
       Asset asset =
           assetRepository
-              .findByIdAndDeletedAtIsNull(id)
+              .findByTenantIdAndIdAndDeletedAtIsNull(tenantId, id)
               .orElseThrow(
                   () -> new AssetException(AssetErrorCode.ASSET_NOT_FOUND, "Asset ID " + id));
-
-      validateTenant(asset);
       if (asset.isFolder()) {
         String pathPrefix = asset.getPath() + StorageConstants.PATH_DELIMITER;
         assetRepository.deleteByTenantIdAndPathStartingWith(asset.getTenantId(), pathPrefix);
@@ -70,13 +68,12 @@ public class AssetDeletionService {
   }
 
   private void internalDelete(long id) {
+    String tenantId = TenantContext.requireTenantId();
     Asset asset =
         assetRepository
-            .findByIdAndDeletedAtIsNull(id)
+            .findByTenantIdAndIdAndDeletedAtIsNull(tenantId, id)
             .orElseThrow(
                 () -> new AssetException(AssetErrorCode.ASSET_NOT_FOUND, "Asset ID " + id));
-
-    validateTenant(asset);
     if (asset.isFolder()) {
       // O(1) Deep deletion of all nested assets using Materialized Path
       String pathPrefix = asset.getPath() + StorageConstants.PATH_DELIMITER;
@@ -99,7 +96,7 @@ public class AssetDeletionService {
   private void validateTenant(Asset asset) {
     String currentTenant = TenantContext.requireTenantId();
     if (!currentTenant.equals(asset.getTenantId())) {
-      throw new AccessDeniedException("Unauthorized access to asset of another tenant");
+      throw new AssetException(AssetErrorCode.ASSET_NOT_FOUND, "Asset not found");
     }
   }
 }

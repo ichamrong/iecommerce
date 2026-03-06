@@ -233,6 +233,18 @@
             constraintName="uq_variant_translation_locale"/>
     </changeSet>
 
+    <changeSet id="27b-catalog-product-variants-booking-fields" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="catalog_product_variants" columnName="duration_minutes"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="catalog_product_variants">
+            <column name="duration_minutes" type="INTEGER"/>
+            <column name="required_staff_id" type="BIGINT"/>
+        </addColumn>
+    </changeSet>
+
     <!-- 28: catalog_product_attributes (locale-invariant technical specs) -->
     <changeSet id="28-catalog-product-attributes" author="chamrong">
         <createTable tableName="catalog_product_attributes">
@@ -254,6 +266,26 @@
             </column>
         </createTable>
         <!-- No FK to catalog_products(id): parent has composite PK; see changeSet 26. -->
+    </changeSet>
+
+    <changeSet id="28b-catalog-product-attributes-auditing-soft-delete" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="catalog_product_attributes" columnName="created_at"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="catalog_product_attributes">
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </addColumn>
     </changeSet>
 
     <!-- 29: catalog_product_relationships -->
@@ -280,6 +312,26 @@
             tableName="catalog_product_relationships"
             columnNames="product_id, related_product_id, type"
             constraintName="uq_product_relationship"/>
+    </changeSet>
+
+    <changeSet id="29b-catalog-product-relationships-auditing-soft-delete" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="catalog_product_relationships" columnName="created_at"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="catalog_product_relationships">
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </addColumn>
     </changeSet>
 
     <!-- 30: catalog_category_translations -->
@@ -533,6 +585,27 @@
             referencedColumnNames="id"
             constraintName="fk_pfv_facet_value"
             onDelete="CASCADE"/>
+    </changeSet>
+
+    <!-- Backfill auditing/soft-delete columns expected by BaseEntity for existing databases -->
+    <changeSet id="33-catalog-facets-auditing-soft-delete" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="catalog_facets" columnName="created_at"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="catalog_facets">
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </addColumn>
     </changeSet>
 
 </databaseChangeLog>

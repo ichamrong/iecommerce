@@ -3,17 +3,12 @@ package com.chamrong.iecommerce.order.infrastructure.scheduler;
 import com.chamrong.iecommerce.common.EventDispatcher;
 import com.chamrong.iecommerce.common.outbox.AbstractOutboxRelay;
 import com.chamrong.iecommerce.order.domain.OrderOutboxEvent;
-import jakarta.persistence.LockModeType;
 import java.time.Instant;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -89,22 +84,5 @@ public class HardenedOutboxRelayScheduler extends AbstractOutboxRelay<OrderOutbo
         repository.save(event);
       }
     }
-  }
-
-  @Repository
-  interface OrderOutboxRepository extends JpaRepository<OrderOutboxEvent, Long> {
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query(
-        value =
-            "SELECT e FROM OrderOutboxEvent e "
-                + "WHERE e.status = 'PENDING' AND e.nextAttemptAt <= :now "
-                + "ORDER BY e.createdAt ASC")
-    @org.springframework.data.jpa.repository.QueryHints({
-      @jakarta.persistence.QueryHint(
-          name = "javax.persistence.lock.timeout",
-          value = "-2") // SKIP LOCKED for Postgres
-    })
-    List<OrderOutboxEvent> findToBeProcessed(Instant now, PageRequest pageable);
   }
 }

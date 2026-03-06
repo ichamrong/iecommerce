@@ -7,6 +7,7 @@ import com.chamrong.iecommerce.catalog.application.dto.ProductResponse;
 import com.chamrong.iecommerce.catalog.domain.ports.ProductRepositoryPort;
 import com.chamrong.iecommerce.common.Money;
 import com.chamrong.iecommerce.common.TenantContext;
+import com.chamrong.iecommerce.subscription.SubscriptionApi;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -21,6 +22,7 @@ public class AddVariantHandler {
   private final ProductRepositoryPort productRepository;
   private final CatalogMapper catalogMapper;
   private final ApplicationEventPublisher eventPublisher;
+  private final SubscriptionApi subscriptionApi;
 
   public ProductResponse handle(Long productId, AddVariantRequest request, String locale) {
     var tenantId = TenantContext.requireTenantId();
@@ -30,6 +32,9 @@ public class AddVariantHandler {
             .findById(productId)
             .filter(p -> p.getTenantId().equals(tenantId))
             .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
+
+    long currentVariantCount = product.getVariants().size();
+    subscriptionApi.checkQuota(tenantId, "maxVariants", currentVariantCount);
 
     Money basePrice =
         (request.priceAmount() != null && request.priceCurrency() != null)

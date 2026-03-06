@@ -5,6 +5,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,11 @@ import org.springframework.web.client.RestClient;
 @Component
 @Order(2)
 @RequiredArgsConstructor
+@ConditionalOnProperty(
+    prefix = "iecommerce.init.kong",
+    name = "enabled",
+    havingValue = "true",
+    matchIfMissing = true)
 public class KongInitializer implements CommandLineRunner {
 
   private final KongProperties properties;

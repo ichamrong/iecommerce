@@ -11,6 +11,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AccessLevel;
@@ -75,6 +76,9 @@ public class User extends BaseTenantEntity {
       indexes = @Index(name = "idx_user_roles_role_id", columnList = "role_id"))
   private Set<Role> roles = new HashSet<>();
 
+  @Column(name = "last_password_change_at")
+  private Instant lastPasswordChangeAt;
+
   // ── Bootstrap ──────────────────────────────────────────────────────────────
 
   public User(String tenantId, String username, String email) {
@@ -124,5 +128,13 @@ public class User extends BaseTenantEntity {
 
   public void addRole(Role role) {
     this.roles.add(role);
+  }
+
+  public void changeUsername(String newUsername) {
+    this.username = newUsername;
+  }
+
+  public void markPasswordChanged(Instant changedAt) {
+    this.lastPasswordChangeAt = changedAt;
   }
 }

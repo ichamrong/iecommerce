@@ -1,0 +1,16 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+logging:
+  level:
+    com.chamrong: DEBUG
+
+iecommerce:
+  init:
+    keycloak:
+      enabled: false
+    kong:
+      enabled: false
+

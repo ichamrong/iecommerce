@@ -1,27 +1,39 @@
 package com.chamrong.iecommerce.auth.infrastructure.ratelimit;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-
 /**
- * Configuration properties for IP-based rate limiting.
+ * In-memory configuration for IP-based rate limiting.
  *
- * <p>Defaults are conservative values suitable for production. Override in {@code application.yml}:
- *
- * <pre>{@code
- * iecommerce:
- *   security:
- *     rate-limit:
- *       login-max-per-minute: 10
- *       forgot-password-max-per-hour: 5
- *       signup-max-per-day: 3
- * }</pre>
+ * <p>Defaults are conservative values suitable for production. For now this is a simple POJO
+ * instantiated directly by {@link IpRateLimitFilter}; if you later want to externalize it to
+ * configuration, you can reintroduce {@code @ConfigurationProperties} and a dedicated bean.
  */
-@ConfigurationProperties("iecommerce.security.rate-limit")
-public record RateLimitProperties(
-    int loginMaxPerMinute, int forgotPasswordMaxPerHour, int signupMaxPerDay) {
+public class RateLimitProperties {
 
-  /** Provides safe defaults when the property block is absent from configuration. */
-  public RateLimitProperties() {
-    this(10, 5, 3);
+  private int loginMaxPerMinute = 10;
+  private int forgotPasswordMaxPerHour = 5;
+  private int signupMaxPerDay = 3;
+
+  public int loginMaxPerMinute() {
+    return loginMaxPerMinute;
+  }
+
+  public void setLoginMaxPerMinute(int loginMaxPerMinute) {
+    this.loginMaxPerMinute = loginMaxPerMinute;
+  }
+
+  public int forgotPasswordMaxPerHour() {
+    return forgotPasswordMaxPerHour;
+  }
+
+  public void setForgotPasswordMaxPerHour(int forgotPasswordMaxPerHour) {
+    this.forgotPasswordMaxPerHour = forgotPasswordMaxPerHour;
+  }
+
+  public int signupMaxPerDay() {
+    return signupMaxPerDay;
+  }
+
+  public void setSignupMaxPerDay(int signupMaxPerDay) {
+    this.signupMaxPerDay = signupMaxPerDay;
   }
 }

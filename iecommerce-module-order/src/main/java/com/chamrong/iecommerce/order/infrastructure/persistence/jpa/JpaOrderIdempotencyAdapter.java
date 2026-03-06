@@ -4,9 +4,7 @@ import com.chamrong.iecommerce.order.domain.OrderIdempotency;
 import com.chamrong.iecommerce.order.domain.ports.OrderIdempotencyPort;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Repository;
 
 /** JPA implementation for command idempotency. */
 @Component
@@ -25,12 +23,5 @@ public class JpaOrderIdempotencyAdapter implements OrderIdempotencyPort {
   @Override
   public void record(String operationType, String referenceId, String resultSnapshot) {
     repository.save(OrderIdempotency.of(operationType, referenceId, resultSnapshot));
-  }
-
-  @Repository
-  interface IdempotencySpringDataRepository
-      extends JpaRepository<OrderIdempotency, OrderIdempotency.IdempotencyId> {
-    Optional<OrderIdempotency> findByOperationTypeAndReferenceId(
-        String operationType, String referenceId);
   }
 }

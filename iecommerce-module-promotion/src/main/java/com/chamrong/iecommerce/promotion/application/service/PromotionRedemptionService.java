@@ -12,10 +12,8 @@ import com.chamrong.iecommerce.promotion.domain.rule.PromotionContext;
 import com.chamrong.iecommerce.promotion.domain.rule.engine.PromotionEngine;
 import java.math.BigDecimal;
 import java.util.Optional;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
 public class PromotionRedemptionService implements ApplyPromotionUseCase {
 
   private final PromotionRepository promotionRepository;

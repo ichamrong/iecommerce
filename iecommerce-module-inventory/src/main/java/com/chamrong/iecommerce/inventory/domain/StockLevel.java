@@ -13,10 +13,10 @@ import jakarta.persistence.Version;
     uniqueConstraints = @UniqueConstraint(columnNames = {"product_id", "warehouse_id"}))
 public class StockLevel extends BaseTenantEntity {
 
-  @Column(nullable = false)
+  @Column(name = "product_id", nullable = false)
   private Long productId;
 
-  @Column(nullable = false)
+  @Column(name = "warehouse_id", nullable = false)
   private Long warehouseId;
 
   @Column(nullable = false)

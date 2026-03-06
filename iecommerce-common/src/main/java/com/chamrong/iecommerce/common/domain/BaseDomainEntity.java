@@ -9,6 +9,9 @@ import lombok.NoArgsConstructor;
 /**
  * Persistence-free base for domain aggregates. Use in domain layer only; JPA entities extend {@link
  * com.chamrong.iecommerce.common.BaseEntity} in infrastructure.
+ *
+ * <p>Setter methods are intended for persistence reconstitution and mapping only; domain logic
+ * should prefer behavior methods over direct state mutation.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -25,18 +28,22 @@ public abstract class BaseDomainEntity {
     this.id = id;
   }
 
+  /** For reconstitution from persistence only; do not use in domain logic. */
   public void setCreatedAt(Instant createdAt) {
     this.createdAt = createdAt;
   }
 
+  /** For reconstitution from persistence only; do not use in domain logic. */
   public void setUpdatedAt(Instant updatedAt) {
     this.updatedAt = updatedAt;
   }
 
+  /** For reconstitution from persistence only; do not use in domain logic. */
   public void setDeleted(boolean deleted) {
     this.deleted = deleted;
   }
 
+  /** For reconstitution from persistence only; do not use in domain logic. */
   public void setDeletedAt(Instant deletedAt) {
     this.deletedAt = deletedAt;
   }
@@ -64,3 +71,5 @@ public abstract class BaseDomainEntity {
     return getClass().hashCode();
   }
 }
+
+

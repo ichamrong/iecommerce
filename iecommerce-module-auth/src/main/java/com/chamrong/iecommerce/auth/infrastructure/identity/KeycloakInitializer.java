@@ -14,6 +14,7 @@ import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -21,10 +22,14 @@ import org.springframework.stereotype.Component;
 @Component
 @Order(1)
 @RequiredArgsConstructor
+@ConditionalOnProperty(
+    prefix = "iecommerce.init.keycloak",
+    name = "enabled",
+    havingValue = "true",
+    matchIfMissing = true)
 public class KeycloakInitializer implements CommandLineRunner {
-  private static final String DEFAULT_ADMIN_USERNAME = "admin";
-
   private final KeycloakProperties properties;
+  private final SuperAdminProperties superAdminProperties;
   private final UserRepositoryPort userRepository;
   private final RoleRepositoryPort roleRepository;
   private final Keycloak keycloak;
@@ -119,14 +124,17 @@ public class KeycloakInitializer implements CommandLineRunner {
   }
 
   private void createSuperAdminUser(Keycloak keycloak) {
+    final String bootstrapUsername =
+        superAdminProperties.getUsername() != null ? superAdminProperties.getUsername() : "admin";
+
     RealmResource realmResource = keycloak.realm(properties.getRealm());
     List<UserRepresentation> users =
-        realmResource.users().searchByUsername(DEFAULT_ADMIN_USERNAME, true);
+        realmResource.users().searchByUsername(bootstrapUsername, true);
 
     if (users.isEmpty()) {
-      log.info("Creating default '{}' user in Keycloak...", DEFAULT_ADMIN_USERNAME);
+      log.info("Creating default '{}' user in Keycloak...", bootstrapUsername);
       UserRepresentation user = new UserRepresentation();
-      user.setUsername(DEFAULT_ADMIN_USERNAME);
+      user.setUsername(bootstrapUsername);
       user.setEnabled(true);
       user.setEmailVerified(true);
       user.setFirstName("System");
@@ -135,7 +143,11 @@ public class KeycloakInitializer implements CommandLineRunner {
 
       CredentialRepresentation credential = new CredentialRepresentation();
       credential.setType(CredentialRepresentation.PASSWORD);
-      credential.setValue(DEFAULT_ADMIN_USERNAME);
+      final String bootstrapPassword =
+          superAdminProperties.getPassword() != null
+              ? superAdminProperties.getPassword()
+              : bootstrapUsername;
+      credential.setValue(bootstrapPassword);
       credential.setTemporary(true);
 
       user.setCredentials(List.of(credential));
@@ -148,8 +160,12 @@ public class KeycloakInitializer implements CommandLineRunner {
           realmResource.users().get(userId).roles().realmLevel().add(List.of(adminRole));
           log.info("Super admin created successfully with ID: {}", userId);
 
-          syncSuperAdminToDatabase(
-              userId, DEFAULT_ADMIN_USERNAME, DEFAULT_ADMIN_USERNAME + "@platform.com");
+          final String email =
+              superAdminProperties.getEmail() != null
+                  ? superAdminProperties.getEmail()
+                  : bootstrapUsername + "@platform.com";
+
+          syncSuperAdminToDatabase(userId, bootstrapUsername, email);
         } else {
           log.error("Failed to create super admin user. HTTP Status: {}", response.getStatus());
         }

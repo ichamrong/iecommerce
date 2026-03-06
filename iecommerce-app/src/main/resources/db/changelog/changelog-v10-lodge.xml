@@ -56,6 +56,50 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="38-booking-stay-policy-soft-delete" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="booking_stay_policy" columnName="deleted_at"/>
+            </not>
+        </preConditions>
+        <comment>Add deleted_at column to booking_stay_policy for soft delete support</comment>
+        <addColumn tableName="booking_stay_policy">
+            <column name="deleted_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="39-booking-stay-policy-label" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="booking_stay_policy" columnName="label"/>
+            </not>
+        </preConditions>
+        <comment>Add human-readable label to booking_stay_policy</comment>
+        <addColumn tableName="booking_stay_policy">
+            <column name="label" type="VARCHAR(100)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="40-booking-stay-policy-min-max-columns" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <or>
+                <not>
+                    <columnExists tableName="booking_stay_policy" columnName="min_stay"/>
+                </not>
+                <not>
+                    <columnExists tableName="booking_stay_policy" columnName="max_stay"/>
+                </not>
+            </or>
+        </preConditions>
+        <comment>Align booking_stay_policy with StayPolicy.minStay/maxStay fields</comment>
+        <addColumn tableName="booking_stay_policy">
+            <column name="min_stay" type="INTEGER" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_stay" type="INTEGER"/>
+        </addColumn>
+    </changeSet>
+
     <changeSet id="34-booking-lodge-operation-rule" author="chamrong">
         <createTable tableName="booking_lodge_operation_rule">
             <column name="id" type="BIGSERIAL"><constraints primaryKey="true" nullable="false"/></column>
@@ -71,6 +115,18 @@
             <column name="updated_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
             <column name="deleted" type="BOOLEAN" defaultValueBoolean="false"><constraints nullable="false"/></column>
         </createTable>
+    </changeSet>
+
+    <changeSet id="37-booking-lodge-operation-soft-delete" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="booking_lodge_operation_rule" columnName="deleted_at"/>
+            </not>
+        </preConditions>
+        <comment>Add deleted_at column to booking_lodge_operation_rule for soft delete support</comment>
+        <addColumn tableName="booking_lodge_operation_rule">
+            <column name="deleted_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </addColumn>
     </changeSet>
 
     <changeSet id="35-promotion-lodge-discount-rule" author="chamrong">

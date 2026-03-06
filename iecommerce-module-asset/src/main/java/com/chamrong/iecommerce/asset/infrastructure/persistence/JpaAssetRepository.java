@@ -16,6 +16,9 @@ public interface JpaAssetRepository extends JpaRepository<Asset, Long>, AssetRep
   Optional<Asset> findByIdAndDeletedAtIsNull(Long id);
 
   @Override
+  Optional<Asset> findByTenantIdAndIdAndDeletedAtIsNull(String tenantId, Long id);
+
+  @Override
   List<Asset> findByTenantIdAndTypeAndDeletedAtIsNull(String tenantId, AssetType type);
 
   @Override

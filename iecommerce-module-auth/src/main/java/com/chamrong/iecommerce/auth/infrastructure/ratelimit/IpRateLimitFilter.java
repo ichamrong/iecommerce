@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -35,7 +34,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class IpRateLimitFilter extends OncePerRequestFilter {
 
   private static final String BUCKET_KEY_LOGIN = "login";
@@ -46,7 +44,7 @@ public class IpRateLimitFilter extends OncePerRequestFilter {
   private static final String PATH_FORGOT = "/api/v1/auth/forgot-password";
   private static final String PATH_SIGNUP = "/api/v1/tenants/register";
 
-  private final RateLimitProperties props;
+  private final RateLimitProperties props = new RateLimitProperties();
 
   // One cache per bucket category — key: "IP:category"
   private final Cache<String, Bucket> bucketCache =

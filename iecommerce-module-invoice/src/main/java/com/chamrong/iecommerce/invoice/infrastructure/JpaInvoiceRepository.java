@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 /** Spring Data JPA adapter for the domain {@link InvoiceRepository} port. */
@@ -19,4 +20,14 @@ public interface JpaInvoiceRepository extends JpaRepository<Invoice, Long>, Invo
 
   @Override
   List<Invoice> findByTenantIdAndCreatedAtBetween(String tenantId, Instant start, Instant end);
+
+  /**
+   * Legacy idempotency lookup for older APIs.
+   *
+   * <p>The current schema does not persist an explicit idempotency key, so this implementation
+   * always returns empty. Newer flows should rely on dedicated idempotency mechanisms instead.
+   */
+  @Override
+  @Query("SELECT i FROM Invoice i WHERE 1 = 0")
+  Optional<Invoice> findByIdempotencyKey(String idempotencyKey);
 }

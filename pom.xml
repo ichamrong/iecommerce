@@ -299,6 +299,10 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${jacoco.version}</version>
+                <configuration>
+                    <!-- Temporary: disable JaCoCo agent to avoid Unsupported class file major version 68 with newer JDKs -->
+                    <skip>true</skip>
+                </configuration>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>

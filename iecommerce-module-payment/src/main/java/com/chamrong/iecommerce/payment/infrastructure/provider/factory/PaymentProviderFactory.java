@@ -2,7 +2,7 @@ package com.chamrong.iecommerce.payment.infrastructure.provider.factory;
 
 import com.chamrong.iecommerce.payment.domain.ProviderType;
 import com.chamrong.iecommerce.payment.domain.exception.PaymentDomainException;
-import com.chamrong.iecommerce.payment.domain.paymentintent.PaymentProviderPort;
+import com.chamrong.iecommerce.payment.domain.intent.PaymentProviderPort;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;

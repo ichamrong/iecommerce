@@ -7,9 +7,13 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "customer_address")
+@Getter
+@Setter
 public class AddressEntity extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -27,76 +31,12 @@ public class AddressEntity extends BaseEntity {
   @Column(nullable = false)
   private String country;
 
-  @Column(name = "postal_code")
   private String postalCode;
 
-  @Column(name = "is_default_shipping", nullable = false)
-  private boolean defaultShipping = false;
+  @Column(nullable = false, columnDefinition = "boolean default false")
+  private boolean isDefaultShipping = false;
 
-  @Column(name = "is_default_billing", nullable = false)
-  private boolean defaultBilling = false;
-
-  public CustomerEntity getCustomer() {
-    return customer;
-  }
-
-  public void setCustomer(CustomerEntity customer) {
-    this.customer = customer;
-  }
-
-  public String getStreet() {
-    return street;
-  }
-
-  public void setStreet(String street) {
-    this.street = street;
-  }
-
-  public String getCity() {
-    return city;
-  }
-
-  public void setCity(String city) {
-    this.city = city;
-  }
-
-  public String getState() {
-    return state;
-  }
-
-  public void setState(String state) {
-    this.state = state;
-  }
-
-  public String getCountry() {
-    return country;
-  }
-
-  public void setCountry(String country) {
-    this.country = country;
-  }
-
-  public String getPostalCode() {
-    return postalCode;
-  }
-
-  public void setPostalCode(String postalCode) {
-    this.postalCode = postalCode;
-  }
-
-  public boolean isDefaultShipping() {
-    return defaultShipping;
-  }
-
-  public void setDefaultShipping(boolean defaultShipping) {
-    this.defaultShipping = defaultShipping;
-  }
-
-  public boolean isDefaultBilling() {
-    return defaultBilling;
-  }
-
-  public void setDefaultBilling(boolean defaultBilling) {
-    this.defaultBilling = defaultBilling;
-  }
+  @Column(nullable = false, columnDefinition = "boolean default false")
+  private boolean isDefaultBilling = false;
 }
+

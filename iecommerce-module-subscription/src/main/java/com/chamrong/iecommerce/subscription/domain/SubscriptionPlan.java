@@ -36,6 +36,8 @@ public class SubscriptionPlan extends BaseEntity {
   /** Quota limits stored as JSON or simplified fields. For now, let's use simplified fields. */
   private int maxProducts;
 
+  private int maxVariants;
+
   private int maxOrdersPerMonth;
   private int maxStaffProfiles;
   private boolean customDomainAllowed;

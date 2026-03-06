@@ -16,6 +16,10 @@
             <artifactId>iecommerce-common</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.chamrong</groupId>
+            <artifactId>iecommerce-module-setting</artifactId>
+        </dependency>
+        <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
             <version>2.29.2</version>

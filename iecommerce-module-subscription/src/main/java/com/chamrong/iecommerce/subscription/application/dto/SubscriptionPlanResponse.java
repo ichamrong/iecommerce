@@ -9,6 +9,7 @@ public record SubscriptionPlanResponse(
     String description,
     Money price,
     int maxProducts,
+    int maxVariants,
     int maxOrdersPerMonth,
     int maxStaffProfiles,
     boolean customDomainAllowed,

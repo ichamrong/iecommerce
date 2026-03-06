@@ -24,6 +24,7 @@ public class StorageRoutingService implements StorageService {
 
   private final List<StorageService> allServices;
   private final StorageRoutingConfiguration config;
+  private final StorageRoutingPolicy routingPolicy;
 
   private final Map<String, StorageService> providers = new HashMap<>();
 
@@ -128,7 +129,7 @@ public class StorageRoutingService implements StorageService {
 
   private StorageService getPrimaryService() {
     StorageProvider provider = config.getProvider();
-    String key = provider.getKey();
+    String key = routingPolicy.resolveForCurrentTenant();
     StorageService service = providers.get(key);
 
     if (service == null) {

@@ -5,11 +5,13 @@ import java.time.Duration;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
+@ConditionalOnBean(RedisTemplate.class)
 @RequiredArgsConstructor
 public class RedisSessionStoreAdapter implements SessionStorePort {
 

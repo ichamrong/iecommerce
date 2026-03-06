@@ -31,10 +31,9 @@ public class Customer extends BaseTenantEntity {
 
   private String phoneNumber;
 
-  @Column(name = "auth_user_id")
   private Long authUserId; // Link to Auth module's User
 
-  @Column(name = "token_version", nullable = false)
+  @Column(nullable = false)
   private long tokenVersion = 1L;
 
   @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)

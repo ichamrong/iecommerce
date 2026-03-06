@@ -1,5 +1,6 @@
 package com.chamrong.iecommerce.auth.api;
 
+import com.chamrong.iecommerce.auth.application.command.ChangeCredentialsCommand;
 import com.chamrong.iecommerce.auth.application.command.ChangePasswordCommand;
 import com.chamrong.iecommerce.auth.application.command.LoginCommand;
 import com.chamrong.iecommerce.auth.application.command.RegisterCommand;
@@ -10,6 +11,7 @@ import com.chamrong.iecommerce.auth.application.command.auth.RefreshTokenCommand
 import com.chamrong.iecommerce.auth.application.command.auth.RefreshTokenHandler;
 import com.chamrong.iecommerce.auth.application.command.password.ForgotPasswordCommand;
 import com.chamrong.iecommerce.auth.application.command.password.ForgotPasswordHandler;
+import com.chamrong.iecommerce.auth.application.command.security.ChangeCredentialsHandler;
 import com.chamrong.iecommerce.auth.application.command.security.ChangePasswordHandler;
 import com.chamrong.iecommerce.auth.application.command.user.RegisterUserHandler;
 import com.chamrong.iecommerce.auth.application.dto.AuthResponse;
@@ -46,6 +48,7 @@ public class AuthController {
   private final LoginUserHandler loginUserHandler;
   private final ForgotPasswordHandler forgotPasswordHandler;
   private final ChangePasswordHandler changePasswordHandler;
+  private final ChangeCredentialsHandler changeCredentialsHandler;
   private final RefreshTokenHandler refreshTokenHandler;
   private final LogoutHandler logoutHandler;
   private final ListSocialProvidersQueryHandler listSocialProvidersQueryHandler;
@@ -55,6 +58,7 @@ public class AuthController {
       LoginUserHandler loginUserHandler,
       ForgotPasswordHandler forgotPasswordHandler,
       ChangePasswordHandler changePasswordHandler,
+      ChangeCredentialsHandler changeCredentialsHandler,
       RefreshTokenHandler refreshTokenHandler,
       LogoutHandler logoutHandler,
       ListSocialProvidersQueryHandler listSocialProvidersQueryHandler) {
@@ -62,6 +66,7 @@ public class AuthController {
     this.loginUserHandler = loginUserHandler;
     this.forgotPasswordHandler = forgotPasswordHandler;
     this.changePasswordHandler = changePasswordHandler;
+    this.changeCredentialsHandler = changeCredentialsHandler;
     this.refreshTokenHandler = refreshTokenHandler;
     this.logoutHandler = logoutHandler;
     this.listSocialProvidersQueryHandler = listSocialProvidersQueryHandler;
@@ -218,6 +223,41 @@ public class AuthController {
   @PostMapping("/change-password")
   public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordCommand cmd) {
     changePasswordHandler.handle(cmd);
+    return ResponseEntity.noContent().build();
+  }
+
+  /**
+   * Change both the authenticated user's username and password in a single first-login step.
+   *
+   * <p>POST /api/v1/auth/change-credentials — requires a valid JWT.
+   *
+   * <p>This endpoint is designed for the initial super admin and any accounts flagged as new. The
+   * backend verifies the current password, enforces basic password strength, updates username and
+   * password in the Identity Provider, and transitions the local account state from PENDING to
+   * ACTIVE.
+   */
+  @Operation(
+      summary = "Change username and password",
+      description =
+          "Verifies the current password then updates both username and password. "
+              + "Intended for first-login flows, including the initial super admin bootstrap.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "204",
+        description = "Credentials changed successfully",
+        content = @Content),
+    @ApiResponse(
+        responseCode = "401",
+        description = "Invalid current password",
+        content = @Content),
+    @ApiResponse(
+        responseCode = "409",
+        description = "Username already exists in this tenant",
+        content = @Content)
+  })
+  @PostMapping("/change-credentials")
+  public ResponseEntity<Void> changeCredentials(@Valid @RequestBody ChangeCredentialsCommand cmd) {
+    changeCredentialsHandler.handle(cmd);
     return ResponseEntity.noContent().build();
   }
 }

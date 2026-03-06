@@ -1,6 +1,7 @@
 package com.chamrong.iecommerce.common.pagination;
 
 import java.util.Map;
+import lombok.Getter;
 
 /**
  * Standard cursor page request: cursor, limit, and optional filters for filterHash binding.
@@ -9,10 +10,13 @@ import java.util.Map;
  * include any query params that affect the result set (e.g. status, search) so that cursors from
  * one filter cannot be used for another.
  */
+@Getter
 public final class CursorPageRequest {
 
   private final String cursor;
   private final int limit;
+
+  /** -- GETTER -- Unmodifiable map of filter key to value (for FilterHasher). */
   private final Map<String, Object> filters;
 
   public CursorPageRequest(String cursor, int limit, Map<String, Object> filters) {
@@ -27,19 +31,6 @@ public final class CursorPageRequest {
 
   public static CursorPageRequest of(String cursor, int limit, Map<String, Object> filters) {
     return new CursorPageRequest(cursor, limit, filters);
-  }
-
-  public String getCursor() {
-    return cursor;
-  }
-
-  public int getLimit() {
-    return limit;
-  }
-
-  /** Unmodifiable map of filter key to value (for FilterHasher). */
-  public Map<String, Object> getFilters() {
-    return filters;
   }
 
   /** Limit for DB query: request limit + 1 to detect hasNext. */

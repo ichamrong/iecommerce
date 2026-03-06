@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- auth_pos_terminal and auth_pos_session were created in v11 before deletedAt was
+         added to BaseEntity. Add the missing soft-delete timestamp column to both tables. -->
+
+    <changeSet id="116-pos-terminal-deleted-at" author="chamrong">
+        <addColumn tableName="auth_pos_terminal">
+            <column name="deleted_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="117-pos-session-deleted-at" author="chamrong">
+        <addColumn tableName="auth_pos_session">
+            <column name="deleted_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

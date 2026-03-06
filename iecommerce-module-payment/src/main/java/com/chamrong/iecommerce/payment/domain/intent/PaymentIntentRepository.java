@@ -1,4 +1,4 @@
-package com.chamrong.iecommerce.payment.domain.paymentintent;
+package com.chamrong.iecommerce.payment.domain.intent;
 
 import com.chamrong.iecommerce.payment.domain.PaymentIntent;
 import com.chamrong.iecommerce.payment.domain.ProviderType;

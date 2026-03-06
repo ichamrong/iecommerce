@@ -5,11 +5,13 @@ import com.chamrong.iecommerce.customer.domain.auth.port.LoginAttemptPort;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
+@ConditionalOnBean(RedisTemplate.class)
 @RequiredArgsConstructor
 public class RedisLoginAttemptAdapter implements LoginAttemptPort {
 

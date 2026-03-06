@@ -36,4 +36,9 @@
     <include file="db/changelog/changelog-v29-audit-event-enterprise.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/changelog-v30-catalog-barcode-sku.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/changelog-v31-chat-keyset.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v32-auth-user-credentials-audit.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v33-inventory-outbox.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v34-pos-soft-delete.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v35-auth-tenant-provisioning-status.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v36-payment-review-outbox.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>

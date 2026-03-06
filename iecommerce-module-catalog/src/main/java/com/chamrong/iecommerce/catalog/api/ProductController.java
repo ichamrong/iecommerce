@@ -20,6 +20,9 @@ import com.chamrong.iecommerce.catalog.application.dto.UpdateVariantRequest;
 import com.chamrong.iecommerce.catalog.application.query.ProductQueryHandler;
 import com.chamrong.iecommerce.catalog.domain.ProductStatus;
 import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
+import com.chamrong.iecommerce.common.security.CapabilityGate;
+import com.chamrong.iecommerce.common.security.TenantGuard;
+import com.chamrong.iecommerce.setting.domain.ModuleCodes;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -58,6 +61,7 @@ public class ProductController {
   private final UpdateVariantHandler updateVariantHandler;
   private final RemoveVariantHandler removeVariantHandler;
   private final SetRelationshipsHandler setRelationshipsHandler;
+  private final CapabilityGate capabilityGate;
 
   // ── List / Read ────────────────────────────────────────────────────────────
 
@@ -87,6 +91,8 @@ public class ProductController {
       @Parameter(description = "Locale for translation (default: en)")
           @RequestParam(defaultValue = "en")
           String locale) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.CATALOG);
     return queryHandler.list(cursor, limit, status, categoryId, keyword, locale);
   }
 
@@ -94,6 +100,8 @@ public class ProductController {
   @GetMapping("/{id}")
   public ProductResponse getById(
       @PathVariable Long id, @RequestParam(defaultValue = "en") String locale) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.CATALOG);
     return queryHandler.getById(id, locale);
   }
 
@@ -103,6 +111,8 @@ public class ProductController {
   @GetMapping("/by-sku/{sku}")
   public ProductResponse getBySku(
       @PathVariable String sku, @RequestParam(defaultValue = "en") String locale) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.CATALOG);
     return queryHandler.getBySku(sku, locale);
   }
 
@@ -112,6 +122,8 @@ public class ProductController {
   @GetMapping("/by-barcode/{barcode}")
   public ProductResponse getByBarcode(
       @PathVariable String barcode, @RequestParam(defaultValue = "en") String locale) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.CATALOG);
     return queryHandler.getByBarcode(barcode, locale);
   }
 
@@ -127,6 +139,8 @@ public class ProductController {
   })
   @PostMapping
   public ResponseEntity<ProductResponse> create(@Valid @RequestBody CreateProductRequest req) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.CATALOG);
     var response = createHandler.handle(req);
     return ResponseEntity.created(URI.create("/api/v1/admin/products/" + response.id()))
         .body(response);
@@ -142,6 +156,8 @@ public class ProductController {
       @PathVariable Long id,
       @Valid @RequestBody UpdateProductRequest req,
       @RequestParam(defaultValue = "en") String locale) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.CATALOG);
     return updateHandler.handle(id, req, locale);
   }
 
@@ -151,6 +167,8 @@ public class ProductController {
   @ApiResponse(responseCode = "204", description = "Published")
   @PatchMapping("/{id}/publish")
   public ResponseEntity<Void> publish(@PathVariable Long id) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.CATALOG);
     publishHandler.handle(id);
     return ResponseEntity.noContent().build();
   }
@@ -159,6 +177,8 @@ public class ProductController {
   @ApiResponse(responseCode = "204", description = "Archived")
   @PatchMapping("/{id}/archive")
   public ResponseEntity<Void> archive(@PathVariable Long id) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.CATALOG);
     archiveHandler.handle(id);
     return ResponseEntity.noContent().build();
   }
@@ -170,6 +190,8 @@ public class ProductController {
       description = "Returns all locale entries for a product as a map.")
   @GetMapping("/{id}/translations")
   public ProductTranslationsResponse getAllTranslations(@PathVariable Long id) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.CATALOG);
     return queryHandler.getAllTranslations(id);
   }
 
@@ -179,6 +201,8 @@ public class ProductController {
   @PutMapping("/{id}/translations/{locale}")
   public ResponseEntity<Void> upsertTranslation(
       @PathVariable Long id, @PathVariable String locale, @RequestBody TranslationRequest req) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.CATALOG);
     translationHandler.handle(id, locale, req);
     return ResponseEntity.noContent().build();
   }
@@ -190,6 +214,8 @@ public class ProductController {
   @DeleteMapping("/{id}/translations/{locale}")
   public ResponseEntity<Void> deleteTranslation(
       @PathVariable Long id, @PathVariable String locale) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.CATALOG);
     translationHandler.delete(id, locale);
     return ResponseEntity.noContent().build();
   }
@@ -202,6 +228,8 @@ public class ProductController {
       @PathVariable Long id,
       @RequestBody AddVariantRequest request,
       @RequestParam(defaultValue = "en") String locale) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.CATALOG);
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(addVariantHandler.handle(id, request, locale));
   }
@@ -213,12 +241,16 @@ public class ProductController {
       @PathVariable Long variantId,
       @RequestBody UpdateVariantRequest request,
       @RequestParam(defaultValue = "en") String locale) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.CATALOG);
     return ResponseEntity.ok(updateVariantHandler.handle(id, variantId, request, locale));
   }
 
   @Operation(summary = "Remove variant", description = "Removes a variant by ID.")
   @DeleteMapping("/{id}/variants/{variantId}")
   public ResponseEntity<Void> removeVariant(@PathVariable Long id, @PathVariable Long variantId) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.CATALOG);
     removeVariantHandler.handle(id, variantId);
     return ResponseEntity.noContent().build();
   }
@@ -231,6 +263,8 @@ public class ProductController {
   @PutMapping("/{id}/relationships")
   public ResponseEntity<Void> setRelationships(
       @PathVariable Long id, @RequestBody List<SetRelationshipsRequest> request) {
+    String tenantId = TenantGuard.requireTenantIdPresent();
+    capabilityGate.requireModule(tenantId, ModuleCodes.CATALOG);
     setRelationshipsHandler.handle(id, request);
     return ResponseEntity.noContent().build();
   }

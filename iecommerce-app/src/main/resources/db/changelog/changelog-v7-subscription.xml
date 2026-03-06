@@ -20,6 +20,7 @@
             <column name="price_amount" type="DECIMAL(19,4)"/>
             <column name="price_currency" type="VARCHAR(3)"/>
             <column name="max_products" type="INTEGER"/>
+            <column name="max_variants" type="INTEGER" defaultValueNumeric="0"/>
             <column name="max_orders_per_month" type="INTEGER"/>
             <column name="max_staff_profiles" type="INTEGER"/>
             <column name="custom_domain_allowed" type="BOOLEAN" defaultValueBoolean="false"/>
@@ -44,6 +45,7 @@
             <column name="price_amount" valueNumeric="0.00"/>
             <column name="price_currency" value="USD"/>
             <column name="max_products" valueNumeric="50"/>
+            <column name="max_variants" valueNumeric="200"/>
             <column name="max_orders_per_month" valueNumeric="100"/>
             <column name="max_staff_profiles" valueNumeric="2"/>
             <column name="created_at" valueDate="now()"/>
@@ -57,6 +59,7 @@
             <column name="price_amount" valueNumeric="49.00"/>
             <column name="price_currency" value="USD"/>
             <column name="max_products" valueNumeric="1000"/>
+            <column name="max_variants" valueNumeric="5000"/>
             <column name="max_orders_per_month" valueNumeric="5000"/>
             <column name="max_staff_profiles" valueNumeric="10"/>
             <column name="custom_domain_allowed" valueBoolean="true"/>

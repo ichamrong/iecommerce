@@ -2,11 +2,14 @@ package com.chamrong.iecommerce.audit.infrastructure;
 
 import com.chamrong.iecommerce.audit.application.dto.AuditQuery;
 import com.chamrong.iecommerce.audit.domain.AuditEvent;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
@@ -17,23 +20,23 @@ public class JpaAuditRepositoryImpl implements JpaAuditRepositoryCustom {
 
   private static final Sort KEYSET_SORT = Sort.by(Sort.Direction.DESC, "createdAt", "id");
 
-  private final JpaAuditRepository repository;
+  private final EntityManager entityManager;
 
-  public JpaAuditRepositoryImpl(JpaAuditRepository repository) {
-    this.repository = repository;
+  public JpaAuditRepositoryImpl(EntityManager entityManager) {
+    this.entityManager = entityManager;
   }
 
   @Override
   public List<AuditEvent> findFirstPage(String tenantId, int limitPlusOne) {
     Specification<AuditEvent> spec = (root, q, cb) -> cb.equal(root.get("tenantId"), tenantId);
-    return repository.findAll(spec, PageRequest.of(0, limitPlusOne, KEYSET_SORT)).getContent();
+    return execute(spec, limitPlusOne);
   }
 
   @Override
   public List<AuditEvent> findNextPage(
       String tenantId, Instant cursorCreatedAt, Long cursorId, int limitPlusOne) {
     Specification<AuditEvent> spec = tenantAndKeysetSpec(tenantId, cursorCreatedAt, cursorId);
-    return repository.findAll(spec, PageRequest.of(0, limitPlusOne, KEYSET_SORT)).getContent();
+    return execute(spec, limitPlusOne);
   }
 
   @Override
@@ -41,7 +44,7 @@ public class JpaAuditRepositoryImpl implements JpaAuditRepositoryCustom {
     Specification<AuditEvent> spec =
         (root, q, cb) ->
             cb.and(cb.equal(root.get("tenantId"), tenantId), cb.equal(root.get("userId"), userId));
-    return repository.findAll(spec, PageRequest.of(0, limitPlusOne, KEYSET_SORT)).getContent();
+    return execute(spec, limitPlusOne);
   }
 
   @Override
@@ -53,21 +56,40 @@ public class JpaAuditRepositoryImpl implements JpaAuditRepositoryCustom {
                 cb.equal(root.get("tenantId"), tenantId),
                 cb.equal(root.get("userId"), userId),
                 keysetPredicate(root, q, cb, cursorCreatedAt, cursorId));
-    return repository.findAll(spec, PageRequest.of(0, limitPlusOne, KEYSET_SORT)).getContent();
+    return execute(spec, limitPlusOne);
   }
 
   @Override
   public List<AuditEvent> findFirstPageByQuery(
       String tenantId, AuditQuery query, int limitPlusOne) {
     Specification<AuditEvent> spec = querySpec(tenantId, query, null, null);
-    return repository.findAll(spec, PageRequest.of(0, limitPlusOne, KEYSET_SORT)).getContent();
+    return execute(spec, limitPlusOne);
   }
 
   @Override
   public List<AuditEvent> findNextPageByQuery(
       String tenantId, AuditQuery query, Instant cursorCreatedAt, Long cursorId, int limitPlusOne) {
     Specification<AuditEvent> spec = querySpec(tenantId, query, cursorCreatedAt, cursorId);
-    return repository.findAll(spec, PageRequest.of(0, limitPlusOne, KEYSET_SORT)).getContent();
+    return execute(spec, limitPlusOne);
+  }
+
+  private List<AuditEvent> execute(Specification<AuditEvent> spec, int limitPlusOne) {
+    CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+    CriteriaQuery<AuditEvent> cq = cb.createQuery(AuditEvent.class);
+    Root<AuditEvent> root = cq.from(AuditEvent.class);
+    Predicate predicate = spec.toPredicate(root, cq, cb);
+    if (predicate != null) {
+      cq.where(predicate);
+    }
+    cq.orderBy(
+        KEYSET_SORT.stream()
+            .map(
+                order ->
+                    order.isAscending()
+                        ? cb.asc(root.get(order.getProperty()))
+                        : cb.desc(root.get(order.getProperty())))
+            .toList());
+    return entityManager.createQuery(cq).setMaxResults(limitPlusOne).getResultList();
   }
 
   private static Specification<AuditEvent> tenantAndKeysetSpec(

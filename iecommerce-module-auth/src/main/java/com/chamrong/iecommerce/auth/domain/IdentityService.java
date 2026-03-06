@@ -70,6 +70,17 @@ public interface IdentityService {
   void resetPassword(String keycloakId, String temporaryPassword);
 
   /**
+   * Updates a user's username in the identity provider.
+   *
+   * <p>Used when the application allows the login name to be changed as part of a credentials
+   * update flow.
+   *
+   * @param keycloakId the IDP-assigned user identifier
+   * @param newUsername the new unique username to set
+   */
+  void updateUsername(String keycloakId, String newUsername);
+
+  /**
    * Triggers a Keycloak "Reset Password" email for the given user.
    *
    * <p>Keycloak sends the password-reset link directly from the realm's configured SMTP server.

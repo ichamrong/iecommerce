@@ -54,6 +54,7 @@ public class SubscriptionService implements SubscriptionApi {
     plan.setDescription(request.description());
     plan.setPrice(request.price());
     plan.setMaxProducts(request.maxProducts());
+    plan.setMaxVariants(request.maxVariants());
     plan.setMaxOrdersPerMonth(request.maxOrdersPerMonth());
     plan.setMaxStaffProfiles(request.maxStaffProfiles());
     plan.setCustomDomainAllowed(request.customDomainAllowed());
@@ -82,6 +83,7 @@ public class SubscriptionService implements SubscriptionApi {
     plan.setDescription(request.description());
     plan.setPrice(request.price());
     plan.setMaxProducts(request.maxProducts());
+    plan.setMaxVariants(request.maxVariants());
     plan.setMaxOrdersPerMonth(request.maxOrdersPerMonth());
     plan.setMaxStaffProfiles(request.maxStaffProfiles());
     plan.setCustomDomainAllowed(request.customDomainAllowed());
@@ -198,6 +200,7 @@ public class SubscriptionService implements SubscriptionApi {
           case "maxProducts" -> plan.getMaxProducts();
           case "maxStaffProfiles" -> plan.getMaxStaffProfiles();
           case "maxOrdersPerMonth" -> plan.getMaxOrdersPerMonth();
+          case "maxVariants" -> plan.getMaxVariants();
           default -> Integer.MAX_VALUE;
         };
 
@@ -219,6 +222,7 @@ public class SubscriptionService implements SubscriptionApi {
         p.getDescription(),
         p.getPrice(),
         p.getMaxProducts(),
+        p.getMaxVariants(),
         p.getMaxOrdersPerMonth(),
         p.getMaxStaffProfiles(),
         p.isCustomDomainAllowed(),

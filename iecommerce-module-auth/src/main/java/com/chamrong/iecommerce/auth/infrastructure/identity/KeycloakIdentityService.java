@@ -215,6 +215,15 @@ public class KeycloakIdentityService implements IdentityService {
   }
 
   @Override
+  public void updateUsername(String keycloakId, String newUsername) {
+    var userResource = keycloak.realm(properties.getRealm()).users().get(keycloakId);
+    var representation = userResource.toRepresentation();
+    representation.setUsername(newUsername);
+    userResource.update(representation);
+    log.info("Username updated in Keycloak for user '{}'", keycloakId);
+  }
+
+  @Override
   public void sendPasswordResetEmail(String keycloakId) {
     // Triggers Keycloak to send its built-in password-reset email.
     // Requires the realm to have SMTP configured.

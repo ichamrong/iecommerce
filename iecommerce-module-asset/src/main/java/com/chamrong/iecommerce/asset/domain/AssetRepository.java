@@ -7,6 +7,8 @@ public interface AssetRepository {
 
   Optional<Asset> findByIdAndDeletedAtIsNull(Long id);
 
+  Optional<Asset> findByTenantIdAndIdAndDeletedAtIsNull(String tenantId, Long id);
+
   Asset save(Asset asset);
 
   <S extends Asset> List<S> saveAll(Iterable<S> entities);

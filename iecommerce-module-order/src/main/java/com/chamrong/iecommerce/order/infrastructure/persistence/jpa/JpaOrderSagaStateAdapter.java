@@ -5,9 +5,7 @@ import com.chamrong.iecommerce.order.domain.saga.OrderSagaState;
 import com.chamrong.iecommerce.order.domain.saga.SagaStep;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Repository;
 
 /** JPA implementation for tracking saga choreography state. */
 @Component
@@ -48,10 +46,5 @@ public class JpaOrderSagaStateAdapter implements OrderSagaStatePort {
   @Override
   public Optional<OrderSagaState> findByOrderId(Long orderId) {
     return repository.findByOrderId(orderId);
-  }
-
-  @Repository
-  interface SagaSpringDataRepository extends JpaRepository<OrderSagaState, Long> {
-    Optional<OrderSagaState> findByOrderId(Long orderId);
   }
 }

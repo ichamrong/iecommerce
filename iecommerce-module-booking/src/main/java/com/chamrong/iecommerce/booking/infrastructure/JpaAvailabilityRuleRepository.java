@@ -4,6 +4,7 @@ import com.chamrong.iecommerce.booking.domain.AvailabilityRule;
 import com.chamrong.iecommerce.booking.domain.AvailabilityRuleRepository;
 import java.time.DayOfWeek;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,6 +12,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface JpaAvailabilityRuleRepository
     extends JpaRepository<AvailabilityRule, Long>, AvailabilityRuleRepository {
+
+  @Override
+  Optional<AvailabilityRule> findById(Long id);
 
   @Override
   List<AvailabilityRule> findByResourceProductId(Long resourceProductId);
@@ -21,4 +25,7 @@ public interface JpaAvailabilityRuleRepository
 
   @Override
   List<AvailabilityRule> findByStaffIdAndDayOfWeek(Long staffId, DayOfWeek dayOfWeek);
+
+  @Override
+  void delete(AvailabilityRule rule);
 }
