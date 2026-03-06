@@ -70,6 +70,30 @@ class TenantContextFilterTest {
   }
 
   @Test
+  void whenNoTenantIdClaim_filterDoesNotCallRepository() throws Exception {
+    Jwt jwt =
+        Jwt.withTokenValue("mock-token").header("alg", "RS256").claim("sub", "user-1").build();
+    SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt, null));
+
+    filter.doFilterInternal(request, response, filterChain);
+
+    verify(tenantRepository, never()).findByCode(any());
+    verify(filterChain).doFilter(any(), any());
+  }
+
+  @Test
+  void whenTenantNotFound_returns403WithSuspendedCode() throws Exception {
+    SecurityContextHolder.getContext().setAuthentication(jwtWithTenant(TENANT_ID));
+    when(tenantRepository.findByCode(TENANT_ID)).thenReturn(Optional.empty());
+
+    filter.doFilterInternal(request, response, filterChain);
+
+    verify(response).sendError(eq(HttpServletResponse.SC_FORBIDDEN), any());
+    verify(response).setHeader("X-Error-Code", "TENANT_SUSPENDED");
+    verify(filterChain, never()).doFilter(any(), any());
+  }
+
+  @Test
   void whenTenantGrace_andGet_allowsRequest() throws Exception {
     SecurityContextHolder.getContext().setAuthentication(jwtWithTenant(TENANT_ID));
     when(tenantRepository.findByCode(TENANT_ID))
@@ -119,6 +143,20 @@ class TenantContextFilterTest {
 
     verify(response).sendError(eq(HttpServletResponse.SC_FORBIDDEN), any());
     verify(response).setHeader("X-Error-Code", "TENANT_TERMINATED");
+    verify(filterChain, never()).doFilter(any(), any());
+  }
+
+  @Test
+  void whenTenantDisabled_returns403AndSuspendedCode() throws Exception {
+    SecurityContextHolder.getContext().setAuthentication(jwtWithTenant(TENANT_ID));
+    Tenant tenant = tenantWithStatus(TenantStatus.ACTIVE);
+    tenant.setEnabled(false);
+    when(tenantRepository.findByCode(TENANT_ID)).thenReturn(Optional.of(tenant));
+
+    filter.doFilterInternal(request, response, filterChain);
+
+    verify(response).sendError(eq(HttpServletResponse.SC_FORBIDDEN), any());
+    verify(response).setHeader("X-Error-Code", "TENANT_SUSPENDED");
     verify(filterChain, never()).doFilter(any(), any());
   }
 }

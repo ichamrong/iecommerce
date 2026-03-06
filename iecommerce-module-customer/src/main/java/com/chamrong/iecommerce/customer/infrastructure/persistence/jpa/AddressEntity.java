@@ -39,4 +39,3 @@ public class AddressEntity extends BaseEntity {
   @Column(nullable = false, columnDefinition = "boolean default false")
   private boolean isDefaultBilling = false;
 }
-

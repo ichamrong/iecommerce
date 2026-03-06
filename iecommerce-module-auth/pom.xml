@@ -154,6 +154,21 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <configuration>
+                    <!-- Enable JaCoCo agent only for this module's code -->
+                    <skip>false</skip>
+                    <includes>
+                        <include>com.chamrong.iecommerce.auth.*</include>
+                    </includes>
+                    <!-- Exclude Mockito's dynamically generated mock classes which may use newer class file versions -->
+                    <excludes>
+                        <exclude>com.chamrong.iecommerce.auth.*$MockitoMock$*</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
