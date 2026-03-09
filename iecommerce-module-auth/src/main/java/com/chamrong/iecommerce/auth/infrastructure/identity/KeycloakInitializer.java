@@ -107,9 +107,13 @@ public class KeycloakInitializer implements CommandLineRunner {
     List<String> systemRoles =
         List.of(
             "ROLE_PLATFORM_ADMIN",
+            "ROLE_PLATFORM_STAFF",
             "ROLE_ACCOUNTING",
+            "ROLE_MODERATOR",
             "ROLE_SUPPORT",
             "ROLE_PLAN_MANAGER",
+            "ROLE_SYSTEM_STATUS",
+            "ROLE_TENANT_ADMIN",
             "ROLE_CUSTOMER");
 
     for (String roleName : systemRoles) {

@@ -14,7 +14,9 @@ import com.chamrong.iecommerce.auth.application.command.tenant.TenantSignupHandl
 import com.chamrong.iecommerce.auth.application.command.tenant.UpdateTenantPreferencesHandler;
 import com.chamrong.iecommerce.auth.application.command.tenant.UpdateTenantStatusHandler;
 import com.chamrong.iecommerce.auth.application.dto.TenantResponse;
+import com.chamrong.iecommerce.auth.application.query.GetTenantByCodeHandler;
 import com.chamrong.iecommerce.auth.application.query.GetTenantPreferencesHandler;
+import com.chamrong.iecommerce.auth.application.query.ListTenantsHandler;
 import com.chamrong.iecommerce.auth.domain.TenantPlan;
 import com.chamrong.iecommerce.auth.domain.TenantStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +39,12 @@ class TenantControllerWebMvcTest {
   @Mock private UpdateTenantStatusHandler statusHandler;
   @Mock private UpdateTenantPreferencesHandler updatePreferencesHandler;
   @Mock private GetTenantPreferencesHandler getPreferencesHandler;
+  @Mock private ListTenantsHandler listTenantsHandler;
+  @Mock private GetTenantByCodeHandler getTenantByCodeHandler;
+
+  @Mock
+  private com.chamrong.iecommerce.auth.application.command.tenant.UpdateTenantHandler
+      updateTenantHandler;
 
   @BeforeEach
   void setUp() {
@@ -46,7 +54,10 @@ class TenantControllerWebMvcTest {
             provisionHandler,
             statusHandler,
             updatePreferencesHandler,
-            getPreferencesHandler);
+            getPreferencesHandler,
+            listTenantsHandler,
+            getTenantByCodeHandler,
+            updateTenantHandler);
     this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
   }
 

@@ -104,11 +104,14 @@ public class SecurityConfig {
         .authorizeHttpRequests(
             auth ->
                 auth
+                    // CORS preflight requests
+                    .requestMatchers(HttpMethod.OPTIONS, "/**")
+                    .permitAll()
                     // ── Public auth endpoints ────────────────────────────────────
                     .requestMatchers(HttpMethod.POST, "/api/v1/auth/**")
                     .permitAll()
                     // Social providers list — public (needed before login)
-                    .requestMatchers(HttpMethod.GET, "/api/v1/auth/social/providers")
+                    .requestMatchers(HttpMethod.GET, "/api/v1/auth/social-providers")
                     .permitAll()
                     // Self-service tenant registration
                     .requestMatchers(HttpMethod.POST, "/api/v1/tenants/register")

@@ -5,6 +5,7 @@ import com.chamrong.iecommerce.auth.domain.ports.TenantRepositoryPort;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 /** Implements TenantRepositoryPort using TenantEntity and TenantPersistenceMapper. */
 @Component
@@ -22,6 +23,12 @@ public class JpaTenantAdapter implements TenantRepositoryPort {
   @Cacheable(value = "tenants", key = "#code", cacheManager = "authCacheManager")
   public java.util.Optional<Tenant> findByCode(String code) {
     return repository.findByCode(code).map(mapper::toDomain);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public java.util.List<Tenant> findAll() {
+    return repository.findAll().stream().map(mapper::toDomain).toList();
   }
 
   @Override

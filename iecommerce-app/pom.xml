@@ -76,6 +76,14 @@
 			<artifactId>iecommerce-module-review</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>com.chamrong</groupId>
+			<artifactId>iecommerce-module-ekyc</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.chamrong</groupId>
+			<artifactId>iecommerce-module-helpdesk</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>

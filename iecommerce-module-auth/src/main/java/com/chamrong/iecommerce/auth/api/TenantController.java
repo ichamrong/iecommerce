@@ -2,23 +2,31 @@ package com.chamrong.iecommerce.auth.api;
 
 import com.chamrong.iecommerce.auth.application.command.TenantProvisionCommand;
 import com.chamrong.iecommerce.auth.application.command.TenantSignupCommand;
+import com.chamrong.iecommerce.auth.application.command.UpdateTenantCommand;
 import com.chamrong.iecommerce.auth.application.command.UpdateTenantPreferencesCommand;
+import com.chamrong.iecommerce.auth.application.command.UpdateTenantRequest;
 import com.chamrong.iecommerce.auth.application.command.UpdateTenantStatusCommand;
 import com.chamrong.iecommerce.auth.application.command.tenant.TenantProvisionHandler;
 import com.chamrong.iecommerce.auth.application.command.tenant.TenantSignupHandler;
+import com.chamrong.iecommerce.auth.application.command.tenant.UpdateTenantHandler;
 import com.chamrong.iecommerce.auth.application.command.tenant.UpdateTenantPreferencesHandler;
 import com.chamrong.iecommerce.auth.application.command.tenant.UpdateTenantStatusHandler;
 import com.chamrong.iecommerce.auth.application.dto.TenantPreferencesResponse;
 import com.chamrong.iecommerce.auth.application.dto.TenantResponse;
+import com.chamrong.iecommerce.auth.application.query.GetTenantByCodeHandler;
 import com.chamrong.iecommerce.auth.application.query.GetTenantPreferencesHandler;
+import com.chamrong.iecommerce.auth.application.query.ListTenantsHandler;
 import com.chamrong.iecommerce.auth.domain.Permissions;
+import com.chamrong.iecommerce.auth.domain.TenantStatus;
 import com.chamrong.iecommerce.common.TenantContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,18 +46,27 @@ public class TenantController {
   private final UpdateTenantStatusHandler statusHandler;
   private final UpdateTenantPreferencesHandler updatePreferencesHandler;
   private final GetTenantPreferencesHandler getPreferencesHandler;
+  private final ListTenantsHandler listTenantsHandler;
+  private final GetTenantByCodeHandler getTenantByCodeHandler;
+  private final UpdateTenantHandler updateTenantHandler;
 
   public TenantController(
       TenantSignupHandler signupHandler,
       TenantProvisionHandler provisionHandler,
       UpdateTenantStatusHandler statusHandler,
       UpdateTenantPreferencesHandler updatePreferencesHandler,
-      GetTenantPreferencesHandler getPreferencesHandler) {
+      GetTenantPreferencesHandler getPreferencesHandler,
+      ListTenantsHandler listTenantsHandler,
+      GetTenantByCodeHandler getTenantByCodeHandler,
+      UpdateTenantHandler updateTenantHandler) {
     this.signupHandler = signupHandler;
     this.provisionHandler = provisionHandler;
     this.statusHandler = statusHandler;
     this.updatePreferencesHandler = updatePreferencesHandler;
     this.getPreferencesHandler = getPreferencesHandler;
+    this.listTenantsHandler = listTenantsHandler;
+    this.getTenantByCodeHandler = getTenantByCodeHandler;
+    this.updateTenantHandler = updateTenantHandler;
   }
 
   /** Self-service tenant registration — public, no auth required. */
@@ -75,6 +92,66 @@ public class TenantController {
       @Valid @RequestBody TenantProvisionCommand cmd) {
     TenantResponse response = provisionHandler.handle(cmd);
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
+  }
+
+  /** List all tenants (admin). */
+  @Operation(
+      summary = "Admin: list tenants",
+      description =
+          "Returns all tenants. Owner email is not included. Requires `tenant:create` permission.")
+  @GetMapping("/api/v1/admin/tenants")
+  @PreAuthorize(Permissions.HAS_TENANT_CREATE)
+  public List<TenantResponse> listTenants() {
+    return listTenantsHandler.handle();
+  }
+
+  /** Get a single tenant by code (admin). */
+  @Operation(
+      summary = "Admin: get tenant by id",
+      description = "Returns tenant by code (id). Requires `tenant:create` permission.")
+  @GetMapping("/api/v1/admin/tenants/{id}")
+  @PreAuthorize(Permissions.HAS_TENANT_CREATE)
+  public ResponseEntity<TenantResponse> getTenantById(@PathVariable("id") String tenantCode) {
+    return getTenantByCodeHandler
+        .handle(tenantCode)
+        .map(ResponseEntity::ok)
+        .orElse(ResponseEntity.notFound().build());
+  }
+
+  /** Update tenant name/plan (admin). */
+  @Operation(
+      summary = "Admin: update tenant",
+      description = "Updates tenant name and/or plan. Requires `tenant:create` permission.")
+  @PutMapping("/api/v1/admin/tenants/{id}")
+  @PreAuthorize(Permissions.HAS_TENANT_CREATE)
+  public ResponseEntity<Void> updateTenant(
+      @PathVariable("id") String tenantCode,
+      @RequestBody(required = false) UpdateTenantRequest body) {
+    try {
+      UpdateTenantCommand cmd =
+          body != null
+              ? new UpdateTenantCommand(tenantCode, body.name(), body.plan(), body.trialEndsAt())
+              : new UpdateTenantCommand(tenantCode, null, null, null);
+      updateTenantHandler.handle(cmd);
+      return ResponseEntity.ok().build();
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.notFound().build();
+    }
+  }
+
+  /** Terminate tenant (admin). Sets status to TERMINATED. */
+  @Operation(
+      summary = "Admin: delete (terminate) tenant",
+      description = "Sets tenant status to TERMINATED. Requires `tenant:create` permission.")
+  @DeleteMapping("/api/v1/admin/tenants/{id}")
+  @PreAuthorize(Permissions.HAS_TENANT_CREATE)
+  public ResponseEntity<Void> deleteTenant(@PathVariable("id") String tenantCode) {
+    try {
+      statusHandler.handle(new UpdateTenantStatusCommand(tenantCode, TenantStatus.TERMINATED));
+      return ResponseEntity.noContent().build();
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.notFound().build();
+    }
   }
 
   /** Updates a tenant's billing/operational status. */

@@ -27,6 +27,14 @@ public final class Permissions {
   // Self-service
   public static final String PROFILE_READ = "profile:read";
 
+  // eKYC / Merchant approvals
+  public static final String EKYC_READ = "ekyc:read";
+  public static final String EKYC_REVIEW = "ekyc:review";
+
+  // Helpdesk
+  public static final String HELPDESK_READ = "helpdesk:read";
+  public static final String HELPDESK_REPLY = "helpdesk:reply";
+
   // SpEL expressions for @PreAuthorize
   public static final String HAS_USER_READ = "hasAuthority('" + USER_READ + "')";
   public static final String HAS_USER_CREATE = "hasAuthority('" + USER_CREATE + "')";
@@ -40,6 +48,10 @@ public final class Permissions {
   public static final String HAS_SALE_MANAGE = "hasAuthority('" + SALE_MANAGE + "')";
   public static final String HAS_INVOICE_READ = "hasAuthority('" + INVOICE_READ + "')";
   public static final String HAS_INVOICE_MANAGE = "hasAuthority('" + INVOICE_MANAGE + "')";
+  public static final String HAS_EKYC_READ = "hasAuthority('" + EKYC_READ + "')";
+  public static final String HAS_EKYC_REVIEW = "hasAuthority('" + EKYC_REVIEW + "')";
+  public static final String HAS_HELPDESK_READ = "hasAuthority('" + HELPDESK_READ + "')";
+  public static final String HAS_HELPDESK_REPLY = "hasAuthority('" + HELPDESK_REPLY + "')";
 
   private Permissions() {}
 }

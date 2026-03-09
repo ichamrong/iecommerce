@@ -36,6 +36,8 @@
         <module>iecommerce-module-review</module>
         <module>iecommerce-module-booking</module>
         <module>iecommerce-module-subscription</module>
+        <module>iecommerce-module-ekyc</module>
+        <module>iecommerce-module-helpdesk</module>
         <module>iecommerce-app</module>
     </modules>
 
@@ -154,6 +156,16 @@
             <dependency>
                 <groupId>com.chamrong</groupId>
                 <artifactId>iecommerce-module-subscription</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.chamrong</groupId>
+                <artifactId>iecommerce-module-ekyc</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.chamrong</groupId>
+                <artifactId>iecommerce-module-helpdesk</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

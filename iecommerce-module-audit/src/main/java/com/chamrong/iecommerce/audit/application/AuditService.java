@@ -11,12 +11,14 @@ import com.chamrong.iecommerce.common.pagination.FilterHasher;
 import com.chamrong.iecommerce.common.pagination.InvalidCursorException;
 import com.chamrong.iecommerce.common.security.TenantGuard;
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -204,6 +206,73 @@ public class AuditService {
   @Transactional(readOnly = true)
   public List<String> getUniqueResourceTypes() {
     return auditRepository.findUniqueResourceTypes();
+  }
+
+  /** Maximum rows to include in CSV export to avoid excessive load. */
+  public static final int EXPORT_CSV_MAX_ROWS = 10_000;
+
+  /**
+   * Exports audit logs matching the query as CSV. Pages through results up to EXPORT_CSV_MAX_ROWS.
+   *
+   * @param tenantId tenant context
+   * @param query optional filters
+   * @return CSV content (header + rows)
+   */
+  @Transactional(readOnly = true)
+  public String exportAsCsv(String tenantId, AuditQuery query) {
+    Map<String, Object> filters = new LinkedHashMap<>();
+    if (query != null) {
+      if (StringUtils.hasText(query.userId())) filters.put("userId", query.userId());
+      if (StringUtils.hasText(query.action())) filters.put("action", query.action());
+      if (StringUtils.hasText(query.resourceType()))
+        filters.put("resourceType", query.resourceType());
+      if (StringUtils.hasText(query.resourceId())) filters.put("resourceId", query.resourceId());
+      if (StringUtils.hasText(query.searchTerm())) filters.put("searchTerm", query.searchTerm());
+      if (query.from() != null) filters.put("from", query.from());
+      if (query.to() != null) filters.put("to", query.to());
+    }
+    StringBuilder csv = new StringBuilder();
+    csv.append("id,userId,action,resourceType,resourceId,metadata,ipAddress,userAgent,timestamp\n");
+    String cursor = null;
+    int total = 0;
+    int pageSize = 500;
+    while (total < EXPORT_CSV_MAX_ROWS) {
+      CursorPageResponse<AuditResponse> page =
+          findPageByQuery(
+              tenantId,
+              query != null ? query : new AuditQuery(null, null, null, null, null, null, null),
+              cursor,
+              pageSize,
+              ENDPOINT_LIST_ALL,
+              filters);
+      for (AuditResponse row : page.getData()) {
+        csv.append(escapeCsv(row.id())).append(',');
+        csv.append(escapeCsv(row.userId())).append(',');
+        csv.append(escapeCsv(row.action())).append(',');
+        csv.append(escapeCsv(row.resourceType())).append(',');
+        csv.append(escapeCsv(row.resourceId())).append(',');
+        csv.append(escapeCsv(row.metadata())).append(',');
+        csv.append(escapeCsv(row.ipAddress())).append(',');
+        csv.append(escapeCsv(row.userAgent())).append(',');
+        csv.append(row.timestamp() != null ? escapeCsv(row.timestamp().toString()) : "")
+            .append('\n');
+        total++;
+        if (total >= EXPORT_CSV_MAX_ROWS) break;
+      }
+      if (!page.isHasNext() || page.getData().isEmpty()) break;
+      cursor = page.getNextCursor();
+      if (cursor == null) break;
+    }
+    return csv.toString();
+  }
+
+  private static String escapeCsv(Object value) {
+    if (value == null) return "";
+    String s = value.toString();
+    if (s.contains(",") || s.contains("\"") || s.contains("\n")) {
+      return "\"" + s.replace("\"", "\"\"") + "\"";
+    }
+    return s;
   }
 
   private AuditResponse toResponse(AuditEvent event) {

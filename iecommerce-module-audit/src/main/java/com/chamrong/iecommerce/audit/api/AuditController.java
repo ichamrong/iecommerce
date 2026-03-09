@@ -12,6 +12,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
@@ -147,5 +149,30 @@ public class AuditController {
     Map<String, Object> filters = Map.of("userId", userId);
     return auditService.findPageByUserId(
         tenantId, userId, cursor, Math.min(100, Math.max(1, limit)), filters);
+  }
+
+  @Operation(
+      summary = "Export audit logs as CSV",
+      description =
+          "Returns audit logs matching the same filters as list, as a CSV file. Capped at "
+              + AuditService.EXPORT_CSV_MAX_ROWS
+              + " rows. Requires `audit:read` permission.")
+  @GetMapping("/export")
+  @PreAuthorize(Permissions.HAS_AUDIT_READ)
+  public ResponseEntity<String> exportCsv(
+      @RequestHeader("X-Tenant-ID") String tenantId,
+      @RequestParam(required = false) String userId,
+      @RequestParam(required = false) String action,
+      @RequestParam(required = false) String resourceType,
+      @RequestParam(required = false) String resourceId,
+      @RequestParam(required = false) String searchTerm,
+      @RequestParam(required = false) Instant from,
+      @RequestParam(required = false) Instant to) {
+    var query = new AuditQuery(userId, action, resourceType, resourceId, searchTerm, from, to);
+    String csv = auditService.exportAsCsv(tenantId, query);
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.parseMediaType("text/csv; charset=UTF-8"));
+    headers.setContentDispositionFormData("attachment", "audit-export.csv");
+    return ResponseEntity.ok().headers(headers).body(csv);
   }
 }
