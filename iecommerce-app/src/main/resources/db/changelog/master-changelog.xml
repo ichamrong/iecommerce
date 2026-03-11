@@ -41,4 +41,6 @@
     <include file="db/changelog/changelog-v34-pos-soft-delete.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/changelog-v35-auth-tenant-provisioning-status.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/changelog-v36-payment-review-outbox.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v37-payment-ledger-fix.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changelog-v38-asset-folder-fields.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>

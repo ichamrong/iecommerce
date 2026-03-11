@@ -48,17 +48,20 @@ public class FinancialLedger extends BaseTenantEntity {
   @Column(length = 255)
   private String bankTransactionId;
 
-  @Column(nullable = false, updatable = false)
-  private Instant createdAt = Instant.now();
-
+  @Column(name = "execution_date")
   private Instant settledAt;
 
   @Column(columnDefinition = "TEXT")
   private String notes;
 
-  @Column private Boolean manualOverride;
-  @Column private String manualOverrideReason;
-  @Column private String approvedByAdmin;
+  @Column(name = "manual_override")
+  private Boolean manualOverride;
+
+  @Column(name = "manual_override_reason")
+  private String manualOverrideReason;
+
+  @Column(name = "approved_by_admin")
+  private String approvedByAdmin;
 
   public Long getOrderId() {
     return orderId;
@@ -112,10 +115,6 @@ public class FinancialLedger extends BaseTenantEntity {
     return adminReferenceId;
   }
 
-  public void setAdminReferenceId(String adminReferenceId) {
-    this.adminReferenceId = adminReferenceId;
-  }
-
   public String getBankTransactionId() {
     return bankTransactionId;
   }
@@ -124,12 +123,8 @@ public class FinancialLedger extends BaseTenantEntity {
     this.bankTransactionId = bankTransactionId;
   }
 
-  public Instant getCreatedAt() {
-    return createdAt;
-  }
-
-  public void setCreatedAt(Instant createdAt) {
-    this.createdAt = createdAt;
+  public void setAdminReferenceId(String adminReferenceId) {
+    this.adminReferenceId = adminReferenceId;
   }
 
   public Instant getSettledAt() {
@@ -208,7 +203,6 @@ public class FinancialLedger extends BaseTenantEntity {
     e.category = category;
     e.amount = amount;
     e.status = LedgerStatus.PENDING;
-    e.createdAt = Instant.now();
     return e;
   }
 

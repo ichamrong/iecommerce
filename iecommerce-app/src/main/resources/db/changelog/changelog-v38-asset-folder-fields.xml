@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Add folder and related fields to ecommerce_asset to match Asset entity (fixes "column is_folder does not exist") -->
+    <changeSet id="v38-asset-folder-fields" author="chamrong">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="ecommerce_asset" columnName="is_folder"/>
+            </not>
+        </preConditions>
+        <comment>Add is_folder, is_public, path, parent_id, version, metadata to ecommerce_asset</comment>
+        <addColumn tableName="ecommerce_asset">
+            <column name="is_folder" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_public" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="path" type="VARCHAR(255)"/>
+            <column name="parent_id" type="BIGINT"/>
+            <column name="version" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata" type="JSONB"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

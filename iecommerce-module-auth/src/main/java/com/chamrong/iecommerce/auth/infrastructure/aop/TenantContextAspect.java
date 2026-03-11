@@ -34,8 +34,9 @@ public class TenantContextAspect {
         log.trace("Setting TenantContext to: {} for method: {}", tenantId, method.getName());
         TenantContext.setCurrentTenant(tenantId);
       } else {
-        log.warn(
-            "Could not extract tenantId for method: {} using expression: {}",
+        // null/blank is valid for e.g. superadmin login (no tenant)
+        log.debug(
+            "No tenantId for method: {} (expression: {}); proceeding without tenant context.",
             method.getName(),
             withTenantContext.tenantId());
       }

@@ -6,6 +6,14 @@ public class TenantContext {
 
   private static final ThreadLocal<String> CURRENT_TENANT = new ThreadLocal<>();
 
+  /**
+   * When set as current tenant, downstream code may treat it as "platform admin, no tenant scope"
+   * and list/query across all tenants. Set by {@link
+   * com.chamrong.iecommerce.auth.infrastructure.security.TenantContextFilter} when JWT has no
+   * tenant_id and user has ROLE_PLATFORM_ADMIN.
+   */
+  public static final String PLATFORM_ADMIN_SENTINEL = "__PLATFORM_ADMIN__";
+
   public static void setCurrentTenant(String tenantId) {
     CURRENT_TENANT.set(tenantId);
   }

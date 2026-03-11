@@ -2,12 +2,11 @@ package com.chamrong.iecommerce.audit.api;
 
 import com.chamrong.iecommerce.audit.application.AuditService;
 import com.chamrong.iecommerce.audit.application.dto.AuditQuery;
-import com.chamrong.iecommerce.audit.application.dto.AuditResponse;
 import com.chamrong.iecommerce.auth.domain.Permissions;
-import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +15,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,12 +36,14 @@ public class AuditController {
   @Operation(
       summary = "List all audit logs",
       description =
-          "Returns a cursor-paginated list of all system audit logs with optional filtering. "
-              + "Requires `audit:read` permission.")
+          "Returns a cursor-paginated list of audit logs with optional filtering. When X-Tenant-ID"
+              + " is omitted and caller is platform admin, returns logs across all tenants."
+              + " Requires `audit:read` permission.")
   @GetMapping
   @PreAuthorize(Permissions.HAS_AUDIT_READ)
-  public CursorPageResponse<AuditResponse> listAll(
-      @RequestHeader("X-Tenant-ID") String tenantId,
+  public ResponseEntity<?> listAll(
+      @AuthenticationPrincipal Jwt jwt,
+      @RequestHeader(value = "X-Tenant-ID", required = false) String tenantId,
       @RequestParam(required = false) String cursor,
       @RequestParam(defaultValue = "20") int limit,
       @RequestParam(required = false) String userId,
@@ -50,6 +53,20 @@ public class AuditController {
       @RequestParam(required = false) String searchTerm,
       @RequestParam(required = false) Instant from,
       @RequestParam(required = false) Instant to) {
+    if (tenantId == null || tenantId.isBlank()) {
+      if (!isPlatformAdmin(jwt)) {
+        return ResponseEntity.badRequest()
+            .body(
+                Map.of(
+                    "error",
+                    "Bad Request",
+                    "message",
+                    "X-Tenant-ID header is required for audit list, or use platform admin role.",
+                    "status",
+                    400));
+      }
+      tenantId = null;
+    }
     var query = new AuditQuery(userId, action, resourceType, resourceId, searchTerm, from, to);
     Map<String, Object> filters = new LinkedHashMap<>();
     if (StringUtils.hasText(userId)) {
@@ -69,13 +86,27 @@ public class AuditController {
     }
     if (from != null) filters.put("from", from);
     if (to != null) filters.put("to", to);
-    return auditService.findPageByQuery(
-        tenantId,
-        query,
-        cursor,
-        Math.min(100, Math.max(1, limit)),
-        AuditService.ENDPOINT_LIST_ALL,
-        filters);
+    return ResponseEntity.ok(
+        auditService.findPageByQuery(
+            tenantId,
+            query,
+            cursor,
+            Math.min(100, Math.max(1, limit)),
+            AuditService.ENDPOINT_LIST_ALL,
+            filters));
+  }
+
+  @SuppressWarnings("unchecked")
+  private static boolean isPlatformAdmin(Jwt jwt) {
+    Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+    if (realmAccess == null || !realmAccess.containsKey("roles")) {
+      return false;
+    }
+    Object roles = realmAccess.get("roles");
+    if (!(roles instanceof Collection)) {
+      return false;
+    }
+    return ((Collection<?>) roles).contains("ROLE_PLATFORM_ADMIN");
   }
 
   @Operation(
@@ -84,8 +115,24 @@ public class AuditController {
           "Returns the full details of a single audit log entry. Requires `audit:read` permission.")
   @GetMapping("/{id}")
   @PreAuthorize(Permissions.HAS_AUDIT_READ)
-  public ResponseEntity<AuditResponse> getById(
-      @RequestHeader("X-Tenant-ID") String tenantId, @PathVariable Long id) {
+  public ResponseEntity<?> getById(
+      @AuthenticationPrincipal Jwt jwt,
+      @RequestHeader(value = "X-Tenant-ID", required = false) String tenantId,
+      @PathVariable Long id) {
+    if (tenantId == null || tenantId.isBlank()) {
+      if (!isPlatformAdmin(jwt)) {
+        return ResponseEntity.badRequest()
+            .body(
+                Map.of(
+                    "error",
+                    "Bad Request",
+                    "message",
+                    "X-Tenant-ID header required",
+                    "status",
+                    400));
+      }
+      tenantId = null;
+    }
     return auditService
         .findById(tenantId, id)
         .map(ResponseEntity::ok)
@@ -99,21 +146,37 @@ public class AuditController {
               + " `audit:read` permission.")
   @GetMapping("/resource/{resourceType}/{resourceId}")
   @PreAuthorize(Permissions.HAS_AUDIT_READ)
-  public CursorPageResponse<AuditResponse> getResourceHistory(
-      @RequestHeader("X-Tenant-ID") String tenantId,
+  public ResponseEntity<?> getResourceHistory(
+      @AuthenticationPrincipal Jwt jwt,
+      @RequestHeader(value = "X-Tenant-ID", required = false) String tenantId,
       @PathVariable String resourceType,
       @PathVariable String resourceId,
       @RequestParam(required = false) String cursor,
       @RequestParam(defaultValue = "20") int limit) {
+    if (tenantId == null || tenantId.isBlank()) {
+      if (!isPlatformAdmin(jwt)) {
+        return ResponseEntity.badRequest()
+            .body(
+                Map.of(
+                    "error",
+                    "Bad Request",
+                    "message",
+                    "X-Tenant-ID header required",
+                    "status",
+                    400));
+      }
+      tenantId = null;
+    }
     var query = new AuditQuery(null, null, resourceType, resourceId, null, null, null);
     Map<String, Object> filters = Map.of("resourceType", resourceType, "resourceId", resourceId);
-    return auditService.findPageByQuery(
-        tenantId,
-        query,
-        cursor,
-        Math.min(100, Math.max(1, limit)),
-        AuditService.ENDPOINT_RESOURCE_HISTORY,
-        filters);
+    return ResponseEntity.ok(
+        auditService.findPageByQuery(
+            tenantId,
+            query,
+            cursor,
+            Math.min(100, Math.max(1, limit)),
+            AuditService.ENDPOINT_RESOURCE_HISTORY,
+            filters));
   }
 
   @Operation(
@@ -141,14 +204,30 @@ public class AuditController {
               + " `audit:read` permission.")
   @GetMapping("/user/{userId}")
   @PreAuthorize(Permissions.HAS_AUDIT_READ)
-  public CursorPageResponse<AuditResponse> listByUser(
-      @RequestHeader("X-Tenant-ID") String tenantId,
+  public ResponseEntity<?> listByUser(
+      @AuthenticationPrincipal Jwt jwt,
+      @RequestHeader(value = "X-Tenant-ID", required = false) String tenantId,
       @PathVariable String userId,
       @RequestParam(required = false) String cursor,
       @RequestParam(defaultValue = "20") int limit) {
+    if (tenantId == null || tenantId.isBlank()) {
+      if (!isPlatformAdmin(jwt)) {
+        return ResponseEntity.badRequest()
+            .body(
+                Map.of(
+                    "error",
+                    "Bad Request",
+                    "message",
+                    "X-Tenant-ID header required",
+                    "status",
+                    400));
+      }
+      tenantId = null;
+    }
     Map<String, Object> filters = Map.of("userId", userId);
-    return auditService.findPageByUserId(
-        tenantId, userId, cursor, Math.min(100, Math.max(1, limit)), filters);
+    return ResponseEntity.ok(
+        auditService.findPageByUserId(
+            tenantId, userId, cursor, Math.min(100, Math.max(1, limit)), filters));
   }
 
   @Operation(
@@ -159,8 +238,9 @@ public class AuditController {
               + " rows. Requires `audit:read` permission.")
   @GetMapping("/export")
   @PreAuthorize(Permissions.HAS_AUDIT_READ)
-  public ResponseEntity<String> exportCsv(
-      @RequestHeader("X-Tenant-ID") String tenantId,
+  public ResponseEntity<?> exportCsv(
+      @AuthenticationPrincipal Jwt jwt,
+      @RequestHeader(value = "X-Tenant-ID", required = false) String tenantId,
       @RequestParam(required = false) String userId,
       @RequestParam(required = false) String action,
       @RequestParam(required = false) String resourceType,
@@ -168,6 +248,20 @@ public class AuditController {
       @RequestParam(required = false) String searchTerm,
       @RequestParam(required = false) Instant from,
       @RequestParam(required = false) Instant to) {
+    if (tenantId == null || tenantId.isBlank()) {
+      if (!isPlatformAdmin(jwt)) {
+        return ResponseEntity.badRequest()
+            .body(
+                Map.of(
+                    "error",
+                    "Bad Request",
+                    "message",
+                    "X-Tenant-ID header required",
+                    "status",
+                    400));
+      }
+      tenantId = null;
+    }
     var query = new AuditQuery(userId, action, resourceType, resourceId, searchTerm, from, to);
     String csv = auditService.exportAsCsv(tenantId, query);
     HttpHeaders headers = new HttpHeaders();

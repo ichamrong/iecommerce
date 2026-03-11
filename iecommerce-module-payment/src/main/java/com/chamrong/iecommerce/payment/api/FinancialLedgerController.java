@@ -1,5 +1,6 @@
 package com.chamrong.iecommerce.payment.api;
 
+import com.chamrong.iecommerce.auth.domain.Permissions;
 import com.chamrong.iecommerce.payment.application.FinancialLedgerService;
 import com.chamrong.iecommerce.payment.domain.FinancialLedger;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,7 +30,7 @@ public class FinancialLedgerController {
 
   @Operation(summary = "Get all pending payouts and refunds")
   @GetMapping("/pending")
-  @PreAuthorize("hasAuthority('finance:manage')")
+  @PreAuthorize(Permissions.HAS_FINANCE_MANAGE)
   public ResponseEntity<List<FinancialLedger>> getPendingPayouts() {
     return ResponseEntity.ok(ledgerService.getPendingPayouts());
   }
@@ -38,7 +39,7 @@ public class FinancialLedgerController {
       summary = "Execute a manual payout/refund",
       description = "Marks a PENDING ledger entry as EXECUTED with reference details.")
   @PostMapping("/{id}/execute")
-  @PreAuthorize("hasAuthority('finance:manage')")
+  @PreAuthorize(Permissions.HAS_FINANCE_MANAGE)
   public ResponseEntity<FinancialLedger> executePayout(
       @PathVariable Long id, @jakarta.validation.Valid @RequestBody ExecutePayoutRequest request) {
     return ResponseEntity.ok(

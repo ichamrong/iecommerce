@@ -17,6 +17,11 @@
     -->
 
     <changeSet id="v33-01-inventory-outbox-event" author="antigravity">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="inventory_outbox_event"/>
+            </not>
+        </preConditions>
         <createTable tableName="inventory_outbox_event">
             <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>

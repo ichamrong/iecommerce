@@ -70,6 +70,22 @@ app:
   cors:
     # Comma-separated list of allowed frontend origins (CORS)
     allowed-origins: http://localhost:8082,http://localhost:5173
+  # Auth tokens in httpOnly cookies (ASVS-aligned). When enabled, login/refresh set cookies;
+  # API accepts JWT from cookie or Authorization header. Frontend should use credentials: 'include'.
+  auth:
+    cookies:
+      enabled: true
+      access-token-name: access_token
+      refresh-token-name: refresh_token
+      access-token-max-age-seconds: 3600
+      refresh-token-max-age-seconds: 604800
+      same-site: Lax
+      secure: false
+  # Default Super Admin bootstrap account (Keycloak + local DB). Change on first login.
+  super-admin:
+    username: superadmin
+    password: superadmin
+    email: superadmin@platform.local
   keycloak:
     server-url: http://localhost:8080
     realm: iecommerce
@@ -118,6 +134,11 @@ iecommerce:
 notification:
   sms:
     provider: twilio # Values: twilio, plasgate, mekong
+
+# Order outbox relay: delay between polls (ms). Default 5000 reduces DB load; use 2000 for high-throughput prod.
+order:
+  outbox:
+    relay-delay-ms: 5000
 
 payment:
   stripe:

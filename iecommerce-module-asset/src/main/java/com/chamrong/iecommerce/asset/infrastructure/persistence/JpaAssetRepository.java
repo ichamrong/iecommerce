@@ -6,6 +6,8 @@ import com.chamrong.iecommerce.asset.domain.AssetType;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 /** Spring Data JPA adapter for the domain {@link AssetRepository} port. */
@@ -23,6 +25,10 @@ public interface JpaAssetRepository extends JpaRepository<Asset, Long>, AssetRep
 
   @Override
   List<Asset> findByType(AssetType type);
+
+  @Override
+  @Query("SELECT a FROM Asset a WHERE a.type = :type AND a.deletedAt IS NULL")
+  List<Asset> findByTypeAndDeletedAtIsNull(@Param("type") AssetType type);
 
   @Override
   long countByParentId(Long parentId);

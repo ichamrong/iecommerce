@@ -4,6 +4,7 @@ import com.chamrong.iecommerce.audit.application.dto.AuditQuery;
 import com.chamrong.iecommerce.audit.application.dto.AuditResponse;
 import com.chamrong.iecommerce.audit.domain.AuditEvent;
 import com.chamrong.iecommerce.audit.domain.ports.AuditRepositoryPort;
+import com.chamrong.iecommerce.common.TenantContext;
 import com.chamrong.iecommerce.common.pagination.CursorCodec;
 import com.chamrong.iecommerce.common.pagination.CursorPageResponse;
 import com.chamrong.iecommerce.common.pagination.CursorPayload;
@@ -29,6 +30,11 @@ public class AuditService {
   private final AuditRepositoryPort auditRepository;
   private final com.chamrong.iecommerce.common.security.DigitalSignatureService signatureService;
 
+  private String resolveTenantOrSystem() {
+    String tenantId = TenantContext.getCurrentTenant();
+    return (tenantId != null && !tenantId.isBlank()) ? tenantId : "SYSTEM";
+  }
+
   @Transactional
   public void log(
       String userId, String action, String resourceType, String resourceId, String metadata) {
@@ -37,6 +43,9 @@ public class AuditService {
     event.setAction(action);
     event.setResourceType(resourceType);
     event.setResourceId(resourceId);
+
+    // Ensure tenantId is always set (bank-grade multi-tenant audit requirement)
+    event.setTenantId(resolveTenantOrSystem());
 
     // Applying bank-level audit masking for sensitive metadata
     event.setMetadata(signatureService.mask(metadata));
@@ -91,7 +100,9 @@ public class AuditService {
         .findById(id)
         .map(
             event -> {
-              TenantGuard.requireSameTenant(event.getTenantId(), tenantId);
+              if (tenantId != null && !tenantId.isBlank()) {
+                TenantGuard.requireSameTenant(event.getTenantId(), tenantId);
+              }
               return toResponse(event);
             });
   }

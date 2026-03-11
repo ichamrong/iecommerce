@@ -40,16 +40,19 @@ public class SecurityConfig {
   private final CustomAuthenticationEntryPoint authenticationEntryPoint;
   private final CustomAccessDeniedHandler accessDeniedHandler;
   private final IpRateLimitFilter ipRateLimitFilter;
+  private final CookieBearerTokenResolver cookieBearerTokenResolver;
 
   public SecurityConfig(
       TenantContextFilter tenantContextFilter,
       CustomAuthenticationEntryPoint authenticationEntryPoint,
       CustomAccessDeniedHandler accessDeniedHandler,
-      IpRateLimitFilter ipRateLimitFilter) {
+      IpRateLimitFilter ipRateLimitFilter,
+      CookieBearerTokenResolver cookieBearerTokenResolver) {
     this.tenantContextFilter = tenantContextFilter;
     this.authenticationEntryPoint = authenticationEntryPoint;
     this.accessDeniedHandler = accessDeniedHandler;
     this.ipRateLimitFilter = ipRateLimitFilter;
+    this.cookieBearerTokenResolver = cookieBearerTokenResolver;
   }
 
   /**
@@ -90,6 +93,7 @@ public class SecurityConfig {
         .oauth2ResourceServer(
             oauth2 ->
                 oauth2
+                    .bearerTokenResolver(cookieBearerTokenResolver)
                     .jwt(
                         jwt ->
                             jwt.jwtAuthenticationConverter(

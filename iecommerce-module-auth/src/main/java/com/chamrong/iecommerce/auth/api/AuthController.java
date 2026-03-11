@@ -15,8 +15,11 @@ import com.chamrong.iecommerce.auth.application.command.security.ChangeCredentia
 import com.chamrong.iecommerce.auth.application.command.security.ChangePasswordHandler;
 import com.chamrong.iecommerce.auth.application.command.user.RegisterUserHandler;
 import com.chamrong.iecommerce.auth.application.dto.AuthResponse;
+import com.chamrong.iecommerce.auth.application.dto.MeResponse;
+import com.chamrong.iecommerce.auth.application.query.GetMeHandler;
 import com.chamrong.iecommerce.auth.application.query.ListSocialProvidersQueryHandler;
 import com.chamrong.iecommerce.auth.domain.idp.SocialProvider;
+import com.chamrong.iecommerce.auth.infrastructure.config.AuthCookieHelper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,6 +27,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -52,6 +57,8 @@ public class AuthController {
   private final RefreshTokenHandler refreshTokenHandler;
   private final LogoutHandler logoutHandler;
   private final ListSocialProvidersQueryHandler listSocialProvidersQueryHandler;
+  private final AuthCookieHelper authCookieHelper;
+  private final GetMeHandler getMeHandler;
 
   public AuthController(
       RegisterUserHandler registerUserHandler,
@@ -61,7 +68,9 @@ public class AuthController {
       ChangeCredentialsHandler changeCredentialsHandler,
       RefreshTokenHandler refreshTokenHandler,
       LogoutHandler logoutHandler,
-      ListSocialProvidersQueryHandler listSocialProvidersQueryHandler) {
+      ListSocialProvidersQueryHandler listSocialProvidersQueryHandler,
+      AuthCookieHelper authCookieHelper,
+      GetMeHandler getMeHandler) {
     this.registerUserHandler = registerUserHandler;
     this.loginUserHandler = loginUserHandler;
     this.forgotPasswordHandler = forgotPasswordHandler;
@@ -70,6 +79,30 @@ public class AuthController {
     this.refreshTokenHandler = refreshTokenHandler;
     this.logoutHandler = logoutHandler;
     this.listSocialProvidersQueryHandler = listSocialProvidersQueryHandler;
+    this.authCookieHelper = authCookieHelper;
+    this.getMeHandler = getMeHandler;
+  }
+
+  /**
+   * Current user (session restore). When the frontend loads with httpOnly cookies but no in-memory
+   * state, it calls this to restore user and stay on the dashboard. Requires valid JWT (cookie or
+   * header).
+   */
+  @Operation(
+      summary = "Current user",
+      description =
+          "Returns the authenticated user's profile. Used to restore session when the app loads"
+              + " with cookies (no token in memory). Requires authentication.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "Current user",
+        content = @Content(schema = @Schema(implementation = MeResponse.class))),
+    @ApiResponse(responseCode = "401", description = "Not authenticated", content = @Content)
+  })
+  @GetMapping("/me")
+  public ResponseEntity<MeResponse> me() {
+    return ResponseEntity.ok(getMeHandler.handle());
   }
 
   /**
@@ -92,8 +125,10 @@ public class AuthController {
         content = @Content)
   })
   @PostMapping("/register")
-  public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterCommand cmd) {
+  public ResponseEntity<AuthResponse> register(
+      @Valid @RequestBody RegisterCommand cmd, HttpServletResponse httpResponse) {
     var response = registerUserHandler.handle(cmd);
+    authCookieHelper.addAuthCookies(httpResponse, response);
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
@@ -120,8 +155,10 @@ public class AuthController {
     @ApiResponse(responseCode = "429", description = "Too many requests", content = @Content)
   })
   @PostMapping("/login")
-  public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginCommand cmd) {
+  public ResponseEntity<AuthResponse> login(
+      @Valid @RequestBody LoginCommand cmd, HttpServletResponse httpResponse) {
     var response = loginUserHandler.handle(cmd);
+    authCookieHelper.addAuthCookies(httpResponse, response);
     return ResponseEntity.ok(response);
   }
 
@@ -145,8 +182,20 @@ public class AuthController {
         content = @Content)
   })
   @PostMapping("/refresh-token")
-  public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenCommand cmd) {
-    return ResponseEntity.ok(refreshTokenHandler.handle(cmd));
+  public ResponseEntity<AuthResponse> refreshToken(
+      @RequestBody(required = false) RefreshTokenCommand cmd,
+      HttpServletRequest request,
+      HttpServletResponse httpResponse) {
+    String refreshToken =
+        (cmd != null && cmd.refreshToken() != null && !cmd.refreshToken().isBlank())
+            ? cmd.refreshToken()
+            : authCookieHelper.getRefreshTokenFromCookies(request);
+    if (refreshToken == null || refreshToken.isBlank()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+    var response = refreshTokenHandler.handle(new RefreshTokenCommand(refreshToken));
+    authCookieHelper.addAuthCookies(httpResponse, response);
+    return ResponseEntity.ok(response);
   }
 
   /**
@@ -159,8 +208,18 @@ public class AuthController {
       description = "Logs out a user by revoking their refresh token via the Identity Provider.")
   @ApiResponses({@ApiResponse(responseCode = "204", description = "User logged out successfully")})
   @PostMapping("/logout")
-  public ResponseEntity<Void> logout(@Valid @RequestBody LogoutCommand cmd) {
-    logoutHandler.handle(cmd);
+  public ResponseEntity<Void> logout(
+      @RequestBody(required = false) LogoutCommand cmd,
+      HttpServletRequest request,
+      HttpServletResponse httpResponse) {
+    String refreshToken =
+        (cmd != null && cmd.refreshToken() != null && !cmd.refreshToken().isBlank())
+            ? cmd.refreshToken()
+            : authCookieHelper.getRefreshTokenFromCookies(request);
+    if (refreshToken != null && !refreshToken.isBlank()) {
+      logoutHandler.handle(new LogoutCommand(refreshToken));
+    }
+    authCookieHelper.clearAuthCookies(httpResponse);
     return ResponseEntity.noContent().build();
   }
 

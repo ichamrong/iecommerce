@@ -111,17 +111,25 @@ public class AssetRetrievalService {
   }
 
   /**
-   * Finds assets by type.
+   * Finds assets by type. When current tenant is platform-admin sentinel (or missing, e.g. cookie
+   * auth), returns assets across all tenants. Otherwise scopes to the current tenant.
    *
    * @param type the asset type
    * @return list of asset responses
    */
   @Transactional(readOnly = true)
   public List<AssetResponse> findByType(AssetType type) {
-    String tenantId = TenantContext.requireTenantId();
-    return assetRepository.findByTenantIdAndTypeAndDeletedAtIsNull(tenantId, type).stream()
-        .map(AssetMapper::toResponse)
-        .toList();
+    String tenantId = TenantContext.getCurrentTenant();
+    if (tenantId == null || tenantId.isBlank()) {
+      tenantId = TenantContext.PLATFORM_ADMIN_SENTINEL;
+    }
+    List<Asset> assets;
+    if (TenantContext.PLATFORM_ADMIN_SENTINEL.equals(tenantId)) {
+      assets = assetRepository.findByTypeAndDeletedAtIsNull(type);
+    } else {
+      assets = assetRepository.findByTenantIdAndTypeAndDeletedAtIsNull(tenantId, type);
+    }
+    return assets.stream().map(AssetMapper::toResponse).toList();
   }
 
   @Transactional(readOnly = true)

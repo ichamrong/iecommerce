@@ -153,6 +153,10 @@
 		<dependency>
 			<groupId>com.chamrong</groupId>
 			<artifactId>iecommerce-common</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.chamrong</groupId>
+			<artifactId>iecommerce-common</artifactId>
 			<version>${project.version}</version>
 			<type>test-jar</type>
 			<scope>test</scope>

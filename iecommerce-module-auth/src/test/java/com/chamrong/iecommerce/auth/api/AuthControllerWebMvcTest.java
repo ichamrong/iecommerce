@@ -21,9 +21,11 @@ import com.chamrong.iecommerce.auth.application.command.security.ChangeCredentia
 import com.chamrong.iecommerce.auth.application.command.security.ChangePasswordHandler;
 import com.chamrong.iecommerce.auth.application.command.user.RegisterUserHandler;
 import com.chamrong.iecommerce.auth.application.dto.AuthResponse;
+import com.chamrong.iecommerce.auth.application.query.GetMeHandler;
 import com.chamrong.iecommerce.auth.application.query.ListSocialProvidersQueryHandler;
 import com.chamrong.iecommerce.auth.domain.idp.IdentityProviderType;
 import com.chamrong.iecommerce.auth.domain.idp.SocialProvider;
+import com.chamrong.iecommerce.auth.infrastructure.config.AuthCookieHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,6 +54,8 @@ class AuthControllerWebMvcTest {
   @Mock private RefreshTokenHandler refreshTokenHandler;
   @Mock private LogoutHandler logoutHandler;
   @Mock private ListSocialProvidersQueryHandler listSocialProvidersQueryHandler;
+  @Mock private AuthCookieHelper authCookieHelper;
+  @Mock private GetMeHandler getMeHandler;
 
   @BeforeEach
   void setUp() {
@@ -64,7 +68,9 @@ class AuthControllerWebMvcTest {
             changeCredentialsHandler,
             refreshTokenHandler,
             logoutHandler,
-            listSocialProvidersQueryHandler);
+            listSocialProvidersQueryHandler,
+            authCookieHelper,
+            getMeHandler);
     this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
   }
 

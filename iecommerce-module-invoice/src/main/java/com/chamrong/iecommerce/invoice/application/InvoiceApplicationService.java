@@ -280,11 +280,14 @@ public class InvoiceApplicationService {
   }
 
   /**
-   * Lists invoices for a tenant using cursor/keyset pagination.
+   * Lists invoices using cursor/keyset pagination.
+   *
+   * <p>When {@code tenantId} is null or blank (platform admin with no tenant in JWT), lists
+   * invoices across all tenants. Otherwise scopes to the given tenant.
    *
    * <p>Sort: {@code (issue_date DESC, id DESC)}.
    *
-   * @param tenantId calling tenant
+   * @param tenantId calling tenant, or null/blank for platform-admin cross-tenant list
    * @param statusFilter optional status filter
    * @param cursor opaque cursor from previous response, or null for first page
    * @param limit max items (capped at {@value #MAX_PAGE_SIZE})
@@ -296,8 +299,9 @@ public class InvoiceApplicationService {
     // Fetch one extra to detect next page
     int fetchLimit = effectiveLimit + 1;
 
+    boolean allTenants = tenantId == null || tenantId.isBlank();
     Map<String, Object> filterMap = new LinkedHashMap<>();
-    filterMap.put("tenantId", tenantId);
+    filterMap.put("tenantId", allTenants ? "__all__" : tenantId);
     filterMap.put("status", statusFilter != null ? statusFilter.name() : null);
     String filterHash = FilterHasher.computeHash(ENDPOINT_LIST_INVOICES, filterMap);
 
@@ -314,9 +318,16 @@ public class InvoiceApplicationService {
       }
     }
 
-    List<Invoice> invoices =
-        invoiceRepository.findByTenantCursor(
-            tenantId, statusFilter, afterIssuedAt, afterId, fetchLimit);
+    List<Invoice> invoices;
+    if (allTenants) {
+      invoices =
+          invoiceRepository.findByCursorAllTenants(
+              statusFilter, afterIssuedAt, afterId, fetchLimit);
+    } else {
+      invoices =
+          invoiceRepository.findByTenantCursor(
+              tenantId, statusFilter, afterIssuedAt, afterId, fetchLimit);
+    }
 
     boolean hasNext = invoices.size() > effectiveLimit;
     List<Invoice> page = hasNext ? invoices.subList(0, effectiveLimit) : invoices;

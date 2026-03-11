@@ -47,6 +47,38 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
   }
 
+  /** Handles invalid arguments (e.g. entity not found). Returns 400 so clients do not see 500. */
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<Map<String, Object>> handleIllegalArgument(
+      IllegalArgumentException ex, HttpServletRequest request) {
+    String correlationId = UUID.randomUUID().toString();
+    log.warn("Invalid argument [CorrelationID: {}]: {}", correlationId, ex.getMessage());
+    Map<String, Object> body = new HashMap<>();
+    body.put("timestamp", Instant.now());
+    body.put("status", HttpStatus.BAD_REQUEST.value());
+    body.put("error", "Bad Request");
+    body.put("message", ex.getMessage());
+    body.put("correlationId", correlationId);
+    return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+  }
+
+  /**
+   * Handles invalid state (e.g. business rule violation). Returns 409 so clients do not see 500.
+   */
+  @ExceptionHandler(IllegalStateException.class)
+  public ResponseEntity<Map<String, Object>> handleIllegalState(
+      IllegalStateException ex, HttpServletRequest request) {
+    String correlationId = UUID.randomUUID().toString();
+    log.warn("Invalid state [CorrelationID: {}]: {}", correlationId, ex.getMessage());
+    Map<String, Object> body = new HashMap<>();
+    body.put("timestamp", Instant.now());
+    body.put("status", HttpStatus.CONFLICT.value());
+    body.put("error", "Conflict");
+    body.put("message", ex.getMessage());
+    body.put("correlationId", correlationId);
+    return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+  }
+
   @ExceptionHandler(Exception.class)
   public Object handleAllExceptions(Exception ex, HttpServletRequest request) {
     String correlationId = UUID.randomUUID().toString();

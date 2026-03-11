@@ -24,7 +24,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -125,9 +127,11 @@ public class InvoiceController {
 
   @Operation(
       summary = "List invoices (cursor paginated)",
-      description = "Returns invoices for the calling tenant, sorted by issue_date DESC, id DESC.")
+      description =
+          "Returns invoices for the calling tenant, sorted by issue_date DESC, id DESC. "
+              + "Platform admin with no tenant_id in JWT receives invoices across all tenants.")
   @GetMapping
-  public ResponseEntity<CursorPageResponse<InvoiceDetailResponse>> listInvoices(
+  public ResponseEntity<?> listInvoices(
       @AuthenticationPrincipal Jwt jwt,
       @RequestParam(required = false) InvoiceStatus status,
       @RequestParam(required = false) String cursor,
@@ -137,7 +141,35 @@ public class InvoiceController {
           @Max(MAX_PAGE_SIZE)
           int limit) {
     String tenantId = jwt.getClaimAsString("tenant_id");
+    if (tenantId == null || tenantId.isBlank()) {
+      if (!isPlatformAdmin(jwt)) {
+        return ResponseEntity.badRequest()
+            .body(
+                Map.of(
+                    "error",
+                    "Bad Request",
+                    "message",
+                    "tenant_id is required in the token for listing invoices. Platform admin may"
+                        + " list all when token has no tenant_id.",
+                    "status",
+                    400));
+      }
+      tenantId = null;
+    }
     return ResponseEntity.ok(invoiceService.listInvoices(tenantId, status, cursor, limit));
+  }
+
+  @SuppressWarnings("unchecked")
+  private static boolean isPlatformAdmin(Jwt jwt) {
+    Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+    if (realmAccess == null || !realmAccess.containsKey("roles")) {
+      return false;
+    }
+    Object roles = realmAccess.get("roles");
+    if (!(roles instanceof Collection)) {
+      return false;
+    }
+    return ((Collection<?>) roles).contains("ROLE_PLATFORM_ADMIN");
   }
 
   // ── GET /api/v1/invoices/{id} ──────────────────────────────────────────────

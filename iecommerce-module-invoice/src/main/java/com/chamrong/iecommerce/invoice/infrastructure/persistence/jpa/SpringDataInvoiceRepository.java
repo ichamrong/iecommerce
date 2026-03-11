@@ -45,4 +45,40 @@ public interface SpringDataInvoiceRepository extends JpaRepository<Invoice, Long
       @Param("afterIssuedAt") Instant afterIssuedAt,
       @Param("afterId") Long afterId,
       org.springframework.data.domain.Pageable pageable);
+
+  /** First page of cursor list across all tenants (platform admin only), no status filter. */
+  @Query("SELECT i FROM Invoice i " + "ORDER BY i.issueDate DESC NULLS LAST, i.id DESC")
+  List<Invoice> findFirstPageAllTenants(org.springframework.data.domain.Pageable pageable);
+
+  /** First page of cursor list across all tenants with status filter. */
+  @Query(
+      "SELECT i FROM Invoice i "
+          + "WHERE i.status = :status "
+          + "ORDER BY i.issueDate DESC NULLS LAST, i.id DESC")
+  List<Invoice> findFirstPageAllTenantsByStatus(
+      @Param("status") InvoiceStatus status, org.springframework.data.domain.Pageable pageable);
+
+  /** Next page across all tenants, no status filter. */
+  @Query(
+      "SELECT i FROM Invoice i "
+          + "WHERE (i.issueDate < :afterIssuedAt "
+          + "     OR (i.issueDate = :afterIssuedAt AND i.id < :afterId)) "
+          + "ORDER BY i.issueDate DESC NULLS LAST, i.id DESC")
+  List<Invoice> findNextPageAllTenants(
+      @Param("afterIssuedAt") Instant afterIssuedAt,
+      @Param("afterId") Long afterId,
+      org.springframework.data.domain.Pageable pageable);
+
+  /** Next page across all tenants with status filter. */
+  @Query(
+      "SELECT i FROM Invoice i "
+          + "WHERE i.status = :status "
+          + "AND (i.issueDate < :afterIssuedAt "
+          + "     OR (i.issueDate = :afterIssuedAt AND i.id < :afterId)) "
+          + "ORDER BY i.issueDate DESC NULLS LAST, i.id DESC")
+  List<Invoice> findNextPageAllTenantsByStatus(
+      @Param("status") InvoiceStatus status,
+      @Param("afterIssuedAt") Instant afterIssuedAt,
+      @Param("afterId") Long afterId,
+      org.springframework.data.domain.Pageable pageable);
 }

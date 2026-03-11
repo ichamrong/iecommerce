@@ -42,8 +42,14 @@ public class JpaAuditRepositoryImpl implements JpaAuditRepositoryCustom {
   @Override
   public List<AuditEvent> findFirstPageByUserId(String tenantId, String userId, int limitPlusOne) {
     Specification<AuditEvent> spec =
-        (root, q, cb) ->
-            cb.and(cb.equal(root.get("tenantId"), tenantId), cb.equal(root.get("userId"), userId));
+        (root, q, cb) -> {
+          var predicates = new ArrayList<Predicate>();
+          if (tenantId != null && !tenantId.isBlank()) {
+            predicates.add(cb.equal(root.get("tenantId"), tenantId));
+          }
+          predicates.add(cb.equal(root.get("userId"), userId));
+          return cb.and(predicates.toArray(new Predicate[0]));
+        };
     return execute(spec, limitPlusOne);
   }
 
@@ -51,11 +57,15 @@ public class JpaAuditRepositoryImpl implements JpaAuditRepositoryCustom {
   public List<AuditEvent> findNextPageByUserId(
       String tenantId, String userId, Instant cursorCreatedAt, Long cursorId, int limitPlusOne) {
     Specification<AuditEvent> spec =
-        (root, q, cb) ->
-            cb.and(
-                cb.equal(root.get("tenantId"), tenantId),
-                cb.equal(root.get("userId"), userId),
-                keysetPredicate(root, q, cb, cursorCreatedAt, cursorId));
+        (root, q, cb) -> {
+          var predicates = new ArrayList<Predicate>();
+          if (tenantId != null && !tenantId.isBlank()) {
+            predicates.add(cb.equal(root.get("tenantId"), tenantId));
+          }
+          predicates.add(cb.equal(root.get("userId"), userId));
+          predicates.add(keysetPredicate(root, q, cb, cursorCreatedAt, cursorId));
+          return cb.and(predicates.toArray(new Predicate[0]));
+        };
     return execute(spec, limitPlusOne);
   }
 
@@ -117,7 +127,9 @@ public class JpaAuditRepositoryImpl implements JpaAuditRepositoryCustom {
       String tenantId, AuditQuery query, Instant cursorCreatedAt, Long cursorId) {
     return (root, q, cb) -> {
       var predicates = new ArrayList<Predicate>();
-      predicates.add(cb.equal(root.get("tenantId"), tenantId));
+      if (tenantId != null && !tenantId.isBlank()) {
+        predicates.add(cb.equal(root.get("tenantId"), tenantId));
+      }
 
       if (query.userId() != null && !query.userId().isBlank()) {
         predicates.add(cb.equal(root.get("userId"), query.userId()));

@@ -1,10 +1,13 @@
 package com.chamrong.iecommerce.common.security;
 
+import lombok.Getter;
+
 /**
  * Thrown when a tenant is not allowed to access a module or feature (vertical mode, disabled
  * module, quota exceeded, or feature flag off). Use {@link #getErrorCode()} for stable API
  * response.
  */
+@Getter
 public class CapabilityDeniedException extends RuntimeException {
 
   /** Tenant's vertical or plan does not allow this module. */
@@ -28,9 +31,5 @@ public class CapabilityDeniedException extends RuntimeException {
 
   public CapabilityDeniedException(String errorCode) {
     this("Capability denied", errorCode);
-  }
-
-  public String getErrorCode() {
-    return errorCode;
   }
 }

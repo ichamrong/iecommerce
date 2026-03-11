@@ -19,7 +19,8 @@ public class SuperAdminProperties {
   /**
    * Initial username for the platform super admin.
    *
-   * <p>If not provided, a sensible default such as {@code admin} will be used by the initializer.
+   * <p>If not provided, a sensible default such as {@code superadmin} will be used by the
+   * initializer.
    */
   private String username;
 

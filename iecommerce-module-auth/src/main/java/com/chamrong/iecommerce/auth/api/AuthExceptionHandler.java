@@ -8,6 +8,8 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -20,9 +22,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * Centralized exception-to-HTTP-response mapping for the auth module.
  *
  * <p>Covers OWASP A07 (auth failures), A09 (logging), and A03 (input validation errors).
+ *
+ * <p>Uses {@link Ordered#HIGHEST_PRECEDENCE} so auth exceptions (e.g. BadCredentialsException) are
+ * mapped to 401 before the global catch-all returns 500.
  */
 @Slf4j
-@RestControllerAdvice(basePackages = "com.chamrong.iecommerce.auth.api")
+@Order(Ordered.HIGHEST_PRECEDENCE)
+@RestControllerAdvice
 public class AuthExceptionHandler {
 
   @ExceptionHandler(AuthException.class)

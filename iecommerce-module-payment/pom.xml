@@ -16,6 +16,10 @@
             <artifactId>iecommerce-common</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.chamrong</groupId>
+            <artifactId>iecommerce-module-auth</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.modulith</groupId>
             <artifactId>spring-modulith-api</artifactId>
         </dependency>

@@ -165,7 +165,11 @@ public class NotificationService implements NotificationApi {
     int fetchLimit = effectiveLimit + 1;
 
     Map<String, Object> filterMap = new LinkedHashMap<>();
-    filterMap.put("tenantId", tenantId);
+    filterMap.put(
+        "tenantId",
+        com.chamrong.iecommerce.common.TenantContext.PLATFORM_ADMIN_SENTINEL.equals(tenantId)
+            ? "__all__"
+            : tenantId);
     String filterHash = FilterHasher.computeHash(ENDPOINT_LIST_NOTIFICATIONS, filterMap);
 
     Instant afterCreatedAt = null;

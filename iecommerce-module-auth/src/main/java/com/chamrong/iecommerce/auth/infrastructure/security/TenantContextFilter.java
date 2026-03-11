@@ -9,11 +9,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /** Stable error codes for tenant status enforcement (ASVS). */
@@ -46,6 +49,9 @@ public class TenantContextFilter extends OncePerRequestFilter {
 
     if (authentication instanceof JwtAuthenticationToken jwtToken) {
       String tenantId = jwtToken.getToken().getClaimAsString("tenantId");
+      if (tenantId == null || tenantId.isBlank()) {
+        tenantId = jwtToken.getToken().getClaimAsString("tenant_id");
+      }
       if (tenantId != null && !tenantId.isBlank()) {
 
         if ("SYSTEM".equals(tenantId)) {
@@ -97,6 +103,17 @@ public class TenantContextFilter extends OncePerRequestFilter {
           }
           TenantContext.setCurrentTenant(tenantId);
         }
+      } else {
+        // Platform admin with no tenant in JWT: use X-Tenant-Id if present, else sentinel (list
+        // all)
+        if (isPlatformAdmin(jwtToken.getToken())) {
+          String headerTenant = request.getHeader("X-Tenant-Id");
+          if (StringUtils.hasText(headerTenant)) {
+            TenantContext.setCurrentTenant(headerTenant.trim());
+          } else {
+            TenantContext.setCurrentTenant(TenantContext.PLATFORM_ADMIN_SENTINEL);
+          }
+        }
       }
     }
 
@@ -105,5 +122,18 @@ public class TenantContextFilter extends OncePerRequestFilter {
     } finally {
       TenantContext.clear();
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static boolean isPlatformAdmin(org.springframework.security.oauth2.jwt.Jwt jwt) {
+    Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+    if (realmAccess == null || !realmAccess.containsKey("roles")) {
+      return false;
+    }
+    Object roles = realmAccess.get("roles");
+    if (!(roles instanceof Collection)) {
+      return false;
+    }
+    return ((Collection<?>) roles).contains("ROLE_PLATFORM_ADMIN");
   }
 }

@@ -55,6 +55,20 @@ public interface InvoiceRepositoryPort {
       String tenantId, InvoiceStatus statusFilter, Instant afterIssuedAt, Long afterId, int limit);
 
   /**
+   * Cursor-keyset paginated listing of invoices across all tenants (platform admin only).
+   *
+   * <p>Same stable sort: {@code (issue_date DESC, id DESC)}. Call only when caller is platform
+   * admin and JWT has no tenant_id.
+   *
+   * @param statusFilter optional status filter, null means all statuses
+   * @param afterIssuedAt cursor: issue_date of the last seen item; null for first page
+   * @param afterId cursor: id of the last seen item; null for first page
+   * @param limit maximum items to return; capped at 100 by callers
+   */
+  List<Invoice> findByCursorAllTenants(
+      InvoiceStatus statusFilter, Instant afterIssuedAt, Long afterId, int limit);
+
+  /**
    * Finds an invoice by human-readable invoice number, enforcing tenant scoping.
    *
    * <p>ASVS V4.2 — Returns empty Optional when the number belongs to a different tenant. Used by

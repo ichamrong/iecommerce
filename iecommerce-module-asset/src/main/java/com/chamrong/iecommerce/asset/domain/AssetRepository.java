@@ -15,6 +15,9 @@ public interface AssetRepository {
 
   List<Asset> findByType(AssetType type);
 
+  /** All tenants (platform admin); excludes deleted. */
+  List<Asset> findByTypeAndDeletedAtIsNull(AssetType type);
+
   List<Asset> findByTenantIdAndTypeAndDeletedAtIsNull(String tenantId, AssetType type);
 
   void deleteById(Long id);

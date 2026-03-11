@@ -35,6 +35,9 @@ public final class Permissions {
   public static final String HELPDESK_READ = "helpdesk:read";
   public static final String HELPDESK_REPLY = "helpdesk:reply";
 
+  // Finance / Ledgers
+  public static final String FINANCE_MANAGE = "finance:manage";
+
   // SpEL expressions for @PreAuthorize
   public static final String HAS_USER_READ = "hasAuthority('" + USER_READ + "')";
   public static final String HAS_USER_CREATE = "hasAuthority('" + USER_CREATE + "')";
@@ -52,6 +55,7 @@ public final class Permissions {
   public static final String HAS_EKYC_REVIEW = "hasAuthority('" + EKYC_REVIEW + "')";
   public static final String HAS_HELPDESK_READ = "hasAuthority('" + HELPDESK_READ + "')";
   public static final String HAS_HELPDESK_REPLY = "hasAuthority('" + HELPDESK_REPLY + "')";
+  public static final String HAS_FINANCE_MANAGE = "hasAuthority('" + FINANCE_MANAGE + "')";
 
   private Permissions() {}
 }

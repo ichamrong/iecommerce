@@ -46,6 +46,20 @@ public class JpaInvoiceRepositoryAdapter implements InvoiceRepositoryPort {
   }
 
   @Override
+  public List<Invoice> findByCursorAllTenants(
+      InvoiceStatus statusFilter, Instant afterIssuedAt, Long afterId, int limit) {
+    PageRequest page = PageRequest.of(0, limit);
+    if (afterIssuedAt == null || afterId == null) {
+      return statusFilter == null
+          ? jpaRepo.findFirstPageAllTenants(page)
+          : jpaRepo.findFirstPageAllTenantsByStatus(statusFilter, page);
+    }
+    return statusFilter == null
+        ? jpaRepo.findNextPageAllTenants(afterIssuedAt, afterId, page)
+        : jpaRepo.findNextPageAllTenantsByStatus(statusFilter, afterIssuedAt, afterId, page);
+  }
+
+  @Override
   public Optional<Invoice> findByInvoiceNumberAndTenant(String invoiceNumber, String tenantId) {
     return jpaRepo.findByInvoiceNumberAndTenantId(invoiceNumber, tenantId);
   }

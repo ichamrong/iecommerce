@@ -1,7 +1,4 @@
 package com.chamrong.iecommerce.auth.application.command.auth;
 
-import jakarta.validation.constraints.NotBlank;
-
-/** Command to refresh an access token. */
-public record RefreshTokenCommand(
-    @NotBlank(message = "Refresh token is required") String refreshToken) {}
+/** Command to refresh an access token. Token may come from request body or from httpOnly cookie. */
+public record RefreshTokenCommand(String refreshToken) {}

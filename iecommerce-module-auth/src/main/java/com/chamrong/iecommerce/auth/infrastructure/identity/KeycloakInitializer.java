@@ -129,7 +129,9 @@ public class KeycloakInitializer implements CommandLineRunner {
 
   private void createSuperAdminUser(Keycloak keycloak) {
     final String bootstrapUsername =
-        superAdminProperties.getUsername() != null ? superAdminProperties.getUsername() : "admin";
+        superAdminProperties.getUsername() != null
+            ? superAdminProperties.getUsername()
+            : "superadmin";
 
     RealmResource realmResource = keycloak.realm(properties.getRealm());
     List<UserRepresentation> users =
@@ -137,8 +139,14 @@ public class KeycloakInitializer implements CommandLineRunner {
 
     if (users.isEmpty()) {
       log.info("Creating default '{}' user in Keycloak...", bootstrapUsername);
+      final String email =
+          superAdminProperties.getEmail() != null
+              ? superAdminProperties.getEmail()
+              : bootstrapUsername + "@platform.local";
+
       UserRepresentation user = new UserRepresentation();
       user.setUsername(bootstrapUsername);
+      user.setEmail(email);
       user.setEnabled(true);
       user.setEmailVerified(true);
       user.setFirstName("System");
@@ -163,11 +171,6 @@ public class KeycloakInitializer implements CommandLineRunner {
               realmResource.roles().get("ROLE_PLATFORM_ADMIN").toRepresentation();
           realmResource.users().get(userId).roles().realmLevel().add(List.of(adminRole));
           log.info("Super admin created successfully with ID: {}", userId);
-
-          final String email =
-              superAdminProperties.getEmail() != null
-                  ? superAdminProperties.getEmail()
-                  : bootstrapUsername + "@platform.com";
 
           syncSuperAdminToDatabase(userId, bootstrapUsername, email);
         } else {

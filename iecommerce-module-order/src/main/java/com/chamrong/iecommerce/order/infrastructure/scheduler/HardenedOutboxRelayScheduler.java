@@ -55,8 +55,13 @@ public class HardenedOutboxRelayScheduler extends AbstractOutboxRelay<OrderOutbo
     repository.save(event);
   }
 
-  /** Runs every 2 seconds. Polls pending events that are due. */
-  @Scheduled(fixedDelay = 2000)
+  /**
+   * Polls pending outbox events that are due.
+   *
+   * <p>Default 5 seconds balances latency vs DB load. Override with {@code
+   * order.outbox.relay-delay-ms} (e.g. 10000 for dev, 2000 for high-throughput prod).
+   */
+  @Scheduled(fixedDelayString = "${order.outbox.relay-delay-ms:5000}")
   @Transactional
   public void relayEvents() {
     // 1. Fetch PENDING events where next_attempt_at <= now()
